@@ -76,6 +76,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 		protected Dictionary<Thing, VisualThing> visiblethings;
 		protected Dictionary<Sector, VisualSector> visiblesectors;
 		protected List<VisualGeometry> visiblegeometry;
+		protected List<VisualSlopeHandle> slopehandles;
 		
 		#endregion
 
@@ -85,6 +86,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 		public bool ProcessThings { get { return processthings; } set { processthings = value; } }
 		public VisualBlockMap BlockMap { get { return blockmap; } }
 		public Dictionary<Vertex, VisualVertexPair> VisualVertices { get { return vertices; } } //mxd
+		public List<VisualSlopeHandle> VisualSlopeHandles { get { return slopehandles; } }
 
 		// Rendering
 		public IRenderer3D Renderer { get { return renderer; } }
@@ -110,6 +112,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 			this.processgeometry = true;
 			this.processthings = true;
 			this.vertices = new Dictionary<Vertex, VisualVertexPair>(); //mxd
+			this.slopehandles = new List<VisualSlopeHandle>();
 
 			//mxd. Synch camera position to cursor position or center of the screen in 2d-mode
 			if(General.Settings.GZSynchCameras && General.Editing.Mode is ClassicMode) 
@@ -223,8 +226,11 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 			// Dispose
 			foreach(KeyValuePair<Thing, VisualThing> vt in allthings)
-				if(vt.Value != null) vt.Value.Dispose();	
-			
+				if(vt.Value != null) vt.Value.Dispose();
+
+			foreach (VisualSlopeHandle handle in slopehandles)
+				if (handle != null) handle.Dispose();
+
 			// Apply camera position to thing
 			General.Map.VisualCamera.ApplyToThing();
 			
@@ -962,6 +968,8 @@ namespace CodeImp.DoomBuilder.VisualModes
 		/// Implement this to create an instance of your VisualThing implementation.
 		/// </summary>
 		protected abstract VisualThing CreateVisualThing(Thing t);
+
+		protected abstract VisualSlopeHandle CreateVisualSlopeHandle(Sidedef sd);
 		
 		/// <summary>
 		/// This returns the VisualSector for the given Sector.

@@ -220,6 +220,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="VisualModes\VisualSlopeHandle.cs" />
     <Compile Include="Windows\ThingStatisticsForm.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -117,6 +117,9 @@ namespace CodeImp.DoomBuilder.Rendering
 		//mxd. Visual vertices
 		private List<VisualVertex> visualvertices;
 
+		// Visual slope handles
+		private List<VisualSlopeHandle> visualslopehandles;
+
 		//mxd. Event lines
 		private List<Line3D> eventlines;
 		
@@ -509,6 +512,9 @@ namespace CodeImp.DoomBuilder.Rendering
 			//mxd. Visual vertices
 			RenderVertices();
 
+			// Slope handles
+			RenderSlopeHandles();
+
 			//mxd. Event lines
 			if(General.Settings.GZShowEventLines) RenderArrows(eventlines);
 			
@@ -668,6 +674,35 @@ namespace CodeImp.DoomBuilder.Rendering
 				graphics.Shaders.World3D.ApplySettings();
 				graphics.Device.SetStreamSource(0, v.CeilingVertex ? vertexhandle.Upper : vertexhandle.Lower, 0, WorldVertex.Stride);
 				graphics.Device.DrawPrimitives(PrimitiveType.LineList, 0, 8);
+			}
+
+			// Done
+			graphics.Shaders.World3D.EndPass();
+			graphics.Device.SetRenderState(RenderState.TextureFactor, -1);
+		}
+
+		private void RenderSlopeHandles()
+		{
+			if (visualslopehandles == null) return;
+
+			graphics.Device.SetRenderState(RenderState.AlphaBlendEnable, false);
+			graphics.Device.SetRenderState(RenderState.AlphaTestEnable, false);
+			graphics.Device.SetRenderState(RenderState.ZWriteEnable, false);
+			graphics.Device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
+			graphics.Device.SetRenderState(RenderState.DestinationBlend, Blend.SourceAlpha);
+
+			graphics.Shaders.World3D.BeginPass(16);
+
+			foreach(VisualSlopeHandle handle in visualslopehandles)
+			{
+				handle.Update();
+				Color4 color = General.Colors.Vertices.ToColorValue();
+				color.Alpha = 1f;
+				graphics.Shaders.World3D.VertexColor = color;
+
+				graphics.Shaders.World3D.ApplySettings();
+				graphics.Device.SetStreamSource(0, handle.GeoBuffer, 0, WorldVertex.Stride);
+				graphics.Device.DrawPrimitives(PrimitiveType.TriangleList, 0, 2);
 			}
 
 			// Done
@@ -2048,6 +2083,8 @@ namespace CodeImp.DoomBuilder.Rendering
 
 		//mxd
 		public void SetVisualVertices(List<VisualVertex> verts) { visualvertices = verts; }
+
+		public void SetVisualSlopeHandles(List<VisualSlopeHandle> handles) { visualslopehandles = handles; }
 
 		//mxd
 		public void SetEventLines(List<Line3D> lines) { eventlines = lines; }

@@ -463,6 +463,7 @@
     <Compile Include="VisualModes\BaseVisualSector.cs" />
     <Compile Include="VisualModes\BaseVisualThing.cs" />
     <Compile Include="VisualModes\BaseVisualVertex.cs" />
+    <Compile Include="VisualModes\VisualSidedefSlopeHandle.cs" />
     <Compile Include="VisualModes\Effect3DFloor.cs" />
     <Compile Include="VisualModes\EffectBrightnessLevel.cs" />
     <Compile Include="VisualModes\EffectCopySlope.cs" />

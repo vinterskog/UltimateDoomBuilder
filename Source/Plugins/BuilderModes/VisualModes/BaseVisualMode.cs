@@ -406,7 +406,15 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			allsectors.Add(s, vs); //mxd
 			return vs;
 		}
-		
+
+		protected override VisualSlopeHandle CreateVisualSlopeHandle(Sidedef sd)
+		{
+			VisualSidedefSlopeHandle handle = new VisualSidedefSlopeHandle(this, sd);
+			handle.Setup();
+			slopehandles.Add(handle);
+			return handle;
+		}
+
 		// This creates a visual thing
 		protected override VisualThing CreateVisualThing(Thing t)
 		{
@@ -1114,6 +1122,13 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						break;
 				}
 			}
+
+			slopehandles.Clear();
+			foreach (Sidedef sd in General.Map.Map.Sidedefs)
+			{
+				VisualSlopeHandle handle = CreateVisualSlopeHandle(sd);
+				slopehandles.Add(handle);
+			}
 		}
 		
 		#endregion
@@ -1354,6 +1369,15 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 					renderer.SetVisualVertices(verts);
 				}
+
+				Sidedef sd = null;
+				foreach(Sidedef _sd in General.Map.Map.Sidedefs)
+				{
+					sd = _sd;
+					break;
+				}
+
+				renderer.SetVisualSlopeHandles(slopehandles);
 				
 				// Done rendering geometry
 				renderer.FinishGeometry();
