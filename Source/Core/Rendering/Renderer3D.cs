@@ -698,7 +698,15 @@ namespace CodeImp.DoomBuilder.Rendering
 				handle.Update();
 				Color4 color = General.Colors.Vertices.ToColorValue();
 				color.Alpha = 1f;
+
 				graphics.Shaders.World3D.VertexColor = color;
+
+				if (handle.Pivot)
+					graphics.Shaders.World3D.VertexColor = General.Colors.Guideline.ToColorValue();
+				else if (handle.Selected)
+					graphics.Shaders.World3D.VertexColor = General.Colors.Selection3D.ToColorValue();
+				else if (handle == highlighted)
+					graphics.Shaders.World3D.VertexColor = General.Colors.Highlight3D.ToColorValue();
 
 				graphics.Shaders.World3D.ApplySettings();
 				graphics.Device.SetStreamSource(0, handle.GeoBuffer, 0, WorldVertex.Stride);

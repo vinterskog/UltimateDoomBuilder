@@ -810,10 +810,13 @@ namespace CodeImp.DoomBuilder.VisualModes
 			foreach(VisualThing vt in visiblethings.Values) pickables.Add(vt);
 
 			//mxd. And all visual vertices
-			if(General.Map.UDMF && General.Settings.GZShowVisualVertices) 
+			if(General.Map.UDMF) 
 			{
-				foreach(KeyValuePair<Vertex, VisualVertexPair> pair in vertices)
-					pickables.AddRange(pair.Value.Vertices);
+				if(General.Settings.GZShowVisualVertices)
+					foreach (KeyValuePair<Vertex, VisualVertexPair> pair in vertices)
+						pickables.AddRange(pair.Value.Vertices);
+
+				pickables.AddRange(slopehandles);
 			}
 			
 			// Now we have a list of potential geometry that lies along the trace line.
