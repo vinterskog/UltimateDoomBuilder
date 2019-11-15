@@ -3142,6 +3142,14 @@ namespace CodeImp.DoomBuilder.Windows
 			General.MainWindow.UpdateGZDoomPanel();
 		}
 
+		[BeginAction("togglevisualslopehandles")]
+		internal void ToggleVisualSlopeHandles()
+		{
+			General.Settings.ShowVisualSlopeHandles = !General.Settings.ShowVisualSlopeHandles;
+			General.MainWindow.DisplayStatus(StatusType.Action, "Visual slope handles are " + (General.Settings.ShowVisualSlopeHandles ? "ENABLED" : "DISABLED"));
+			General.MainWindow.RedrawDisplay();
+		}
+
 		#endregion
 
 		#region ================== Mode Menu

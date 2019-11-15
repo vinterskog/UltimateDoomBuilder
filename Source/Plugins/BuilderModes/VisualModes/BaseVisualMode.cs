@@ -407,9 +407,14 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			return vs;
 		}
 
-		protected override VisualSlopeHandle CreateVisualSlopeHandle(Sidedef sd)
+		internal VisualSlopeHandle CreateVisualSlopeHandle(SectorLevel level, Sidedef sd)
 		{
-			VisualSidedefSlopeHandle handle = new VisualSidedefSlopeHandle(this, sd);
+			return CreateVisualSlopeHandle(level, sd, false);
+		}
+
+		internal VisualSlopeHandle CreateVisualSlopeHandle(SectorLevel level, Sidedef sd, bool innerside)
+		{
+			VisualSidedefSlopeHandle handle = new VisualSidedefSlopeHandle(this, level, sd, innerside);
 			handle.Setup();
 			slopehandles.Add(handle);
 			return handle;
@@ -1124,11 +1129,42 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			}
 
 			slopehandles.Clear();
+
+			if (General.Map.UDMF && General.Settings.ShowVisualSlopeHandles)
+			{
+				foreach (Sector s in General.Map.Map.Sectors)
+				{
+					SectorData sectordata = GetSectorData(s);
+
+					foreach (Sidedef sidedef in s.Sidedefs)
+					{
+						VisualSlopeHandle handle = CreateVisualSlopeHandle(sectordata.Floor, sidedef);
+						//slopehandles.Add(handle);
+
+						handle = CreateVisualSlopeHandle(sectordata.Ceiling, sidedef, true);
+						// slopehandles.Add(handle);
+
+						if (sectordata.ExtraFloors.Count > 0)
+						{
+							sectordata.Update();
+
+							foreach (Effect3DFloor floor in sectordata.ExtraFloors)
+							{
+								handle = CreateVisualSlopeHandle(floor.Floor, sidedef, true);
+								handle = CreateVisualSlopeHandle(floor.Ceiling, sidedef);
+								// slopehandles.Add(handle);
+							}
+						}
+					}
+				}
+			}
+			/*
 			foreach (Sidedef sd in General.Map.Map.Sidedefs)
 			{
 				VisualSlopeHandle handle = CreateVisualSlopeHandle(sd);
 				slopehandles.Add(handle);
 			}
+			*/
 		}
 		
 		#endregion
@@ -3901,6 +3937,14 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		{
 			if (target.picked is VisualSlopeHandle)
 				((VisualSlopeHandle)target.picked).Pivot = !((VisualSlopeHandle)target.picked).Pivot;
+		}
+
+		// biwa
+		[BeginAction("togglevisualslopehandles", BaseAction = true)]
+		public void ToggleVisualSlopeHandles()
+		{
+			RebuildElementData();
+			UpdateChangedObjects();
 		}
 
 		#endregion

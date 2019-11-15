@@ -13,21 +13,32 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 		private readonly BaseVisualMode mode;
 		private readonly Sidedef sidedef;
+		private readonly SectorLevel level;
+		private readonly bool innerside;
+
+		#endregion
+
+		#region ================== Constants
+
+		private const int SIZE = 8;
 
 		#endregion
 
 		#region ================== Properties
 
 		public Sidedef Sidedef { get { return sidedef; } }
+		public SectorLevel Level { get { return level; } }
 
 		#endregion
 
 		#region ================== Constructor / Destructor
 
-		public VisualSidedefSlopeHandle(BaseVisualMode mode, Sidedef sidedef) : base()
+		public VisualSidedefSlopeHandle(BaseVisualMode mode, SectorLevel level, Sidedef sidedef, bool innerside) : base()
 		{
 			this.mode = mode;
 			this.sidedef = sidedef;
+			this.level = level;
+			this.innerside = innerside;
 
 			// We have no destructor
 			GC.SuppressFinalize(this);
@@ -47,8 +58,8 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 			// Make vertices
 			WorldVertex[] verts = new WorldVertex[6];
-			Vector2D offset = ld.Line.GetPerpendicular().GetNormal()*16 * (sidedef.IsFront ? -1 : 1);
-			Line2D line = new Line2D(ld.Line.GetCoordinatesAt(ld.LengthInv * 16), ld.Line.GetCoordinatesAt(1.0f - (ld.LengthInv * 16)));
+			Vector2D offset = ld.Line.GetPerpendicular().GetNormal()*SIZE * (sidedef.IsFront ? -1 : 1);
+			Line2D line = new Line2D(ld.Line.GetCoordinatesAt(ld.LengthInv * SIZE), ld.Line.GetCoordinatesAt(1.0f - (ld.LengthInv * SIZE)));
 
 			Vector3D v1;
 			Vector3D v2;
@@ -70,17 +81,34 @@ namespace CodeImp.DoomBuilder.VisualModes
 				v4 = line.v1;
 			}
 
-			v1.z = sd.Floor.plane.GetZ(v1) + 0.1f;
-			v2.z = sd.Floor.plane.GetZ(v2) + 0.1f;
-			v3.z = sd.Floor.plane.GetZ(v3) + 0.1f;
-			v4.z = sd.Floor.plane.GetZ(v4) + 0.1f;
+			if (level.type == SectorLevelType.Ceiling)
+			{
+				v1.z = level.plane.GetZ(v1) - 0.1f;
+				v2.z = level.plane.GetZ(v2) - 0.1f;
+				v3.z = level.plane.GetZ(v3) - 0.1f;
+				v4.z = level.plane.GetZ(v4) - 0.1f;
 
-			verts[0] = new WorldVertex(v1);
-			verts[1] = new WorldVertex(v2);
-			verts[2] = new WorldVertex(v3);
-			verts[3] = new WorldVertex(v1);
-			verts[4] = new WorldVertex(v3);
-			verts[5] = new WorldVertex(v4);
+				verts[0] = new WorldVertex(v3);
+				verts[1] = new WorldVertex(v2);
+				verts[2] = new WorldVertex(v1);
+				verts[3] = new WorldVertex(v4);
+				verts[4] = new WorldVertex(v3);
+				verts[5] = new WorldVertex(v1);
+			}
+			else
+			{
+				v1.z = level.plane.GetZ(v1) + 0.1f;
+				v2.z = level.plane.GetZ(v2) + 0.1f;
+				v3.z = level.plane.GetZ(v3) + 0.1f;
+				v4.z = level.plane.GetZ(v4) + 0.1f;
+
+				verts[0] = new WorldVertex(v1);
+				verts[1] = new WorldVertex(v2);
+				verts[2] = new WorldVertex(v3);
+				verts[3] = new WorldVertex(v1);
+				verts[4] = new WorldVertex(v3);
+				verts[5] = new WorldVertex(v4);
+			}
 
 			//verts[0] = new WorldVertex(line.v1.x, line.v1.y, 0.1f);
 			//verts[1] = new WorldVertex(line.v2.x, line.v2.y, 0.1f);
@@ -115,8 +143,6 @@ namespace CodeImp.DoomBuilder.VisualModes
 			float pickrayu = 0.0f;
 			Vector3D pickintersect;
 
-			SectorLevel level = mode.GetSectorData(sidedef.Sector).Floor;
-
 			if (level.plane.Distance(from) > 0.0f && level.plane.GetIntersection(from, to, ref pickrayu))
 			{
 				if (pickrayu > 0.0f)
@@ -125,13 +151,13 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 					u_ray = pickrayu - 0.001f;
 
-					Sidedef sd = MapSet.NearestSidedef(level.sector.Sidedefs, pickintersect);
+					Sidedef sd = MapSet.NearestSidedef(sidedef.Sector.Sidedefs, pickintersect);
 					if (sd == sidedef) {
 						float side = sd.Line.SideOfLine(pickintersect);
 
 						if ((side <= 0.0f && sd.IsFront) || (side > 0.0f && !sd.IsFront))
 						{
-							if (sidedef.Line.DistanceTo(pickintersect, true) <= 16.0f)
+							if (sidedef.Line.DistanceTo(pickintersect, true) <= SIZE)
 								return true;
 						}
 					}
@@ -139,6 +165,49 @@ namespace CodeImp.DoomBuilder.VisualModes
 			}
 
 			return false;
+		}
+
+		internal VisualSidedefSlopeHandle GetSmartPivotHandle(VisualSidedefSlopeHandle starthandle)
+		{
+			VisualSidedefSlopeHandle handle = null;
+			int angle = starthandle.sidedef.Line.AngleDeg;
+			int anglediff = 180;
+
+			if (angle >= 180) angle -= 180;
+
+			foreach(VisualSidedefSlopeHandle checkhandle in mode.VisualSlopeHandles)
+			{
+				checkhandle.SmartPivot = false;
+
+				if (checkhandle == starthandle) continue;
+				if (checkhandle.Level != starthandle.Level) continue;
+
+				/*
+				if(handle == null)
+				{
+					handle = checkhandle;
+					continue;
+				}
+				*/
+
+				int checkangle = checkhandle.Sidedef.Line.AngleDeg;
+				if (checkangle >= 180) checkangle -= 180;
+
+				int checkanglediff = Math.Abs(angle - checkangle);
+				if(checkanglediff < anglediff)
+				{
+					anglediff = checkanglediff;
+					handle = checkhandle;
+				}
+			}
+
+			if (handle == starthandle)
+				return null;
+
+			if(handle != null)
+				handle.SmartPivot = true;
+
+			return handle;
 		}
 
 		#endregion
@@ -158,29 +227,53 @@ namespace CodeImp.DoomBuilder.VisualModes
 				}
 			}
 
+			if(pivothandle == null)
+			{
+				pivothandle = GetSmartPivotHandle(this);
+			}
+
 			if (pivothandle == null)
 				return;
 
 			SectorData sd = mode.GetSectorData(sidedef.Sector);
-			SectorData sdpivot = mode.GetSectorData(((VisualSidedefSlopeHandle)pivothandle).sidedef.Sector);
+			SectorData sdpivot = mode.GetSectorData(level.sector);
 
-			Plane originalplane = sd.Floor.plane;
-			Plane pivotplane = sdpivot.Floor.plane;
+			Plane originalplane = level.plane;
+			Plane pivotplane = ((VisualSidedefSlopeHandle)pivothandle).Level.plane;
 
-			Vector3D p1 = new Vector3D(sidedef.Line.Start.Position, originalplane.GetZ(sidedef.Line.Start.Position));
-			Vector3D p2 = new Vector3D(sidedef.Line.End.Position, originalplane.GetZ(sidedef.Line.End.Position));
-			Vector3D p3 = new Vector3D(((VisualSidedefSlopeHandle)pivothandle).Sidedef.Line.Line.GetCoordinatesAt(0.5f), pivotplane.GetZ(((VisualSidedefSlopeHandle)pivothandle).Sidedef.Line.Line.GetCoordinatesAt(0.5f)));
+			Vector3D p1 = new Vector3D(sidedef.Line.Start.Position, (float)Math.Round(originalplane.GetZ(sidedef.Line.Start.Position)));
+			Vector3D p2 = new Vector3D(sidedef.Line.End.Position, (float)Math.Round(originalplane.GetZ(sidedef.Line.End.Position)));
+			Vector3D p3 = new Vector3D(((VisualSidedefSlopeHandle)pivothandle).Sidedef.Line.Line.GetCoordinatesAt(0.5f), (float)Math.Round(pivotplane.GetZ(((VisualSidedefSlopeHandle)pivothandle).Sidedef.Line.Line.GetCoordinatesAt(0.5f))));
 
 			p1 += new Vector3D(0f, 0f, amount);
 			p2 += new Vector3D(0f, 0f, amount);
 
 			Plane plane = new Plane(p1, p2, p3, true);
 
-			sd.Sector.FloorSlope = plane.Normal;
-			sd.Sector.FloorSlopeOffset = plane.Offset;
+
+			if (innerside)
+			{
+				plane = plane.GetInverted();
+				level.sector.CeilSlope = plane.Normal;
+				level.sector.CeilSlopeOffset = plane.Offset;
+
+				Vector2D center = new Vector2D(level.sector.BBox.X + level.sector.BBox.Width / 2,
+												   level.sector.BBox.Y + level.sector.BBox.Height / 2);
+
+				level.sector.CeilHeight = (int)new Plane(level.sector.CeilSlope, level.sector.CeilSlopeOffset).GetZ(center);
+			}
+			else
+			{
+				level.sector.FloorSlope = plane.Normal;
+				level.sector.FloorSlopeOffset = plane.Offset;
+
+				Vector2D center = new Vector2D(level.sector.BBox.X + level.sector.BBox.Width / 2,
+												   level.sector.BBox.Y + level.sector.BBox.Height / 2);
+
+				level.sector.FloorHeight = (int)new Plane(level.sector.FloorSlope, level.sector.FloorSlopeOffset).GetZ(center);
+			}
 
 			// Rebuild sector
-			SectorLevel level = mode.GetSectorData(sidedef.Sector).Floor;
 			BaseVisualSector vs;
 			if (mode.VisualSectorExists(level.sector))
 			{
@@ -188,7 +281,6 @@ namespace CodeImp.DoomBuilder.VisualModes
 			}
 			else
 			{
-				//mxd. Need this to apply changes to 3d-floor even if control sector doesn't exist as BaseVisualSector
 				vs = mode.CreateBaseVisualSector(level.sector);
 			}
 

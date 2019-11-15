@@ -148,6 +148,9 @@ namespace CodeImp.DoomBuilder.Config
 		private int defaultthingtype = 1;
 		private float defaultthingangle;
 		private List<string> defaultthingflags;
+
+		// biwa
+		private bool showvisualslopehandles;
 		
 		#endregion
 
@@ -273,6 +276,9 @@ namespace CodeImp.DoomBuilder.Config
 
 		public int DefaultThingType { get { return defaultthingtype; } set { defaultthingtype = value; } }
 		public float DefaultThingAngle { get { return defaultthingangle; } set { defaultthingangle = value; } }
+
+		// biwa
+		public bool ShowVisualSlopeHandles { get { return showvisualslopehandles; } set { showvisualslopehandles = value; } }
 
 		#endregion
 

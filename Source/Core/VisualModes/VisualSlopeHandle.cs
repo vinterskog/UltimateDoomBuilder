@@ -15,8 +15,11 @@ namespace CodeImp.DoomBuilder.VisualModes
 		// Selected?
 		protected bool selected;
 
-		// Pivor?
+		// Pivot?
 		protected bool pivot;
+
+		// Smart Pivot?
+		protected bool smartpivot;
 
 		// Geometry
 		private WorldVertex[] vertices;
@@ -42,6 +45,8 @@ namespace CodeImp.DoomBuilder.VisualModes
 		/// </summary>
 		public bool IsDisposed { get { return isdisposed; } }
 
+		public bool SmartPivot { get { return smartpivot; } set { smartpivot = value; } }
+
 		public VertexBuffer GeoBuffer { get { return geobuffer; } }
 
 		#endregion
@@ -54,6 +59,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 			General.Map.Graphics.RegisterResource(this);
 
 			pivot = false;
+			smartpivot = false;
 		}
 
 		// Disposer

@@ -971,8 +971,6 @@ namespace CodeImp.DoomBuilder.VisualModes
 		/// Implement this to create an instance of your VisualThing implementation.
 		/// </summary>
 		protected abstract VisualThing CreateVisualThing(Thing t);
-
-		protected abstract VisualSlopeHandle CreateVisualSlopeHandle(Sidedef sd);
 		
 		/// <summary>
 		/// This returns the VisualSector for the given Sector.

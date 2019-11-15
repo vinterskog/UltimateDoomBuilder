@@ -513,7 +513,8 @@ namespace CodeImp.DoomBuilder.Rendering
 			RenderVertices();
 
 			// Slope handles
-			RenderSlopeHandles();
+			if(General.Map.UDMF && General.Settings.ShowVisualSlopeHandles)
+				RenderSlopeHandles();
 
 			//mxd. Event lines
 			if(General.Settings.GZShowEventLines) RenderArrows(eventlines);
@@ -707,6 +708,8 @@ namespace CodeImp.DoomBuilder.Rendering
 					graphics.Shaders.World3D.VertexColor = General.Colors.Selection3D.ToColorValue();
 				else if (handle == highlighted)
 					graphics.Shaders.World3D.VertexColor = General.Colors.Highlight3D.ToColorValue();
+				//else if (handle.SmartPivot)
+				//	graphics.Shaders.World3D.VertexColor = General.Colors.Comments.ToColorValue();
 
 				graphics.Shaders.World3D.ApplySettings();
 				graphics.Device.SetStreamSource(0, handle.GeoBuffer, 0, WorldVertex.Stride);
