@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 using CodeImp.DoomBuilder.BuilderModes;
 using CodeImp.DoomBuilder.Geometry;
@@ -14,7 +15,11 @@ namespace CodeImp.DoomBuilder.VisualModes
 		private readonly BaseVisualMode mode;
 		private readonly Sidedef sidedef;
 		private readonly SectorLevel level;
-		private readonly bool innerside;
+		private readonly bool up;
+		private RectangleF bbox;
+		private Vector3D pickintersect;
+		private float pickrayu;
+		private Plane plane;
 
 		#endregion
 
@@ -33,12 +38,14 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 		#region ================== Constructor / Destructor
 
-		public VisualSidedefSlopeHandle(BaseVisualMode mode, SectorLevel level, Sidedef sidedef, bool innerside) : base()
+		public VisualSidedefSlopeHandle(BaseVisualMode mode, SectorLevel level, Sidedef sidedef, bool up) : base()
 		{
 			this.mode = mode;
 			this.sidedef = sidedef;
 			this.level = level;
-			this.innerside = innerside;
+			this.up = up;
+
+			bbox = CreateBoundingBox();
 
 			// We have no destructor
 			GC.SuppressFinalize(this);
@@ -48,10 +55,31 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 		#region ================== Methods
 
+		private RectangleF CreateBoundingBox()
+		{
+			Line2D l = sidedef.Line.Line;
+			float left = l.v1.x;
+			float right = l.v1.x;
+			float top = l.v1.y;
+			float bottom = l.v1.y;
+
+			if (l.v2.x < left) left = l.v2.x;
+			if (l.v2.x > right) right = l.v2.x;
+			if (l.v2.y > bottom) bottom = l.v2.y;
+			if (l.v2.y < top) top = l.v2.y;
+
+			return new RectangleF(left - SIZE, top - SIZE, right - left + SIZE*2, bottom - top + SIZE*2);
+		}
+
 		public bool Setup()
 		{
 			if (sidedef == null)
 				return false;
+
+			plane = new Plane(level.plane.Normal, level.plane.Offset - 0.1f);
+
+			if (!up)
+				plane = plane.GetInverted();
 
 			Linedef ld = sidedef.Line;
 			SectorData sd = mode.GetSectorData(sidedef.Sector);
@@ -131,7 +159,21 @@ namespace CodeImp.DoomBuilder.VisualModes
 		/// </summary>
 		public override bool PickFastReject(Vector3D from, Vector3D to, Vector3D dir)
 		{
-			return true;
+			if ((up && plane.Distance(from) > 0.0f) || (!up && plane.Distance(from) < 0.0f))
+			{
+				if (plane.GetIntersection(from, to, ref pickrayu))
+				{
+					if (pickrayu > 0.0f)
+					{
+						pickintersect = from + (to - from) * pickrayu;
+
+						return ((pickintersect.x >= bbox.Left) && (pickintersect.x <= bbox.Right) &&
+								(pickintersect.y >= bbox.Top) && (pickintersect.y <= bbox.Bottom));
+					}
+				}
+			}
+
+			return false;
 		}
 
 		/// <summary>
@@ -140,27 +182,16 @@ namespace CodeImp.DoomBuilder.VisualModes
 		/// </summary>
 		public override bool PickAccurate(Vector3D from, Vector3D to, Vector3D dir, ref float u_ray)
 		{
-			float pickrayu = 0.0f;
-			Vector3D pickintersect;
+			u_ray = pickrayu;
 
-			if (level.plane.Distance(from) > 0.0f && level.plane.GetIntersection(from, to, ref pickrayu))
-			{
-				if (pickrayu > 0.0f)
+			Sidedef sd = MapSet.NearestSidedef(sidedef.Sector.Sidedefs, pickintersect);
+			if (sd == sidedef) {
+				float side = sd.Line.SideOfLine(pickintersect);
+
+				if ((side <= 0.0f && sd.IsFront) || (side > 0.0f && !sd.IsFront))
 				{
-					pickintersect = from + (to - from) * pickrayu;
-
-					u_ray = pickrayu - 0.001f;
-
-					Sidedef sd = MapSet.NearestSidedef(sidedef.Sector.Sidedefs, pickintersect);
-					if (sd == sidedef) {
-						float side = sd.Line.SideOfLine(pickintersect);
-
-						if ((side <= 0.0f && sd.IsFront) || (side > 0.0f && !sd.IsFront))
-						{
-							if (sidedef.Line.DistanceTo(pickintersect, true) <= SIZE)
-								return true;
-						}
-					}
+					if (sidedef.Line.DistanceTo(pickintersect, true) <= SIZE)
+						return true;
 				}
 			}
 
@@ -251,7 +282,17 @@ namespace CodeImp.DoomBuilder.VisualModes
 			Plane plane = new Plane(p1, p2, p3, true);
 
 
-			if (innerside)
+			if (up)
+			{
+				level.sector.FloorSlope = plane.Normal;
+				level.sector.FloorSlopeOffset = plane.Offset;
+
+				Vector2D center = new Vector2D(level.sector.BBox.X + level.sector.BBox.Width / 2,
+												   level.sector.BBox.Y + level.sector.BBox.Height / 2);
+
+				level.sector.FloorHeight = (int)new Plane(level.sector.FloorSlope, level.sector.FloorSlopeOffset).GetZ(center);
+			}
+			else
 			{
 				plane = plane.GetInverted();
 				level.sector.CeilSlope = plane.Normal;
@@ -261,16 +302,6 @@ namespace CodeImp.DoomBuilder.VisualModes
 												   level.sector.BBox.Y + level.sector.BBox.Height / 2);
 
 				level.sector.CeilHeight = (int)new Plane(level.sector.CeilSlope, level.sector.CeilSlopeOffset).GetZ(center);
-			}
-			else
-			{
-				level.sector.FloorSlope = plane.Normal;
-				level.sector.FloorSlopeOffset = plane.Offset;
-
-				Vector2D center = new Vector2D(level.sector.BBox.X + level.sector.BBox.Width / 2,
-												   level.sector.BBox.Y + level.sector.BBox.Height / 2);
-
-				level.sector.FloorHeight = (int)new Plane(level.sector.FloorSlope, level.sector.FloorSlopeOffset).GetZ(center);
 			}
 
 			// Rebuild sector

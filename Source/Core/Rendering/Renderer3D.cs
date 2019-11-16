@@ -513,8 +513,8 @@ namespace CodeImp.DoomBuilder.Rendering
 			RenderVertices();
 
 			// Slope handles
-			if(General.Map.UDMF && General.Settings.ShowVisualSlopeHandles)
-				RenderSlopeHandles();
+			//if(General.Map.UDMF && General.Settings.ShowVisualSlopeHandles)
+			//	RenderSlopeHandles();
 
 			//mxd. Event lines
 			if(General.Settings.GZShowEventLines) RenderArrows(eventlines);
@@ -693,6 +693,9 @@ namespace CodeImp.DoomBuilder.Rendering
 			graphics.Device.SetRenderState(RenderState.DestinationBlend, Blend.SourceAlpha);
 
 			graphics.Shaders.World3D.BeginPass(16);
+
+			world = Matrix.Identity;
+			ApplyMatrices3D();
 
 			foreach(VisualSlopeHandle handle in visualslopehandles)
 			{

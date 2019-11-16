@@ -407,15 +407,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			return vs;
 		}
 
-		internal VisualSlopeHandle CreateVisualSlopeHandle(SectorLevel level, Sidedef sd)
+		internal VisualSlopeHandle CreateVisualSlopeHandle(SectorLevel level, Sidedef sd, bool up)
 		{
-			return CreateVisualSlopeHandle(level, sd, false);
-		}
-
-		internal VisualSlopeHandle CreateVisualSlopeHandle(SectorLevel level, Sidedef sd, bool innerside)
-		{
-			VisualSidedefSlopeHandle handle = new VisualSidedefSlopeHandle(this, level, sd, innerside);
-			handle.Setup();
+			VisualSidedefSlopeHandle handle = new VisualSidedefSlopeHandle(this, level, sd, up);
+			//handle.Setup();
 			slopehandles.Add(handle);
 			return handle;
 		}
@@ -1138,21 +1133,17 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 					foreach (Sidedef sidedef in s.Sidedefs)
 					{
-						VisualSlopeHandle handle = CreateVisualSlopeHandle(sectordata.Floor, sidedef);
-						//slopehandles.Add(handle);
-
-						handle = CreateVisualSlopeHandle(sectordata.Ceiling, sidedef, true);
-						// slopehandles.Add(handle);
-
+						VisualSlopeHandle handle = CreateVisualSlopeHandle(sectordata.Floor, sidedef, true);
+						handle = CreateVisualSlopeHandle(sectordata.Ceiling, sidedef, false);
+						
 						if (sectordata.ExtraFloors.Count > 0)
 						{
 							sectordata.Update();
 
 							foreach (Effect3DFloor floor in sectordata.ExtraFloors)
 							{
-								handle = CreateVisualSlopeHandle(floor.Floor, sidedef, true);
-								handle = CreateVisualSlopeHandle(floor.Ceiling, sidedef);
-								// slopehandles.Add(handle);
+								handle = CreateVisualSlopeHandle(floor.Floor, sidedef, false);
+								handle = CreateVisualSlopeHandle(floor.Ceiling, sidedef, true);
 							}
 						}
 					}

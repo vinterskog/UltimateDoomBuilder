@@ -72,6 +72,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 		protected VisualBlockMap blockmap;
 		protected Dictionary<Thing, VisualThing> allthings;
 		protected Dictionary<Sector, VisualSector> allsectors;
+		protected Dictionary<Sector, VisualSlopeHandle> allslopehandles;
 		protected List<VisualBlockEntry> visibleblocks;
 		protected Dictionary<Thing, VisualThing> visiblethings;
 		protected Dictionary<Sector, VisualSector> visiblesectors;
@@ -105,6 +106,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 			this.blockmap = new VisualBlockMap();
 			this.allsectors = new Dictionary<Sector, VisualSector>(General.Map.Map.Sectors.Count);
 			this.allthings = new Dictionary<Thing, VisualThing>(General.Map.Map.Things.Count);
+			this.allslopehandles = new Dictionary<Sector, VisualSlopeHandle>(General.Map.Map.Sectors.Count);
 			this.visibleblocks = new List<VisualBlockEntry>();
 			this.visiblesectors = new Dictionary<Sector, VisualSector>(50);
 			this.visiblegeometry = new List<VisualGeometry>(200);
@@ -809,10 +811,10 @@ namespace CodeImp.DoomBuilder.VisualModes
 			// Add all the visible things
 			foreach(VisualThing vt in visiblethings.Values) pickables.Add(vt);
 
-			//mxd. And all visual vertices
 			if(General.Map.UDMF) 
 			{
-				if(General.Settings.GZShowVisualVertices)
+				//mxd. And all visual vertices
+				if (General.Settings.GZShowVisualVertices)
 					foreach (KeyValuePair<Vertex, VisualVertexPair> pair in vertices)
 						pickables.AddRange(pair.Value.Vertices);
 
