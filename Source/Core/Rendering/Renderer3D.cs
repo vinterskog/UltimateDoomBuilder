@@ -513,8 +513,8 @@ namespace CodeImp.DoomBuilder.Rendering
 			RenderVertices();
 
 			// Slope handles
-			//if(General.Map.UDMF && General.Settings.ShowVisualSlopeHandles)
-			//	RenderSlopeHandles();
+			if(General.Map.UDMF && General.Settings.ShowVisualSlopeHandles)
+				RenderSlopeHandles();
 
 			//mxd. Event lines
 			if(General.Settings.GZShowEventLines) RenderArrows(eventlines);
@@ -686,33 +686,31 @@ namespace CodeImp.DoomBuilder.Rendering
 		{
 			if (visualslopehandles == null) return;
 
-			graphics.Device.SetRenderState(RenderState.AlphaBlendEnable, false);
+			graphics.Device.SetRenderState(RenderState.AlphaBlendEnable, true); // false
 			graphics.Device.SetRenderState(RenderState.AlphaTestEnable, false);
 			graphics.Device.SetRenderState(RenderState.ZWriteEnable, false);
 			graphics.Device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
-			graphics.Device.SetRenderState(RenderState.DestinationBlend, Blend.SourceAlpha);
+			graphics.Device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
 
-			graphics.Shaders.World3D.BeginPass(16);
+			graphics.Shaders.World3D.BeginPass(18);
 
 			world = Matrix.Identity;
 			ApplyMatrices3D();
 
 			foreach(VisualSlopeHandle handle in visualslopehandles)
 			{
-				handle.Update();
-				Color4 color = General.Colors.Vertices.ToColorValue();
-				color.Alpha = 1f;
-
-				graphics.Shaders.World3D.VertexColor = color;
+				PixelColor color = General.Colors.Vertices;
 
 				if (handle.Pivot)
-					graphics.Shaders.World3D.VertexColor = General.Colors.Guideline.ToColorValue();
+					color = General.Colors.Guideline;
 				else if (handle.Selected)
-					graphics.Shaders.World3D.VertexColor = General.Colors.Selection3D.ToColorValue();
+					color = General.Colors.Selection3D;
 				else if (handle == highlighted)
-					graphics.Shaders.World3D.VertexColor = General.Colors.Highlight3D.ToColorValue();
-				//else if (handle.SmartPivot)
-				//	graphics.Shaders.World3D.VertexColor = General.Colors.Comments.ToColorValue();
+					color = General.Colors.Highlight3D;
+				else if (handle.SmartPivot)
+					color = General.Colors.Vertices;
+
+				handle.Update(color);
 
 				graphics.Shaders.World3D.ApplySettings();
 				graphics.Device.SetStreamSource(0, handle.GeoBuffer, 0, WorldVertex.Stride);

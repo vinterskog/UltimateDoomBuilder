@@ -410,8 +410,12 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		internal VisualSlopeHandle CreateVisualSlopeHandle(SectorLevel level, Sidedef sd, bool up)
 		{
 			VisualSidedefSlopeHandle handle = new VisualSidedefSlopeHandle(this, level, sd, up);
-			//handle.Setup();
-			slopehandles.Add(handle);
+
+			if (!allslopehandles.ContainsKey(sd.Sector))
+				allslopehandles.Add(sd.Sector, new List<VisualSlopeHandle>());
+
+			allslopehandles[sd.Sector].Add(handle);
+
 			return handle;
 		}
 
@@ -515,7 +519,15 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if(vs.Value != null)
 				{
 					BaseVisualSector bvs = (BaseVisualSector)vs.Value;
-					if(bvs.Changed) bvs.Rebuild();
+					if (bvs.Changed)
+					{
+						bvs.Rebuild();
+
+						// Also update slope handles
+						if(allslopehandles.ContainsKey(vs.Key))
+							foreach (VisualSidedefSlopeHandle handle in allslopehandles[vs.Key])
+								handle.Setup();
+					}
 				}
 			}
 
@@ -1123,7 +1135,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				}
 			}
 
-			slopehandles.Clear();
+			// Visual slope handles
+			foreach (KeyValuePair<Sector, List<VisualSlopeHandle>> kvp in allslopehandles)
+				kvp.Value.Clear();
+			allslopehandles.Clear();
+
 
 			if (General.Map.UDMF && General.Settings.ShowVisualSlopeHandles)
 			{
@@ -1404,8 +1420,15 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					break;
 				}
 
-				renderer.SetVisualSlopeHandles(slopehandles);
-				
+				// Visual slope handles
+				List<VisualSlopeHandle> handles = new List<VisualSlopeHandle>();
+				foreach (KeyValuePair<Sector, List<VisualSlopeHandle>> kvp in allslopehandles)
+					foreach (VisualSlopeHandle handle in kvp.Value)
+						if (handle.Selected || handle.Pivot || /* handle.SmartPivot || */ target.picked == handle)
+							handles.Add(handle);
+
+				renderer.SetVisualSlopeHandles(handles);				
+
 				// Done rendering geometry
 				renderer.FinishGeometry();
 				
@@ -2178,10 +2201,13 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			{
 				if (General.Map.UDMF)
 				{
-					foreach (VisualSlopeHandle handle in slopehandles)
+					foreach (KeyValuePair<Sector, List<VisualSlopeHandle>> kvp in allslopehandles)
 					{
-						handle.Selected = false;
-						handle.Pivot = false;
+						foreach (VisualSidedefSlopeHandle handle in kvp.Value)
+						{
+							handle.Selected = false;
+							handle.Pivot = false;
+						}
 					}
 				}
 			}
@@ -3927,7 +3953,17 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		public void SelectVisualSlopePivot()
 		{
 			if (target.picked is VisualSlopeHandle)
+			{
+				// We can only have one pivot handle, so remove it from all first
+				foreach (KeyValuePair<Sector, List<VisualSlopeHandle>> kvp in allslopehandles)
+				{
+					foreach (VisualSlopeHandle handle in kvp.Value)
+						if(target.picked != handle)
+							handle.Pivot = false;
+				}
+
 				((VisualSlopeHandle)target.picked).Pivot = !((VisualSlopeHandle)target.picked).Pivot;
+			}
 		}
 
 		// biwa

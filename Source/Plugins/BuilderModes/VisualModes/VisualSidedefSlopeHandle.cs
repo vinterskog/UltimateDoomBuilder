@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using CodeImp.DoomBuilder.BuilderModes;
@@ -45,6 +46,11 @@ namespace CodeImp.DoomBuilder.VisualModes
 			this.level = level;
 			this.up = up;
 
+			plane = new Plane(level.plane.Normal, level.plane.Offset - 0.1f);
+
+			if (!up)
+				plane = plane.GetInverted();
+
 			bbox = CreateBoundingBox();
 
 			// We have no destructor
@@ -71,7 +77,8 @@ namespace CodeImp.DoomBuilder.VisualModes
 			return new RectangleF(left - SIZE, top - SIZE, right - left + SIZE*2, bottom - top + SIZE*2);
 		}
 
-		public bool Setup()
+		public bool Setup() { return Setup(General.Colors.Vertices); }
+		public bool Setup(PixelColor color)
 		{
 			if (sidedef == null)
 				return false;
@@ -87,7 +94,8 @@ namespace CodeImp.DoomBuilder.VisualModes
 			// Make vertices
 			WorldVertex[] verts = new WorldVertex[6];
 			Vector2D offset = ld.Line.GetPerpendicular().GetNormal()*SIZE * (sidedef.IsFront ? -1 : 1);
-			Line2D line = new Line2D(ld.Line.GetCoordinatesAt(ld.LengthInv * SIZE), ld.Line.GetCoordinatesAt(1.0f - (ld.LengthInv * SIZE)));
+			// Line2D line = new Line2D(ld.Line.GetCoordinatesAt(ld.LengthInv * SIZE), ld.Line.GetCoordinatesAt(1.0f - (ld.LengthInv * SIZE)));
+			Line2D line = ld.Line;
 
 			Vector3D v1;
 			Vector3D v2;
@@ -96,6 +104,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 			if(sidedef.IsFront)
 			{
+				
 				v1 = line.v1;
 				v2 = line.v2;
 				v3 = line.v2 + offset;
@@ -108,6 +117,9 @@ namespace CodeImp.DoomBuilder.VisualModes
 				v3 = line.v2;
 				v4 = line.v1;
 			}
+
+			int color1 = color.WithAlpha(255).ToInt();
+			int color2 = color.WithAlpha(0).ToInt();
 
 			if (level.type == SectorLevelType.Ceiling)
 			{
@@ -122,6 +134,18 @@ namespace CodeImp.DoomBuilder.VisualModes
 				verts[3] = new WorldVertex(v4);
 				verts[4] = new WorldVertex(v3);
 				verts[5] = new WorldVertex(v1);
+
+				int coloron = color1;
+				int coloroff = color2;
+
+				if (!sidedef.IsFront)
+				{
+					coloron = color2;
+					coloroff = color1;
+				}
+
+				verts[1].c = verts[2].c = verts[5].c = coloron;
+				verts[0].c = verts[3].c = verts[4].c = coloroff;
 			}
 			else
 			{
@@ -136,6 +160,18 @@ namespace CodeImp.DoomBuilder.VisualModes
 				verts[3] = new WorldVertex(v1);
 				verts[4] = new WorldVertex(v3);
 				verts[5] = new WorldVertex(v4);
+
+				int coloron = color1;
+				int coloroff = color2;
+
+				if(!sidedef.IsFront)
+				{
+					coloron = color2;
+					coloroff = color1;
+				}
+
+				verts[0].c = verts[1].c = verts[3].c = coloron;
+				verts[2].c = verts[4].c = verts[5].c = coloroff;
 			}
 
 			//verts[0] = new WorldVertex(line.v1.x, line.v1.y, 0.1f);
@@ -148,9 +184,9 @@ namespace CodeImp.DoomBuilder.VisualModes
 			return true;
 		}
 
-		public override bool Update()
+		public override bool Update(PixelColor color)
 		{
-			return Setup();
+			return Setup(color);
 		}
 
 		/// <summary>
@@ -206,29 +242,32 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 			if (angle >= 180) angle -= 180;
 
-			foreach(VisualSidedefSlopeHandle checkhandle in mode.VisualSlopeHandles)
+			foreach(KeyValuePair<Sector, List<VisualSlopeHandle>> kvp in mode.AllSlopeHandles)
 			{
-				checkhandle.SmartPivot = false;
-
-				if (checkhandle == starthandle) continue;
-				if (checkhandle.Level != starthandle.Level) continue;
-
-				/*
-				if(handle == null)
+				foreach (VisualSidedefSlopeHandle checkhandle in kvp.Value)
 				{
-					handle = checkhandle;
-					continue;
-				}
-				*/
+					checkhandle.SmartPivot = false;
 
-				int checkangle = checkhandle.Sidedef.Line.AngleDeg;
-				if (checkangle >= 180) checkangle -= 180;
+					if (checkhandle == starthandle) continue;
+					if (checkhandle.Level != starthandle.Level) continue;
 
-				int checkanglediff = Math.Abs(angle - checkangle);
-				if(checkanglediff < anglediff)
-				{
-					anglediff = checkanglediff;
-					handle = checkhandle;
+					/*
+					if(handle == null)
+					{
+						handle = checkhandle;
+						continue;
+					}
+					*/
+
+					int checkangle = checkhandle.Sidedef.Line.AngleDeg;
+					if (checkangle >= 180) checkangle -= 180;
+
+					int checkanglediff = Math.Abs(angle - checkangle);
+					if (checkanglediff < anglediff)
+					{
+						anglediff = checkanglediff;
+						handle = checkhandle;
+					}
 				}
 			}
 
@@ -249,12 +288,15 @@ namespace CodeImp.DoomBuilder.VisualModes
 		{
 			VisualSlopeHandle pivothandle = null;
 
-			foreach(VisualSlopeHandle handle in mode.VisualSlopeHandles)
+			foreach (KeyValuePair<Sector, List<VisualSlopeHandle>> kvp in mode.AllSlopeHandles)
 			{
-				if(handle.Pivot)
+				foreach (VisualSidedefSlopeHandle handle in kvp.Value)
 				{
-					pivothandle = handle;
-					break;
+					if (handle.Pivot)
+					{
+						pivothandle = handle;
+						break;
+					}
 				}
 			}
 
@@ -265,6 +307,8 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 			if (pivothandle == null)
 				return;
+
+			mode.CreateUndo("Change slope");
 
 			SectorData sd = mode.GetSectorData(sidedef.Sector);
 			SectorData sdpivot = mode.GetSectorData(level.sector);
@@ -316,6 +360,8 @@ namespace CodeImp.DoomBuilder.VisualModes
 			}
 
 			if (vs != null) vs.UpdateSectorGeometry(true);
+
+			mode.SetActionResult("Changed slope.");
 		}
 
 		// Select or deselect

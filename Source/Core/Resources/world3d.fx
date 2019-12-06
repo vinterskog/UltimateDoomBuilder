@@ -431,4 +431,11 @@ technique SM20
 		PixelShader  = compile ps_2_0 ps_lightpass();
 		AlphaBlendEnable = true;
 	}
+
+	pass p18
+	{
+		VertexShader = compile vs_2_0 vs_main();
+		PixelShader = compile ps_2_0 ps_vertex_color();
+		//AlphaBlendEnable = true;
+	}
 }

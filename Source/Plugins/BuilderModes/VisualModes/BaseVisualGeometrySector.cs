@@ -833,6 +833,14 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			}
 
 			if(vs != null) vs.UpdateSectorGeometry(true);
+
+			// Visual slope handles need to be updated, too
+			if(General.Map.UDMF && General.Settings.ShowVisualSlopeHandles)
+			{
+				if (mode.AllSlopeHandles.ContainsKey(level.sector))
+					foreach (VisualSidedefSlopeHandle handle in mode.AllSlopeHandles[level.sector])
+						handle.Changed = true;
+			}
 		}
 		
 		// Sector brightness change

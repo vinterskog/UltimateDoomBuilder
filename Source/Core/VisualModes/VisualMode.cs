@@ -72,12 +72,12 @@ namespace CodeImp.DoomBuilder.VisualModes
 		protected VisualBlockMap blockmap;
 		protected Dictionary<Thing, VisualThing> allthings;
 		protected Dictionary<Sector, VisualSector> allsectors;
-		protected Dictionary<Sector, VisualSlopeHandle> allslopehandles;
+		protected Dictionary<Sector, List<VisualSlopeHandle>> allslopehandles;
 		protected List<VisualBlockEntry> visibleblocks;
 		protected Dictionary<Thing, VisualThing> visiblethings;
 		protected Dictionary<Sector, VisualSector> visiblesectors;
 		protected List<VisualGeometry> visiblegeometry;
-		protected List<VisualSlopeHandle> slopehandles;
+		//protected List<VisualSlopeHandle> slopehandles;
 		
 		#endregion
 
@@ -87,7 +87,8 @@ namespace CodeImp.DoomBuilder.VisualModes
 		public bool ProcessThings { get { return processthings; } set { processthings = value; } }
 		public VisualBlockMap BlockMap { get { return blockmap; } }
 		public Dictionary<Vertex, VisualVertexPair> VisualVertices { get { return vertices; } } //mxd
-		public List<VisualSlopeHandle> VisualSlopeHandles { get { return slopehandles; } }
+		//public List<VisualSlopeHandle> VisualSlopeHandles { get { return slopehandles; } }
+		public Dictionary<Sector, List<VisualSlopeHandle>> AllSlopeHandles { get { return allslopehandles; } }
 
 		// Rendering
 		public IRenderer3D Renderer { get { return renderer; } }
@@ -106,7 +107,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 			this.blockmap = new VisualBlockMap();
 			this.allsectors = new Dictionary<Sector, VisualSector>(General.Map.Map.Sectors.Count);
 			this.allthings = new Dictionary<Thing, VisualThing>(General.Map.Map.Things.Count);
-			this.allslopehandles = new Dictionary<Sector, VisualSlopeHandle>(General.Map.Map.Sectors.Count);
+			this.allslopehandles = new Dictionary<Sector, List<VisualSlopeHandle>>(General.Map.Map.Sectors.Count);
 			this.visibleblocks = new List<VisualBlockEntry>();
 			this.visiblesectors = new Dictionary<Sector, VisualSector>(50);
 			this.visiblegeometry = new List<VisualGeometry>(200);
@@ -114,7 +115,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 			this.processgeometry = true;
 			this.processthings = true;
 			this.vertices = new Dictionary<Vertex, VisualVertexPair>(); //mxd
-			this.slopehandles = new List<VisualSlopeHandle>();
+			//this.slopehandles = new List<VisualSlopeHandle>();
 
 			//mxd. Synch camera position to cursor position or center of the screen in 2d-mode
 			if(General.Settings.GZSynchCameras && General.Editing.Mode is ClassicMode) 
@@ -230,8 +231,11 @@ namespace CodeImp.DoomBuilder.VisualModes
 			foreach(KeyValuePair<Thing, VisualThing> vt in allthings)
 				if(vt.Value != null) vt.Value.Dispose();
 
-			foreach (VisualSlopeHandle handle in slopehandles)
-				if (handle != null) handle.Dispose();
+			foreach (KeyValuePair<Sector, List<VisualSlopeHandle>> kvp in allslopehandles)
+			{
+				foreach (VisualSlopeHandle handle in kvp.Value)
+					if (handle != null) handle.Dispose();
+			}
 
 			// Apply camera position to thing
 			General.Map.VisualCamera.ApplyToThing();
@@ -704,6 +708,10 @@ namespace CodeImp.DoomBuilder.VisualModes
 				VisualSector vs = allsectors[General.Map.VisualCamera.Sector];
 				sectors.Add(General.Map.VisualCamera.Sector, vs);
 				foreach(VisualGeometry g in vs.FixedGeometry) pickables.Add(g);
+
+				// Add slope handles
+				if (General.Map.UDMF && General.Settings.ShowVisualSlopeHandles && allslopehandles.ContainsKey(General.Map.VisualCamera.Sector))
+					pickables.AddRange(allslopehandles[General.Map.VisualCamera.Sector]);
 			}
 			
 			// Go for all lines to see which ones we intersect
@@ -748,6 +756,10 @@ namespace CodeImp.DoomBuilder.VisualModes
 											if(g.Triangles > 0)
 												pickables.Add(g);
 										}
+
+										// Add slope handles
+										if(General.Map.UDMF && General.Settings.ShowVisualSlopeHandles && allslopehandles.ContainsKey(ld.Front.Sector))
+											pickables.AddRange(allslopehandles[ld.Front.Sector]);
 									}
 									
 									// Add sidedef if on the front side
@@ -785,10 +797,14 @@ namespace CodeImp.DoomBuilder.VisualModes
 											if(g.Triangles > 0)
 												pickables.Add(g);
 										}
+
+										// Add slope handles
+										if (General.Map.UDMF && General.Settings.ShowVisualSlopeHandles && allslopehandles.ContainsKey(ld.Back.Sector))
+											pickables.AddRange(allslopehandles[ld.Back.Sector]);
 									}
 
 									// Add sidedef if on the front side
-									if(side > 0.0f)
+									if (side > 0.0f)
 									{
 										List<VisualGeometry> sidedefgeo = vs.GetSidedefGeometry(ld.Back);
 										foreach(VisualGeometry g in sidedefgeo)
@@ -817,8 +833,6 @@ namespace CodeImp.DoomBuilder.VisualModes
 				if (General.Settings.GZShowVisualVertices)
 					foreach (KeyValuePair<Vertex, VisualVertexPair> pair in vertices)
 						pickables.AddRange(pair.Value.Vertices);
-
-				pickables.AddRange(slopehandles);
 			}
 			
 			// Now we have a list of potential geometry that lies along the trace line.

@@ -21,6 +21,9 @@ namespace CodeImp.DoomBuilder.VisualModes
 		// Smart Pivot?
 		protected bool smartpivot;
 
+		// Was changed?
+		private bool changed;
+
 		// Geometry
 		private WorldVertex[] vertices;
 		private VertexBuffer geobuffer;
@@ -46,6 +49,8 @@ namespace CodeImp.DoomBuilder.VisualModes
 		public bool IsDisposed { get { return isdisposed; } }
 
 		public bool SmartPivot { get { return smartpivot; } set { smartpivot = value; } }
+
+		public bool Changed { get { return changed; } set { changed = value; } }
 
 		public VertexBuffer GeoBuffer { get { return geobuffer; } }
 
@@ -126,7 +131,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 			geobuffer.Unlock();
 		}
 
-		public virtual bool Update()
+		public virtual bool Update(PixelColor color)
 		{
 			return true;
 		}
