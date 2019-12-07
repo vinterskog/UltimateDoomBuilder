@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 using CodeImp.DoomBuilder.BuilderModes.Interface;
 using CodeImp.DoomBuilder.Windows;
@@ -384,6 +385,15 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						selectedobjects.Add((BaseVisualVertex)pair.Value.CeilingVertex);
 					if(pair.Value.FloorVertex.Selected)
 						selectedobjects.Add((BaseVisualVertex)pair.Value.FloorVertex);
+				}
+			}
+
+			if (General.Map.UDMF && General.Settings.ShowVisualSlopeHandles)
+			{
+				foreach (KeyValuePair<Sector, List<VisualSlopeHandle>> kvp in allslopehandles)
+				{
+					foreach (VisualSlopeHandle handle in kvp.Value)
+						if (handle.Selected) selectedobjects.Add((VisualSidedefSlopeHandle)handle);
 				}
 			}
 
@@ -1137,7 +1147,16 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 			// Visual slope handles
 			foreach (KeyValuePair<Sector, List<VisualSlopeHandle>> kvp in allslopehandles)
+			{
+				foreach (VisualSlopeHandle handle in kvp.Value)
+					if (handle != null)
+					{
+						if (handle.Selected) RemoveSelectedObject((VisualSidedefSlopeHandle)handle);
+						handle.Dispose();
+					}
+
 				kvp.Value.Clear();
+			}
 			allslopehandles.Clear();
 
 
@@ -2283,7 +2302,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		{
 			PreAction(UndoGroup.SectorHeightChange);
 			List<IVisualEventReceiver> objs = GetSelectedObjects(true, true, true, true, true);
-			foreach(IVisualEventReceiver i in objs) i.OnChangeTargetHeight(8);
+			bool hasvisualslopehandles = objs.Any(o => o is VisualSlopeHandle);
+			foreach(IVisualEventReceiver i in objs) // If slope handles are selected only apply the action to them
+				if (!hasvisualslopehandles || (hasvisualslopehandles && i is VisualSlopeHandle))
+					i.OnChangeTargetHeight(8);
 			PostAction();
 		}
 
@@ -2292,7 +2314,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		{
 			PreAction(UndoGroup.SectorHeightChange);
 			List<IVisualEventReceiver> objs = GetSelectedObjects(true, true, true, true, true);
-			foreach(IVisualEventReceiver i in objs) i.OnChangeTargetHeight(-8);
+			bool hasvisualslopehandles = objs.Any(o => o is VisualSlopeHandle);
+			foreach (IVisualEventReceiver i in objs) // If slope handles are selected only apply the action to them
+				if (!hasvisualslopehandles || (hasvisualslopehandles && i is VisualSlopeHandle))
+					i.OnChangeTargetHeight(-8);
 			PostAction();
 		}
 
@@ -2300,8 +2325,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 	    public void RaiseSector1() {
 	        PreAction(UndoGroup.SectorHeightChange);
 	        List<IVisualEventReceiver> objs = GetSelectedObjects(true, true, true, true, true);
-	        foreach (IVisualEventReceiver i in objs)
-	            i.OnChangeTargetHeight(1);
+			bool hasvisualslopehandles = objs.Any(o => o is VisualSlopeHandle);
+			foreach (IVisualEventReceiver i in objs) // If slope handles are selected only apply the action to them
+				if (!hasvisualslopehandles || (hasvisualslopehandles && i is VisualSlopeHandle))
+					i.OnChangeTargetHeight(1);
 	        PostAction();
 	    }
 
@@ -2309,8 +2336,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 	    public void LowerSector1() {
 	        PreAction(UndoGroup.SectorHeightChange);
 	        List<IVisualEventReceiver> objs = GetSelectedObjects(true, true, true, true, true);
-	        foreach (IVisualEventReceiver i in objs)
-	            i.OnChangeTargetHeight(-1);
+			bool hasvisualslopehandles = objs.Any(o => o is VisualSlopeHandle);
+			foreach (IVisualEventReceiver i in objs) // If slope handles are selected only apply the action to them
+				if (!hasvisualslopehandles || (hasvisualslopehandles && i is VisualSlopeHandle))
+					i.OnChangeTargetHeight(-1);
 	        PostAction();
 	    }
 
@@ -2318,8 +2347,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 	    public void RaiseSector128() {
 	        PreAction(UndoGroup.SectorHeightChange);
 	        List<IVisualEventReceiver> objs = GetSelectedObjects(true, true, true, true, true);
-	        foreach (IVisualEventReceiver i in objs)
-	            i.OnChangeTargetHeight(128);
+			bool hasvisualslopehandles = objs.Any(o => o is VisualSlopeHandle);
+			foreach (IVisualEventReceiver i in objs) // If slope handles are selected only apply the action to them
+				if (!hasvisualslopehandles || (hasvisualslopehandles && i is VisualSlopeHandle))
+					i.OnChangeTargetHeight(128);
 	        PostAction();
 	    }
 
@@ -2327,8 +2358,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 	    public void LowerSector128() {
 	        PreAction(UndoGroup.SectorHeightChange);
 	        List<IVisualEventReceiver> objs = GetSelectedObjects(true, true, true, true, true);
-	        foreach (IVisualEventReceiver i in objs)
-	            i.OnChangeTargetHeight(-128);
+			bool hasvisualslopehandles = objs.Any(o => o is VisualSlopeHandle);
+			foreach (IVisualEventReceiver i in objs) // If slope handles are selected only apply the action to them
+				if (!hasvisualslopehandles || (hasvisualslopehandles && i is VisualSlopeHandle))
+					i.OnChangeTargetHeight(-128);
 	        PostAction();
 	    }
 

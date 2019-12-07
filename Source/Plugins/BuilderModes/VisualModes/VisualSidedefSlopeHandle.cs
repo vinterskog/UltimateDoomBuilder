@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using CodeImp.DoomBuilder.BuilderModes;
 using CodeImp.DoomBuilder.Geometry;
@@ -34,6 +36,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 		public Sidedef Sidedef { get { return sidedef; } }
 		public SectorLevel Level { get { return level; } }
+		public int NormalizedAngleDeg { get { return (sidedef.Line.AngleDeg >= 180) ? (sidedef.Line.AngleDeg - 180) : sidedef.Line.AngleDeg; } }
 
 		#endregion
 
@@ -236,40 +239,104 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 		internal VisualSidedefSlopeHandle GetSmartPivotHandle(VisualSidedefSlopeHandle starthandle)
 		{
-			VisualSidedefSlopeHandle handle = null;
+			VisualSidedefSlopeHandle handle = starthandle;
+			List<VisualSidedefSlopeHandle> potentialhandles = new List<VisualSidedefSlopeHandle>();
 			int angle = starthandle.sidedef.Line.AngleDeg;
 			int anglediff = 180;
+			float distance = 0.0f;
 
 			if (angle >= 180) angle -= 180;
 
-			foreach(KeyValuePair<Sector, List<VisualSlopeHandle>> kvp in mode.AllSlopeHandles)
+			List<IVisualEventReceiver> selectedsectors = mode.GetSelectedObjects(true, false, false, false, false);
+
+			if (selectedsectors.Count == 0)
+			{
+				foreach (VisualSidedefSlopeHandle checkhandle in mode.AllSlopeHandles[starthandle.Sidedef.Sector])
+					if (checkhandle.Level == starthandle.Level)
+						potentialhandles.Add(checkhandle);
+			}
+			else
+			{
+				HashSet<Sector> sectors = new HashSet<Sector>();
+
+				foreach (BaseVisualGeometrySector bvgs in selectedsectors)
+					sectors.Add(bvgs.Sector.Sector);
+
+				foreach(Sector s in sectors)
+					foreach(VisualSidedefSlopeHandle checkhandle in mode.AllSlopeHandles[s])
+						foreach (BaseVisualGeometrySector bvgs in selectedsectors)
+						{
+							if (bvgs.Level == checkhandle.Level)
+								potentialhandles.Add(checkhandle);
+						}
+			}
+
+			Debug.WriteLine("\npotential lines:");
+			foreach (VisualSidedefSlopeHandle vssh in potentialhandles)
+				Debug.WriteLine(vssh.Sidedef.Line);
+
+
+			foreach (KeyValuePair<Sector, List<VisualSlopeHandle>> kvp in mode.AllSlopeHandles)
 			{
 				foreach (VisualSidedefSlopeHandle checkhandle in kvp.Value)
-				{
 					checkhandle.SmartPivot = false;
+			}
 
-					if (checkhandle == starthandle) continue;
-					if (checkhandle.Level != starthandle.Level) continue;
 
-					/*
-					if(handle == null)
+			List<VisualSidedefSlopeHandle> anglediffsortedhandles = potentialhandles.OrderBy(h => Math.Abs(starthandle.NormalizedAngleDeg - h.NormalizedAngleDeg)).ToList();
+
+			Debug.WriteLine("\nSorted by angle diff:");
+
+			foreach (VisualSidedefSlopeHandle vssh in anglediffsortedhandles)
+				Debug.WriteLine(vssh.Sidedef.Line + " (" + Math.Abs(starthandle.NormalizedAngleDeg - vssh.NormalizedAngleDeg) + ")");
+
+
+			Debug.WriteLine("\nSorted by distance:");
+
+			foreach (VisualSidedefSlopeHandle vssh in anglediffsortedhandles.Where(h => h.NormalizedAngleDeg == anglediffsortedhandles[0].NormalizedAngleDeg).OrderByDescending(h => Math.Abs(Vector2D.Distance(h.Sidedef.Line.GetCenterPoint(), starthandle.sidedef.Line.GetCenterPoint()))))
+				Debug.WriteLine(vssh.Sidedef.Line + " (" + Math.Abs(Vector2D.Distance(vssh.Sidedef.Line.GetCenterPoint(), starthandle.sidedef.Line.GetCenterPoint())) + ")");
+
+			if (anglediffsortedhandles.Count > 0)
+			{
+				handle = anglediffsortedhandles.Where(h => h.NormalizedAngleDeg == anglediffsortedhandles[0].NormalizedAngleDeg).OrderByDescending(h => Math.Abs(Vector2D.Distance(h.Sidedef.Line.GetCenterPoint(), starthandle.sidedef.Line.GetCenterPoint()))).First();
+			}
+
+			Debug.WriteLine("\nDecided on " + handle.Sidedef.Line + "(" + handle.Level.type + ")");
+
+			/*
+			foreach (VisualSidedefSlopeHandle checkhandle in potentialhandles)
+			{
+				checkhandle.SmartPivot = false;
+
+				if (checkhandle == starthandle) continue;
+
+				int checkangle = checkhandle.Sidedef.Line.AngleDeg;
+				if (checkangle >= 180) checkangle -= 180;
+
+				int checkanglediff = Math.Abs(angle - checkangle);
+				if (checkanglediff <= anglediff)
+				{
+					// Compute distance between starthandle and checkhandle
+					if (handle != null)
 					{
-						handle = checkhandle;
-						continue;
+						float checkdistance = Math.Abs(Vector2D.Distance(handle.Sidedef.Line.GetCenterPoint(), checkhandle.Sidedef.Line.GetCenterPoint()));
+
+						if (checkdistance > distance)
+						{
+							anglediff = checkanglediff;
+							handle = checkhandle;
+							distance = checkdistance;
+						}
 					}
-					*/
-
-					int checkangle = checkhandle.Sidedef.Line.AngleDeg;
-					if (checkangle >= 180) checkangle -= 180;
-
-					int checkanglediff = Math.Abs(angle - checkangle);
-					if (checkanglediff < anglediff)
+					else
 					{
 						anglediff = checkanglediff;
 						handle = checkhandle;
+						distance = Math.Abs(Vector2D.Distance(handle.Sidedef.Line.GetCenterPoint(), checkhandle.Sidedef.Line.GetCenterPoint()));
 					}
 				}
 			}
+			*/
 
 			if (handle == starthandle)
 				return null;
@@ -287,6 +354,15 @@ namespace CodeImp.DoomBuilder.VisualModes
 		public void OnChangeTargetHeight(int amount)
 		{
 			VisualSlopeHandle pivothandle = null;
+			List<IVisualEventReceiver> selectedsectors = mode.GetSelectedObjects(true, false, false, false, false);
+			List<SectorLevel> levels = new List<SectorLevel>();
+
+			if (selectedsectors.Count == 0)
+				levels.Add(level);
+			else
+				foreach (BaseVisualGeometrySector bvgs in selectedsectors)
+					levels.Add(bvgs.Level);
+
 
 			foreach (KeyValuePair<Sector, List<VisualSlopeHandle>> kvp in mode.AllSlopeHandles)
 			{
@@ -326,40 +402,43 @@ namespace CodeImp.DoomBuilder.VisualModes
 			Plane plane = new Plane(p1, p2, p3, true);
 
 
-			if (up)
+			foreach (SectorLevel l in levels)
 			{
-				level.sector.FloorSlope = plane.Normal;
-				level.sector.FloorSlopeOffset = plane.Offset;
+				if (up)
+				{
+					l.sector.FloorSlope = plane.Normal;
+					l.sector.FloorSlopeOffset = plane.Offset;
 
-				Vector2D center = new Vector2D(level.sector.BBox.X + level.sector.BBox.Width / 2,
-												   level.sector.BBox.Y + level.sector.BBox.Height / 2);
+					Vector2D center = new Vector2D(l.sector.BBox.X + l.sector.BBox.Width / 2,
+													   l.sector.BBox.Y + l.sector.BBox.Height / 2);
 
-				level.sector.FloorHeight = (int)new Plane(level.sector.FloorSlope, level.sector.FloorSlopeOffset).GetZ(center);
+					l.sector.FloorHeight = (int)new Plane(l.sector.FloorSlope, l.sector.FloorSlopeOffset).GetZ(center);
+				}
+				else
+				{
+					plane = plane.GetInverted();
+					l.sector.CeilSlope = plane.Normal;
+					l.sector.CeilSlopeOffset = plane.Offset;
+
+					Vector2D center = new Vector2D(l.sector.BBox.X + l.sector.BBox.Width / 2,
+													   l.sector.BBox.Y + l.sector.BBox.Height / 2);
+
+					l.sector.CeilHeight = (int)new Plane(l.sector.CeilSlope, l.sector.CeilSlopeOffset).GetZ(center);
+				}
+
+				// Rebuild sector
+				BaseVisualSector vs;
+				if (mode.VisualSectorExists(l.sector))
+				{
+					vs = (BaseVisualSector)mode.GetVisualSector(l.sector);
+				}
+				else
+				{
+					vs = mode.CreateBaseVisualSector(l.sector);
+				}
+
+				if (vs != null) vs.UpdateSectorGeometry(true);
 			}
-			else
-			{
-				plane = plane.GetInverted();
-				level.sector.CeilSlope = plane.Normal;
-				level.sector.CeilSlopeOffset = plane.Offset;
-
-				Vector2D center = new Vector2D(level.sector.BBox.X + level.sector.BBox.Width / 2,
-												   level.sector.BBox.Y + level.sector.BBox.Height / 2);
-
-				level.sector.CeilHeight = (int)new Plane(level.sector.CeilSlope, level.sector.CeilSlopeOffset).GetZ(center);
-			}
-
-			// Rebuild sector
-			BaseVisualSector vs;
-			if (mode.VisualSectorExists(level.sector))
-			{
-				vs = (BaseVisualSector)mode.GetVisualSector(level.sector);
-			}
-			else
-			{
-				vs = mode.CreateBaseVisualSector(level.sector);
-			}
-
-			if (vs != null) vs.UpdateSectorGeometry(true);
 
 			mode.SetActionResult("Changed slope.");
 		}
