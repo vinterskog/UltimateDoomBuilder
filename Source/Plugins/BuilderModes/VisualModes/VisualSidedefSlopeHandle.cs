@@ -252,28 +252,50 @@ namespace CodeImp.DoomBuilder.VisualModes
 			if (selectedsectors.Count == 0)
 			{
 				foreach (VisualSidedefSlopeHandle checkhandle in mode.AllSlopeHandles[starthandle.Sidedef.Sector])
-					if (checkhandle.Level == starthandle.Level)
+					if (checkhandle != starthandle && checkhandle.Level == starthandle.Level)
 						potentialhandles.Add(checkhandle);
 			}
 			else
 			{
 				HashSet<Sector> sectors = new HashSet<Sector>();
 
-				foreach (BaseVisualGeometrySector bvgs in selectedsectors)
-					sectors.Add(bvgs.Sector.Sector);
+				// Debug.WriteLine("\nAll levels:");
 
-				foreach(Sector s in sectors)
-					foreach(VisualSidedefSlopeHandle checkhandle in mode.AllSlopeHandles[s])
-						foreach (BaseVisualGeometrySector bvgs in selectedsectors)
-						{
-							if (bvgs.Level == checkhandle.Level)
-								potentialhandles.Add(checkhandle);
-						}
+				foreach(Sector s in General.Map.Map.Sectors)
+				{
+					SectorData sd = mode.GetSectorData(s);
+					// Debug.WriteLine(sd.Floor.GetHashCode());
+					// Debug.WriteLine(sd.Ceiling.GetHashCode());
+				}
+
+				// Debug.WriteLine("\nLevels of selected sectors:");
+
+				foreach (BaseVisualGeometrySector bvgs in selectedsectors)
+				{
+					sectors.Add(bvgs.Sector.Sector);
+					// Debug.WriteLine(bvgs.Level.GetHashCode());
+				}
+
+				// Debug.WriteLine("\nChecking levels:");
+
+				foreach (Sector s in sectors)
+					foreach (VisualSidedefSlopeHandle checkhandle in mode.AllSlopeHandles[s])
+						if(checkhandle != starthandle)
+							foreach (BaseVisualGeometrySector bvgs in selectedsectors)
+							{
+								if (bvgs.Level == checkhandle.Level)
+								{
+									potentialhandles.Add(checkhandle);
+									// Debug.WriteLine(checkhandle.Level.GetHashCode() + " <-- OK!");
+								}
+								//else
+								//	Debug.WriteLine(checkhandle.Level.GetHashCode());
+							}
 			}
 
-			Debug.WriteLine("\npotential lines:");
-			foreach (VisualSidedefSlopeHandle vssh in potentialhandles)
-				Debug.WriteLine(vssh.Sidedef.Line);
+			//Debug.WriteLine("\npotential lines:");
+			//foreach (VisualSidedefSlopeHandle vssh in potentialhandles)
+			//	Debug.WriteLine(vssh.Sidedef.Line);
 
 
 			foreach (KeyValuePair<Sector, List<VisualSlopeHandle>> kvp in mode.AllSlopeHandles)
@@ -285,20 +307,21 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 			List<VisualSidedefSlopeHandle> anglediffsortedhandles = potentialhandles.OrderBy(h => Math.Abs(starthandle.NormalizedAngleDeg - h.NormalizedAngleDeg)).ToList();
 
-			Debug.WriteLine("\nSorted by angle diff:");
+			//Debug.WriteLine("\nSorted by angle diff:");
 
-			foreach (VisualSidedefSlopeHandle vssh in anglediffsortedhandles)
-				Debug.WriteLine(vssh.Sidedef.Line + " (" + Math.Abs(starthandle.NormalizedAngleDeg - vssh.NormalizedAngleDeg) + ")");
+			//foreach (VisualSidedefSlopeHandle vssh in anglediffsortedhandles)
+			//	Debug.WriteLine(vssh.Sidedef.Line + " (" + Math.Abs(starthandle.NormalizedAngleDeg - vssh.NormalizedAngleDeg) + ")");
 
 
-			Debug.WriteLine("\nSorted by distance:");
+			//Debug.WriteLine("\nSorted by distance:");
 
-			foreach (VisualSidedefSlopeHandle vssh in anglediffsortedhandles.Where(h => h.NormalizedAngleDeg == anglediffsortedhandles[0].NormalizedAngleDeg).OrderByDescending(h => Math.Abs(Vector2D.Distance(h.Sidedef.Line.GetCenterPoint(), starthandle.sidedef.Line.GetCenterPoint()))))
-				Debug.WriteLine(vssh.Sidedef.Line + " (" + Math.Abs(Vector2D.Distance(vssh.Sidedef.Line.GetCenterPoint(), starthandle.sidedef.Line.GetCenterPoint())) + ")");
+			//foreach (VisualSidedefSlopeHandle vssh in anglediffsortedhandles.Where(h => h.NormalizedAngleDeg == anglediffsortedhandles[0].NormalizedAngleDeg).OrderByDescending(h => Math.Abs(Vector2D.Distance(h.Sidedef.Line.GetCenterPoint(), starthandle.sidedef.Line.GetCenterPoint()))))
+			//	Debug.WriteLine(vssh.Sidedef.Line + " (" + Math.Abs(Vector2D.Distance(vssh.Sidedef.Line.GetCenterPoint(), starthandle.sidedef.Line.GetCenterPoint())) + ")");
 
 			if (anglediffsortedhandles.Count > 0)
 			{
-				handle = anglediffsortedhandles.Where(h => h.NormalizedAngleDeg == anglediffsortedhandles[0].NormalizedAngleDeg).OrderByDescending(h => Math.Abs(Vector2D.Distance(h.Sidedef.Line.GetCenterPoint(), starthandle.sidedef.Line.GetCenterPoint()))).First();
+				// handle = anglediffsortedhandles.Where(h => h.NormalizedAngleDeg == anglediffsortedhandles[0].NormalizedAngleDeg).OrderByDescending(h => Math.Abs(Vector2D.Distance(h.Sidedef.Line.GetCenterPoint(), starthandle.sidedef.Line.GetCenterPoint()))).First();
+				handle = anglediffsortedhandles.Where(h => h.NormalizedAngleDeg == anglediffsortedhandles[0].NormalizedAngleDeg).OrderByDescending(h => Math.Abs(starthandle.Sidedef.Line.Line.GetDistanceToLine(h.sidedef.Line.GetCenterPoint(), false))).First();
 			}
 
 			Debug.WriteLine("\nDecided on " + handle.Sidedef.Line + "(" + handle.Level.type + ")");

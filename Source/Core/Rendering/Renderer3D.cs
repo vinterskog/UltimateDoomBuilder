@@ -513,7 +513,7 @@ namespace CodeImp.DoomBuilder.Rendering
 			RenderVertices();
 
 			// Slope handles
-			if(General.Map.UDMF && General.Settings.ShowVisualSlopeHandles)
+			if(General.Map.UDMF /* && General.Settings.ShowVisualSlopeHandles */)
 				RenderSlopeHandles();
 
 			//mxd. Event lines
