@@ -72,7 +72,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 		protected VisualBlockMap blockmap;
 		protected Dictionary<Thing, VisualThing> allthings;
 		protected Dictionary<Sector, VisualSector> allsectors;
-		protected Dictionary<Sector, List<VisualSlopeHandle>> allslopehandles;
+		protected Dictionary<Sector, List<VisualSlope>> allslopehandles;
 		protected List<VisualBlockEntry> visibleblocks;
 		protected Dictionary<Thing, VisualThing> visiblethings;
 		protected Dictionary<Sector, VisualSector> visiblesectors;
@@ -88,7 +88,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 		public VisualBlockMap BlockMap { get { return blockmap; } }
 		public Dictionary<Vertex, VisualVertexPair> VisualVertices { get { return vertices; } } //mxd
 		//public List<VisualSlopeHandle> VisualSlopeHandles { get { return slopehandles; } }
-		public Dictionary<Sector, List<VisualSlopeHandle>> AllSlopeHandles { get { return allslopehandles; } }
+		public Dictionary<Sector, List<VisualSlope>> AllSlopeHandles { get { return allslopehandles; } }
 
 		// Rendering
 		public IRenderer3D Renderer { get { return renderer; } }
@@ -107,7 +107,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 			this.blockmap = new VisualBlockMap();
 			this.allsectors = new Dictionary<Sector, VisualSector>(General.Map.Map.Sectors.Count);
 			this.allthings = new Dictionary<Thing, VisualThing>(General.Map.Map.Things.Count);
-			this.allslopehandles = new Dictionary<Sector, List<VisualSlopeHandle>>(General.Map.Map.Sectors.Count);
+			this.allslopehandles = new Dictionary<Sector, List<VisualSlope>>(General.Map.Map.Sectors.Count);
 			this.visibleblocks = new List<VisualBlockEntry>();
 			this.visiblesectors = new Dictionary<Sector, VisualSector>(50);
 			this.visiblegeometry = new List<VisualGeometry>(200);
@@ -231,9 +231,9 @@ namespace CodeImp.DoomBuilder.VisualModes
 			foreach(KeyValuePair<Thing, VisualThing> vt in allthings)
 				if(vt.Value != null) vt.Value.Dispose();
 
-			foreach (KeyValuePair<Sector, List<VisualSlopeHandle>> kvp in allslopehandles)
+			foreach (KeyValuePair<Sector, List<VisualSlope>> kvp in allslopehandles)
 			{
-				foreach (VisualSlopeHandle handle in kvp.Value)
+				foreach (VisualSlope handle in kvp.Value)
 					if (handle != null) handle.Dispose();
 			}
 

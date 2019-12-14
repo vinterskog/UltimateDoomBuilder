@@ -55,6 +55,9 @@ float4 vertexColor;
 // [ZZ]
 float4 stencilColor;
 
+// biwa
+float slopeHandleLength;
+
 //light
 float4 lightPosAndRadius;
 float3 lightOrientation; // this is a vector that points in light's direction
@@ -115,11 +118,26 @@ PixelData vs_main(VertexData vd)
 	return pd;
 }
 
+// biwa. Vertex shader for slope handles
+PixelData vs_slopehandle(VertexData vd)
+{
+	PixelData pd;
+
+	float4 p = float4(vd.pos, 1.0f);
+	p.x *= slopeHandleLength;
+
+	pd.pos = mul(p, worldviewproj);
+	pd.color = vd.color;
+	pd.uv = vd.uv;
+
+	return pd;
+}
+
 //mxd. same as vs_main, but uses vertexColor var instead of actual vertex color. used in models rendering
 PixelData vs_customvertexcolor(VertexData vd) 
 {
 	PixelData pd;
-	
+
 	// Fill pixel data input
 	pd.pos = mul(float4(vd.pos, 1.0f), worldviewproj);
 	pd.color = vertexColor;
@@ -319,6 +337,12 @@ float4 ps_skybox(SkyPixelData pd) : COLOR
 	return float4(highlightcolor.rgb * highlightcolor.a + (ncolor.rgb - 0.4f * highlightcolor.a), 1.0f);
 }
 
+// used to draw slope handles
+float4 ps_slopehandle_color(PixelData pd) : COLOR
+{
+	return pd.color * vertexColor;
+}
+
 // Technique for shader model 2.0
 technique SM20 
 {
@@ -434,8 +458,8 @@ technique SM20
 
 	pass p18
 	{
-		VertexShader = compile vs_2_0 vs_main();
-		PixelShader = compile ps_2_0 ps_vertex_color();
+		VertexShader = compile vs_2_0 vs_slopehandle();
+		PixelShader = compile ps_2_0 ps_slopehandle_color();
 		//AlphaBlendEnable = true;
 	}
 }

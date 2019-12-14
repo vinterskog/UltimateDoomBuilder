@@ -52,6 +52,9 @@ namespace CodeImp.DoomBuilder.Rendering
 
         // [ZZ]
         private readonly EffectHandle stencilColorHandle;
+
+		// biwa
+		private readonly EffectHandle slopeHandleLengthHandle;
 		
 		#endregion
 
@@ -262,6 +265,21 @@ namespace CodeImp.DoomBuilder.Rendering
 			}
 		}
 
+		// biwa. Sets length of slope handle
+		private float vsl;
+		public float SlopeHandleLength
+		{
+			set
+			{
+				if(vsl != value)
+				{
+					effect.SetValue(slopeHandleLengthHandle, value);
+					vsl = value;
+					settingschanged = true;
+				}
+			}
+		}
+
 		#endregion
 
 		#region ================== Constructor / Disposer
@@ -298,6 +316,9 @@ namespace CodeImp.DoomBuilder.Rendering
 
                 // [ZZ]
                 stencilColorHandle = effect.GetParameter(null, "stencilColor");
+
+				// biwa. Slope handle length
+				slopeHandleLengthHandle = effect.GetParameter(null, "slopeHandleLength");
 
 				world = effect.GetParameter(null, "world");
                 modelnormal = effect.GetParameter(null, "modelnormal");
@@ -345,6 +366,9 @@ namespace CodeImp.DoomBuilder.Rendering
                 if(stencilColorHandle != null) stencilColorHandle.Dispose();
 				if(world != null) world.Dispose();
                 if(modelnormal != null) modelnormal.Dispose();
+
+				// biwa
+				if (slopeHandleLengthHandle != null) slopeHandleLengthHandle.Dispose();
 
                 // Done
                 base.Dispose();

@@ -11,7 +11,7 @@ using CodeImp.DoomBuilder.Rendering;
 
 namespace CodeImp.DoomBuilder.VisualModes
 {
-	internal class VisualSidedefSlopeHandle : VisualSlopeHandle, IVisualEventReceiver
+	internal class VisualSidedefSlope : VisualSlope, IVisualEventReceiver
 	{
 		#region ================== Variables
 
@@ -42,12 +42,14 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 		#region ================== Constructor / Destructor
 
-		public VisualSidedefSlopeHandle(BaseVisualMode mode, SectorLevel level, Sidedef sidedef, bool up) : base()
+		public VisualSidedefSlope(BaseVisualMode mode, SectorLevel level, Sidedef sidedef, bool up) : base()
 		{
 			this.mode = mode;
 			this.sidedef = sidedef;
 			this.level = level;
 			this.up = up;
+
+			length = sidedef.Line.Length;
 
 			plane = new Plane(level.plane.Normal, level.plane.Offset - 0.1f);
 
@@ -164,14 +166,17 @@ namespace CodeImp.DoomBuilder.VisualModes
 				verts[4] = new WorldVertex(v3);
 				verts[5] = new WorldVertex(v4);
 
-				int coloron = color1;
-				int coloroff = color2;
+				int coloron = PixelColor.INT_WHITE;
+				int coloroff = PixelColor.INT_WHITE_NO_ALPHA;
 
 				if(!sidedef.IsFront)
 				{
-					coloron = color2;
-					coloroff = color1;
+					coloron = PixelColor.INT_WHITE_NO_ALPHA;
+					coloroff = PixelColor.INT_WHITE;
 				}
+
+				// verts[0].c = verts[1].c = verts[3].c = coloron;
+				// verts[2].c = verts[4].c = verts[5].c = coloroff;
 
 				verts[0].c = verts[1].c = verts[3].c = coloron;
 				verts[2].c = verts[4].c = verts[5].c = coloroff;
@@ -189,6 +194,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 		public override bool Update(PixelColor color)
 		{
+			UpdatePosition();
 			return Setup(color);
 		}
 
@@ -237,10 +243,37 @@ namespace CodeImp.DoomBuilder.VisualModes
 			return false;
 		}
 
-		internal VisualSidedefSlopeHandle GetSmartPivotHandle(VisualSidedefSlopeHandle starthandle)
+		public void UpdatePosition()
 		{
-			VisualSidedefSlopeHandle handle = starthandle;
-			List<VisualSidedefSlopeHandle> potentialhandles = new List<VisualSidedefSlopeHandle>();
+			float angle;
+			Vector3D pos;
+
+			if (sidedef.IsFront)
+			{
+				pos = sidedef.Line.End.Position;
+				pos.z = plane.GetZ(pos);
+
+				angle = sidedef.Line.Angle + (float)Math.PI / 2.0f;
+				if (angle > (float)Math.PI * 2.0f)
+					angle -= 2.0f * (float)Math.PI;
+			}
+			else
+			{
+				pos = sidedef.Line.Start.Position;
+				pos.z = plane.GetZ(pos);
+
+				angle = sidedef.Line.Angle - (float)Math.PI / 2.0f;
+				if (angle < 0.0f)
+					angle += 2.0f * (float)Math.PI;
+			}
+
+			SetPosition(pos, level.plane, angle);
+		}
+
+		internal VisualSidedefSlope GetSmartPivotHandle(VisualSidedefSlope starthandle)
+		{
+			VisualSidedefSlope handle = starthandle;
+			List<VisualSidedefSlope> potentialhandles = new List<VisualSidedefSlope>();
 			int angle = starthandle.sidedef.Line.AngleDeg;
 			int anglediff = 180;
 			float distance = 0.0f;
@@ -251,7 +284,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 			if (selectedsectors.Count == 0)
 			{
-				foreach (VisualSidedefSlopeHandle checkhandle in mode.AllSlopeHandles[starthandle.Sidedef.Sector])
+				foreach (VisualSidedefSlope checkhandle in mode.AllSlopeHandles[starthandle.Sidedef.Sector])
 					if (checkhandle != starthandle && checkhandle.Level == starthandle.Level)
 						potentialhandles.Add(checkhandle);
 			}
@@ -279,7 +312,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 				// Debug.WriteLine("\nChecking levels:");
 
 				foreach (Sector s in sectors)
-					foreach (VisualSidedefSlopeHandle checkhandle in mode.AllSlopeHandles[s])
+					foreach (VisualSidedefSlope checkhandle in mode.AllSlopeHandles[s])
 						if(checkhandle != starthandle)
 							foreach (BaseVisualGeometrySector bvgs in selectedsectors)
 							{
@@ -298,14 +331,14 @@ namespace CodeImp.DoomBuilder.VisualModes
 			//	Debug.WriteLine(vssh.Sidedef.Line);
 
 
-			foreach (KeyValuePair<Sector, List<VisualSlopeHandle>> kvp in mode.AllSlopeHandles)
+			foreach (KeyValuePair<Sector, List<VisualSlope>> kvp in mode.AllSlopeHandles)
 			{
-				foreach (VisualSidedefSlopeHandle checkhandle in kvp.Value)
+				foreach (VisualSidedefSlope checkhandle in kvp.Value)
 					checkhandle.SmartPivot = false;
 			}
 
 
-			List<VisualSidedefSlopeHandle> anglediffsortedhandles = potentialhandles.OrderBy(h => Math.Abs(starthandle.NormalizedAngleDeg - h.NormalizedAngleDeg)).ToList();
+			List<VisualSidedefSlope> anglediffsortedhandles = potentialhandles.OrderBy(h => Math.Abs(starthandle.NormalizedAngleDeg - h.NormalizedAngleDeg)).ToList();
 
 			//Debug.WriteLine("\nSorted by angle diff:");
 
@@ -324,7 +357,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 				handle = anglediffsortedhandles.Where(h => h.NormalizedAngleDeg == anglediffsortedhandles[0].NormalizedAngleDeg).OrderByDescending(h => Math.Abs(starthandle.Sidedef.Line.Line.GetDistanceToLine(h.sidedef.Line.GetCenterPoint(), false))).First();
 			}
 
-			Debug.WriteLine("\nDecided on " + handle.Sidedef.Line + "(" + handle.Level.type + ")");
+			// Debug.WriteLine("\nDecided on " + handle.Sidedef.Line + "(" + handle.Level.type + ")");
 
 			/*
 			foreach (VisualSidedefSlopeHandle checkhandle in potentialhandles)
@@ -376,7 +409,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 		public void OnChangeTargetHeight(int amount)
 		{
-			VisualSlopeHandle pivothandle = null;
+			VisualSlope pivothandle = null;
 			List<IVisualEventReceiver> selectedsectors = mode.GetSelectedObjects(true, false, false, false, false);
 			List<SectorLevel> levels = new List<SectorLevel>();
 
@@ -387,9 +420,9 @@ namespace CodeImp.DoomBuilder.VisualModes
 					levels.Add(bvgs.Level);
 
 
-			foreach (KeyValuePair<Sector, List<VisualSlopeHandle>> kvp in mode.AllSlopeHandles)
+			foreach (KeyValuePair<Sector, List<VisualSlope>> kvp in mode.AllSlopeHandles)
 			{
-				foreach (VisualSidedefSlopeHandle handle in kvp.Value)
+				foreach (VisualSidedefSlope handle in kvp.Value)
 				{
 					if (handle.Pivot)
 					{
@@ -413,11 +446,11 @@ namespace CodeImp.DoomBuilder.VisualModes
 			SectorData sdpivot = mode.GetSectorData(level.sector);
 
 			Plane originalplane = level.plane;
-			Plane pivotplane = ((VisualSidedefSlopeHandle)pivothandle).Level.plane;
+			Plane pivotplane = ((VisualSidedefSlope)pivothandle).Level.plane;
 
 			Vector3D p1 = new Vector3D(sidedef.Line.Start.Position, (float)Math.Round(originalplane.GetZ(sidedef.Line.Start.Position)));
 			Vector3D p2 = new Vector3D(sidedef.Line.End.Position, (float)Math.Round(originalplane.GetZ(sidedef.Line.End.Position)));
-			Vector3D p3 = new Vector3D(((VisualSidedefSlopeHandle)pivothandle).Sidedef.Line.Line.GetCoordinatesAt(0.5f), (float)Math.Round(pivotplane.GetZ(((VisualSidedefSlopeHandle)pivothandle).Sidedef.Line.Line.GetCoordinatesAt(0.5f))));
+			Vector3D p3 = new Vector3D(((VisualSidedefSlope)pivothandle).Sidedef.Line.Line.GetCoordinatesAt(0.5f), (float)Math.Round(pivotplane.GetZ(((VisualSidedefSlope)pivothandle).Sidedef.Line.Line.GetCoordinatesAt(0.5f))));
 
 			p1 += new Vector3D(0f, 0f, amount);
 			p2 += new Vector3D(0f, 0f, amount);

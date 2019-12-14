@@ -69,6 +69,9 @@ namespace CodeImp.DoomBuilder.Rendering
 		//mxd
 		private VisualVertexHandle vertexhandle;
 		private int[] lightOffsets;
+
+		// Slope handle
+		private VisualSlopeHandle visualslopehandle;
 		
 		// Crosshair
 		private FlatVertex[] crosshairverts;
@@ -118,7 +121,7 @@ namespace CodeImp.DoomBuilder.Rendering
 		private List<VisualVertex> visualvertices;
 
 		// Visual slope handles
-		private List<VisualSlopeHandle> visualslopehandles;
+		private List<VisualSlope> visualslopehandles;
 
 		//mxd. Event lines
 		private List<Line3D> eventlines;
@@ -163,6 +166,7 @@ namespace CodeImp.DoomBuilder.Rendering
 			{
 				// Clean up
 				if(vertexhandle != null) vertexhandle.Dispose(); //mxd
+				if (visualslopehandle != null) visualslopehandle.Dispose();
 				
 				// Done
 				base.Dispose();
@@ -226,6 +230,15 @@ namespace CodeImp.DoomBuilder.Rendering
 			{
 				vertexhandle.UnloadResource();
 				vertexhandle.ReloadResource();
+			}
+		}
+
+		internal void UpdateVisualSlopeHandle()
+		{
+			if(visualslopehandle != null)
+			{
+				visualslopehandle.UnloadResource();
+				visualslopehandle.ReloadResource();
 			}
 		}
 
@@ -357,6 +370,9 @@ namespace CodeImp.DoomBuilder.Rendering
 
 				//mxd. Crate vertex handle
 				if(vertexhandle == null) vertexhandle = new VisualVertexHandle();
+
+				// Create slope handle
+				if (visualslopehandle == null) visualslopehandle = new VisualSlopeHandle();
 				
 				// Ready
 				return true;
@@ -694,10 +710,10 @@ namespace CodeImp.DoomBuilder.Rendering
 
 			graphics.Shaders.World3D.BeginPass(18);
 
-			world = Matrix.Identity;
-			ApplyMatrices3D();
+			// world = Matrix.Identity;
+			// ApplyMatrices3D();
 
-			foreach(VisualSlopeHandle handle in visualslopehandles)
+			foreach(VisualSlope handle in visualslopehandles)
 			{
 				PixelColor color = General.Colors.Vertices;
 
@@ -710,10 +726,17 @@ namespace CodeImp.DoomBuilder.Rendering
 				else if (handle.SmartPivot)
 					color = General.Colors.Vertices;
 
+				world = handle.Position;
+				ApplyMatrices3D();
+
 				handle.Update(color);
 
+				graphics.Shaders.World3D.VertexColor = color.ToColorValue();
+				graphics.Shaders.World3D.SlopeHandleLength = handle.Length;
+
 				graphics.Shaders.World3D.ApplySettings();
-				graphics.Device.SetStreamSource(0, handle.GeoBuffer, 0, WorldVertex.Stride);
+				// graphics.Device.SetStreamSource(0, handle.GeoBuffer, 0, WorldVertex.Stride);
+				graphics.Device.SetStreamSource(0, visualslopehandle.Geometry, 0, WorldVertex.Stride);
 				graphics.Device.DrawPrimitives(PrimitiveType.TriangleList, 0, 2);
 			}
 
@@ -2096,7 +2119,7 @@ namespace CodeImp.DoomBuilder.Rendering
 		//mxd
 		public void SetVisualVertices(List<VisualVertex> verts) { visualvertices = verts; }
 
-		public void SetVisualSlopeHandles(List<VisualSlopeHandle> handles) { visualslopehandles = handles; }
+		public void SetVisualSlopeHandles(List<VisualSlope> handles) { visualslopehandles = handles; }
 
 		//mxd
 		public void SetEventLines(List<Line3D> lines) { eventlines = lines; }

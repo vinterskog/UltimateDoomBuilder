@@ -1,11 +1,12 @@
 ﻿using System;
 using CodeImp.DoomBuilder.Geometry;
 using CodeImp.DoomBuilder.Rendering;
+using SlimDX;
 using SlimDX.Direct3D9;
 
 namespace CodeImp.DoomBuilder.VisualModes
 {
-	public abstract class VisualSlopeHandle : IVisualPickable, ID3DResource, IDisposable
+	public abstract class VisualSlope : IVisualPickable, ID3DResource, IDisposable
 	{
 		#region ================== Variables
 
@@ -27,6 +28,10 @@ namespace CodeImp.DoomBuilder.VisualModes
 		// Geometry
 		private WorldVertex[] vertices;
 		private VertexBuffer geobuffer;
+
+		protected float length;
+
+		private Matrix position;
 
 
 		#endregion
@@ -54,11 +59,15 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 		public VertexBuffer GeoBuffer { get { return geobuffer; } }
 
+		public float Length { get { return length; } }
+
+		public Matrix Position { get { return position; } }
+
 		#endregion
 
 		#region ================== Constructor / Destructor
 
-		public VisualSlopeHandle()
+		public VisualSlope()
 		{
 			// Register as resource
 			General.Map.Graphics.RegisterResource(this);
@@ -134,6 +143,15 @@ namespace CodeImp.DoomBuilder.VisualModes
 		public virtual bool Update(PixelColor color)
 		{
 			return true;
+		}
+
+		public void SetPosition(Vector3D pos, Geometry.Plane plane, float angle)
+		{
+
+			Matrix translate = Matrix.Translation(pos.x, pos.y, pos.z);
+			Vector3 v = new Vector3(plane.Normal.x, plane.Normal.y, plane.Normal.z);
+			Matrix rotate = Matrix.RotationAxis(v, angle);
+			position = Matrix.Multiply(rotate, translate);
 		}
 
 		#endregion
