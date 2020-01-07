@@ -32,6 +32,162 @@
       <Filter>OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="Matrix.cpp" />
+    <ClCompile Include="Vulkan\thirdparty\glslang\GenericCodeGen\CodeGen.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\GenericCodeGen</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\GenericCodeGen\Link.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\GenericCodeGen</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\attribute.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\Constant.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\glslang_tab.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\InfoSink.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\Initialize.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\Intermediate.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\intermOut.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\IntermTraverse.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\iomapper.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\limits.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\linkValidate.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\parseConst.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\ParseContextBase.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\ParseHelper.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\PoolAlloc.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\propagateNoContraction.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\reflection.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\RemoveTree.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\Scan.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\ShaderLang.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\SymbolTable.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\Versions.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\preprocessor\Pp.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent\preprocessor</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\preprocessor\PpAtom.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent\preprocessor</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\preprocessor\PpContext.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent\preprocessor</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\preprocessor\PpScanner.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent\preprocessor</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\MachineIndependent\preprocessor\PpTokens.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent\preprocessor</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\OSDependent\Unix\ossource.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\OSDependent\Unix</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\OSDependent\Windows\main.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\OSDependent\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\glslang\OSDependent\Windows\ossource.cpp">
+      <Filter>Vulkan\Thirdparty\glslang\OSDependent\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\OGLCompilersDLL\InitializeDll.cpp">
+      <Filter>Vulkan\Thirdparty\OGLCompilersDLL</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\spirv\disassemble.cpp">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\spirv\doc.cpp">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\spirv\GlslangToSpv.cpp">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\spirv\InReadableOrder.cpp">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\spirv\Logger.cpp">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\spirv\SpvBuilder.cpp">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\spirv\SpvPostProcess.cpp">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\spirv\SPVRemapper.cpp">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\spirv\SpvTools.cpp">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\vk_mem_alloc\vk_mem_alloc.cpp">
+      <Filter>Vulkan\Thirdparty\vk_mem_alloc</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\thirdparty\volk\volk.c">
+      <Filter>Vulkan\Thirdparty\volk</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\VKBackend.cpp">
+      <Filter>Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\VKIndexBuffer.cpp">
+      <Filter>Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\VKRenderDevice.cpp">
+      <Filter>Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\VKTexture.cpp">
+      <Filter>Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\VKVertexBuffer.cpp">
+      <Filter>Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\System\VulkanBuilders.cpp">
+      <Filter>Vulkan\System</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\System\VulkanDevice.cpp">
+      <Filter>Vulkan\System</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan\System\VulkanSwapChain.cpp">
+      <Filter>Vulkan\System</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Precomp.h" />
@@ -67,9 +223,252 @@
     <ClInclude Include="OpenGL\GLBackend.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\Include\arrays.h">
+      <Filter>Vulkan\Thirdparty\glslang\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\Include\BaseTypes.h">
+      <Filter>Vulkan\Thirdparty\glslang\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\Include\Common.h">
+      <Filter>Vulkan\Thirdparty\glslang\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\Include\ConstantUnion.h">
+      <Filter>Vulkan\Thirdparty\glslang\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\Include\InfoSink.h">
+      <Filter>Vulkan\Thirdparty\glslang\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\Include\InitializeGlobals.h">
+      <Filter>Vulkan\Thirdparty\glslang\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\Include\intermediate.h">
+      <Filter>Vulkan\Thirdparty\glslang\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\Include\PoolAlloc.h">
+      <Filter>Vulkan\Thirdparty\glslang\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\Include\ResourceLimits.h">
+      <Filter>Vulkan\Thirdparty\glslang\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\Include\revision.h">
+      <Filter>Vulkan\Thirdparty\glslang\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\Include\ShHandle.h">
+      <Filter>Vulkan\Thirdparty\glslang\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\Include\Types.h">
+      <Filter>Vulkan\Thirdparty\glslang\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\attribute.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\gl_types.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\glslang_tab.cpp.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\Initialize.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\iomapper.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\LiveTraverser.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\localintermediate.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\ParseHelper.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\parseVersions.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\propagateNoContraction.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\reflection.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\RemoveTree.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\Scan.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\ScanContext.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\SymbolTable.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\Versions.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\preprocessor\PpContext.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent\preprocessor</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\MachineIndependent\preprocessor\PpTokens.h">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent\preprocessor</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\Public\ShaderLang.h">
+      <Filter>Vulkan\Thirdparty\glslang\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\glslang\OSDependent\osinclude.h">
+      <Filter>Vulkan\Thirdparty\glslang\OSDependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\OGLCompilersDLL\InitializeDll.h">
+      <Filter>Vulkan\Thirdparty\OGLCompilersDLL</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\spirv\bitutils.h">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\spirv\disassemble.h">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\spirv\doc.h">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\spirv\GLSL.ext.AMD.h">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\spirv\GLSL.ext.EXT.h">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\spirv\GLSL.ext.KHR.h">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\spirv\GLSL.ext.NV.h">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\spirv\GLSL.std.450.h">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\spirv\GlslangToSpv.h">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\spirv\hex_float.h">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\spirv\Logger.h">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\spirv\spirv.hpp">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\spirv\SpvBuilder.h">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\spirv\spvIR.h">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\spirv\SPVRemapper.h">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\spirv\SpvTools.h">
+      <Filter>Vulkan\Thirdparty\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vk_mem_alloc\vk_mem_alloc.h">
+      <Filter>Vulkan\Thirdparty\vk_mem_alloc</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\volk\volk.h">
+      <Filter>Vulkan\Thirdparty\volk</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vk_icd.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vk_layer.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vk_layer_dispatch_table.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vk_platform.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vk_sdk_platform.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vulkan.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vulkan_android.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vulkan_core.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vulkan_fuchsia.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vulkan_ggp.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vulkan_ios.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vulkan_macos.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vulkan_metal.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vulkan_mir.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vulkan_vi.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vulkan_wayland.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vulkan_win32.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vulkan_xcb.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vulkan_xlib.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\thirdparty\vulkan\vulkan_xlib_xrandr.h">
+      <Filter>Vulkan\Thirdparty\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\VKBackend.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\VKIndexBuffer.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\VKRenderDevice.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\VKTexture.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\VKVertexBuffer.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\System\VulkanBuilders.h">
+      <Filter>Vulkan\System</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\System\VulkanDevice.h">
+      <Filter>Vulkan\System</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\System\VulkanObjects.h">
+      <Filter>Vulkan\System</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\System\VulkanSwapChain.h">
+      <Filter>Vulkan\System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />
+    <None Include="Vulkan\thirdparty\glslang\MachineIndependent\glslang.y">
+      <Filter>Vulkan\Thirdparty\glslang\MachineIndependent</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenGL">
@@ -77,6 +476,57 @@
     </Filter>
     <Filter Include="OpenGL\gl_load">
       <UniqueIdentifier>{0acc1cd1-c19f-4410-95aa-718746ce8eaf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan">
+      <UniqueIdentifier>{45f63c5e-4fa1-4feb-8c38-b9e9b4b4041f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan\Thirdparty">
+      <UniqueIdentifier>{cd8c070c-024e-4da0-a946-c56028acf30c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan\Thirdparty\glslang">
+      <UniqueIdentifier>{4831b25b-8b89-42bd-90d2-66abab6b17e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan\Thirdparty\glslang\GenericCodeGen">
+      <UniqueIdentifier>{ca1f4d98-17e9-4ef9-b2e0-4f4975b505c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan\Thirdparty\glslang\Include">
+      <UniqueIdentifier>{4e983664-a724-466b-8d59-105e6205b773}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan\Thirdparty\glslang\MachineIndependent">
+      <UniqueIdentifier>{6fb01d37-fd84-4417-8486-f095275bf5ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan\Thirdparty\glslang\MachineIndependent\preprocessor">
+      <UniqueIdentifier>{8e085f63-8758-4ce3-ab03-3ca7654e8d21}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan\Thirdparty\glslang\OSDependent">
+      <UniqueIdentifier>{cc262bc5-9d5a-4d32-9a75-dc73955ec2c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan\Thirdparty\glslang\OSDependent\Unix">
+      <UniqueIdentifier>{4a6eb171-9535-449e-9eb9-72f54c007b93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan\Thirdparty\glslang\OSDependent\Windows">
+      <UniqueIdentifier>{9eb01a6b-83bd-467e-b400-bc2d54a63acd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan\Thirdparty\glslang\Public">
+      <UniqueIdentifier>{71eff276-3c61-4d22-abce-9bceec255e80}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan\Thirdparty\OGLCompilersDLL">
+      <UniqueIdentifier>{51a1d5cc-e9e5-4dd2-84cd-a55b86ca7b65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan\Thirdparty\spirv">
+      <UniqueIdentifier>{da7e22f6-5797-43e5-add7-c3b82f4ad9e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan\Thirdparty\vk_mem_alloc">
+      <UniqueIdentifier>{42916f9c-50d2-4962-ba96-a12c0587878e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan\Thirdparty\volk">
+      <UniqueIdentifier>{e4f27a1c-366b-4bbf-9fbc-b33c0a4d33c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan\Thirdparty\vulkan">
+      <UniqueIdentifier>{1d362705-9ed3-47ca-b10f-60efa4cd1d52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan\System">
+      <UniqueIdentifier>{296a5c32-1a1b-4871-b2ca-5194bb0edd4f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
