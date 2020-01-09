@@ -275,6 +275,7 @@ public:
 	void setLayout(VulkanPipelineLayout *layout);
 	void setRenderPass(VulkanRenderPass *renderPass);
 	void setTopology(VkPrimitiveTopology topology);
+	void setPolygonMode(VkPolygonMode mode);
 	void setViewport(float x, float y, float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f);
 	void setScissor(int x, int y, int width, int height);
 	void setRasterizationSamples(VkSampleCountFlagBits samples);
@@ -1181,6 +1182,11 @@ inline void GraphicsPipelineBuilder::setRenderPass(VulkanRenderPass *renderPass)
 inline void GraphicsPipelineBuilder::setTopology(VkPrimitiveTopology topology)
 {
 	inputAssembly.topology = topology;
+}
+
+inline void GraphicsPipelineBuilder::setPolygonMode(VkPolygonMode mode)
+{
+	rasterizer.polygonMode = mode;
 }
 
 inline void GraphicsPipelineBuilder::setViewport(float x, float y, float width, float height, float minDepth, float maxDepth)

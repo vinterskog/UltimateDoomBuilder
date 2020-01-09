@@ -492,6 +492,8 @@
     <ClCompile Include="Vulkan\VKBackend.cpp" />
     <ClCompile Include="Vulkan\VKIndexBuffer.cpp" />
     <ClCompile Include="Vulkan\VKRenderDevice.cpp" />
+    <ClCompile Include="Vulkan\VKRenderPass.cpp" />
+    <ClCompile Include="Vulkan\VKShaderManager.cpp" />
     <ClCompile Include="Vulkan\VKTexture.cpp" />
     <ClCompile Include="Vulkan\VKVertexBuffer.cpp" />
   </ItemGroup>
@@ -587,6 +589,8 @@
     <ClInclude Include="Vulkan\VKBackend.h" />
     <ClInclude Include="Vulkan\VKIndexBuffer.h" />
     <ClInclude Include="Vulkan\VKRenderDevice.h" />
+    <ClInclude Include="Vulkan\VKRenderPass.h" />
+    <ClInclude Include="Vulkan\VKShaderManager.h" />
     <ClInclude Include="Vulkan\VKTexture.h" />
     <ClInclude Include="Vulkan\VKVertexBuffer.h" />
   </ItemGroup>

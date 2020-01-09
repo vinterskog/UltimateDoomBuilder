@@ -57,13 +57,3 @@ void VKTexture::SetCubeImage(int size)
 	mWidth = size;
 	mHeight = size;
 }
-
-bool VKTexture::SetPixels(VKRenderDevice* device, const void* data)
-{
-	return true;
-}
-
-bool VKTexture::SetCubePixels(VKRenderDevice* device, CubeMapFace face, const void* data)
-{
-	return true;
-}

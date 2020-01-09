@@ -24,6 +24,10 @@
 #include "VKVertexBuffer.h"
 #include "VKIndexBuffer.h"
 #include "VKTexture.h"
+#include "VKShaderManager.h"
+#include "VKRenderPass.h"
+#include "System/VulkanBuilders.h"
+#include "System/VulkanSwapChain.h"
 #include <stdexcept>
 #include <cstdarg>
 #include <algorithm>
@@ -33,6 +37,24 @@ VKRenderDevice::VKRenderDevice(void* disp, void* window)
 {
 	Window = std::make_unique<Win32Window>(disp, window);
 	Device = std::make_unique<VulkanDevice>(Window.get());
+
+	swapChain = std::make_unique<VulkanSwapChain>(Device.get(), true);
+	mSwapChainImageAvailableSemaphore.reset(new VulkanSemaphore(Device.get()));
+	mRenderFinishedSemaphore.reset(new VulkanSemaphore(Device.get()));
+
+	for (auto& semaphore : mSubmitSemaphore)
+		semaphore.reset(new VulkanSemaphore(Device.get()));
+
+	for (auto& fence : mSubmitFence)
+		fence.reset(new VulkanFence(Device.get()));
+
+	for (int i = 0; i < maxConcurrentSubmitCount; i++)
+		mSubmitWaitFences[i] = mSubmitFence[i]->fence;
+
+	mCommandPool.reset(new VulkanCommandPool(Device.get(), Device->graphicsFamily));
+
+	mShaderManager = std::make_unique<VkShaderManager>(this);
+	mRenderPassManager = std::make_unique<VkRenderPassManager>(this);
 }
 
 VKRenderDevice::~VKRenderDevice()
@@ -51,6 +73,7 @@ void VKRenderDevice::DeclareUniform(UniformName name, const char* glslname, Unif
 
 void VKRenderDevice::DeclareShader(ShaderName index, const char* name, const char* vertexshader, const char* fragmentshader)
 {
+	mShaderManager->DeclareShader(index, name, vertexshader, fragmentshader);
 }
 
 void VKRenderDevice::SetVertexBuffer(VertexBuffer* ibuffer)
@@ -249,4 +272,144 @@ void VKRenderDevice::ProcessDeleteList(bool finalize)
 	mDeleteList.IndexBuffers.clear();
 	mDeleteList.VertexBuffers.clear();
 	mDeleteList.Textures.clear();
+}
+
+VulkanCommandBuffer* VKRenderDevice::GetTransferCommands()
+{
+	if (!mTransferCommands)
+	{
+		mTransferCommands = mCommandPool->createBuffer();
+		mTransferCommands->SetDebugName("VKRenderDevice.mTransferCommands");
+		mTransferCommands->begin();
+	}
+	return mTransferCommands.get();
+}
+
+VulkanCommandBuffer* VKRenderDevice::GetDrawCommands()
+{
+	if (!mDrawCommands)
+	{
+		mDrawCommands = mCommandPool->createBuffer();
+		mDrawCommands->SetDebugName("VKRenderDevice.mDrawCommands");
+		mDrawCommands->begin();
+	}
+	return mDrawCommands.get();
+}
+
+void VKRenderDevice::DeleteFrameObjects()
+{
+	FrameDeleteList.Images.clear();
+	FrameDeleteList.ImageViews.clear();
+	FrameDeleteList.Framebuffers.clear();
+	FrameDeleteList.Buffers.clear();
+	FrameDeleteList.Descriptors.clear();
+	FrameDeleteList.DescriptorPools.clear();
+	FrameDeleteList.CommandBuffers.clear();
+}
+
+void VKRenderDevice::FlushCommands(VulkanCommandBuffer** commands, size_t count, bool finish, bool lastsubmit)
+{
+	int currentIndex = mNextSubmit % maxConcurrentSubmitCount;
+
+	if (mNextSubmit >= maxConcurrentSubmitCount)
+	{
+		vkWaitForFences(Device->device, 1, &mSubmitFence[currentIndex]->fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+		vkResetFences(Device->device, 1, &mSubmitFence[currentIndex]->fence);
+	}
+
+	QueueSubmit submit;
+
+	for (size_t i = 0; i < count; i++)
+		submit.addCommandBuffer(commands[i]);
+
+	if (mNextSubmit > 0)
+		submit.addWait(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, mSubmitSemaphore[(mNextSubmit - 1) % maxConcurrentSubmitCount].get());
+
+	if (finish && presentImageIndex != 0xffffffff)
+	{
+		submit.addWait(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, mSwapChainImageAvailableSemaphore.get());
+		submit.addSignal(mRenderFinishedSemaphore.get());
+	}
+
+	if (!lastsubmit)
+		submit.addSignal(mSubmitSemaphore[currentIndex].get());
+
+	submit.execute(Device.get(), Device->graphicsQueue, mSubmitFence[currentIndex].get());
+	mNextSubmit++;
+}
+
+void VKRenderDevice::FlushCommands(bool finish, bool lastsubmit)
+{
+	EndRenderPass();
+
+	if (mDrawCommands || mTransferCommands)
+	{
+		VulkanCommandBuffer* commands[2];
+		size_t count = 0;
+
+		if (mTransferCommands)
+		{
+			mTransferCommands->end();
+			commands[count++] = mTransferCommands.get();
+			FrameDeleteList.CommandBuffers.push_back(std::move(mTransferCommands));
+		}
+
+		if (mDrawCommands)
+		{
+			mDrawCommands->end();
+			commands[count++] = mDrawCommands.get();
+			FrameDeleteList.CommandBuffers.push_back(std::move(mDrawCommands));
+		}
+
+		FlushCommands(commands, count, finish, lastsubmit);
+	}
+}
+
+void VKRenderDevice::WaitForCommands(bool finish)
+{
+	if (finish)
+	{
+		presentImageIndex = swapChain->acquireImage(GetClientWidth(), GetClientHeight(), mSwapChainImageAvailableSemaphore.get());
+		if (presentImageIndex != 0xffffffff)
+			DrawPresentTexture();
+	}
+
+	FlushCommands(finish, true);
+
+	if (finish && presentImageIndex != 0xffffffff)
+	{
+		swapChain->queuePresent(presentImageIndex, mRenderFinishedSemaphore.get());
+	}
+
+	int numWaitFences = std::min(mNextSubmit, (int)maxConcurrentSubmitCount);
+	if (numWaitFences > 0)
+	{
+		vkWaitForFences(Device->device, numWaitFences, mSubmitWaitFences, VK_TRUE, std::numeric_limits<uint64_t>::max());
+		vkResetFences(Device->device, numWaitFences, mSubmitWaitFences);
+	}
+
+	DeleteFrameObjects();
+	mNextSubmit = 0;
+}
+
+void VKRenderDevice::EndRenderPass()
+{
+}
+
+void VKRenderDevice::DrawPresentTexture()
+{
+}
+
+int VKRenderDevice::GetClientWidth()
+{
+	RECT box = { 0 };
+	GetClientRect((HWND)Window->window, &box);
+	return box.right - box.left;
+}
+
+int VKRenderDevice::GetClientHeight()
+{
+	RECT box = { 0 };
+	GetClientRect((HWND)Window->window, &box);
+	return box.bottom - box.top;
 }

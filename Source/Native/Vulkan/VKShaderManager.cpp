@@ -1,4 +1,4 @@
-/*
+﻿/*
 **  BuilderNative Renderer
 **  Copyright (c) 2019 Magnus Norddahl
 **
@@ -19,34 +19,19 @@
 **  3. This notice may not be removed or altered from any source distribution.
 */
 
-#pragma once
+#include "Precomp.h"
+#include "VKShaderManager.h"
 
-#include "../Backend.h"
-#include <list>
-
-class VKRenderDevice;
-
-class VKTexture : public Texture
+VkShaderManager::VkShaderManager(VKRenderDevice* fb) : fb(fb)
 {
-public:
-	VKTexture();
-	~VKTexture();
+}
 
-	void Finalize();
+void VkShaderManager::DeclareShader(ShaderName index, const char* name, const char* vertexshader, const char* fragmentshader)
+{
+	// To do: compile the shaders
+}
 
-	void Set2DImage(int width, int height) override;
-	void SetCubeImage(int size) override;
-
-	bool IsCubeTexture() const { return mCubeTexture; }
-	int GetWidth() const { return mWidth; }
-	int GetHeight() const { return mHeight; }
-
-	VKRenderDevice* Device = nullptr;
-	std::list<VKTexture*>::iterator ItTexture;
-
-private:
-	int mWidth = 0;
-	int mHeight = 0;
-	bool mCubeTexture = false;
-	bool mPBOTexture = false;
-};
+VkShaderProgram* VkShaderManager::Get(ShaderName index, bool alphatest)
+{
+	return alphatest ? mShadersAlphaTest[index].get() : mShaders[index].get();
+}

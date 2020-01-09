@@ -21,32 +21,25 @@
 
 #pragma once
 
-#include "../Backend.h"
-#include <list>
+#include "VKRenderDevice.h"
 
-class VKRenderDevice;
-
-class VKTexture : public Texture
+class VkShaderProgram
 {
 public:
-	VKTexture();
-	~VKTexture();
+	std::unique_ptr<VulkanShader> vert;
+	std::unique_ptr<VulkanShader> frag;
+};
 
-	void Finalize();
+class VkShaderManager
+{
+public:
+	VkShaderManager(VKRenderDevice* fb);
 
-	void Set2DImage(int width, int height) override;
-	void SetCubeImage(int size) override;
-
-	bool IsCubeTexture() const { return mCubeTexture; }
-	int GetWidth() const { return mWidth; }
-	int GetHeight() const { return mHeight; }
-
-	VKRenderDevice* Device = nullptr;
-	std::list<VKTexture*>::iterator ItTexture;
+	void DeclareShader(ShaderName index, const char* name, const char* vertexshader, const char* fragmentshader);
+	VkShaderProgram* Get(ShaderName index, bool alphatest);
 
 private:
-	int mWidth = 0;
-	int mHeight = 0;
-	bool mCubeTexture = false;
-	bool mPBOTexture = false;
+	VKRenderDevice* fb = nullptr;
+	std::map<ShaderName, std::unique_ptr<VkShaderProgram>> mShaders;
+	std::map<ShaderName, std::unique_ptr<VkShaderProgram>> mShadersAlphaTest;
 };

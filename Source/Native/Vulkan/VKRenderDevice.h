@@ -23,14 +23,15 @@
 
 #include "../Backend.h"
 #include "System/VulkanDevice.h"
+#include "System/VulkanObjects.h"
 #include <list>
 
 class VKSharedVertexBuffer;
-class VKShader;
-class VKShaderManager;
 class VKVertexBuffer;
 class VKIndexBuffer;
 class VKTexture;
+class VkRenderPassManager;
+class VkShaderManager;
 
 class VKRenderDevice : public RenderDevice
 {
@@ -82,6 +83,17 @@ public:
 
 	void ProcessDeleteList(bool finalize = false);
 
+	VkShaderManager* GetShaderManager() { return mShaderManager.get(); }
+	VkRenderPassManager* GetRenderPassManager() { return mRenderPassManager.get(); }
+
+	VulkanCommandBuffer* GetTransferCommands();
+	VulkanCommandBuffer* GetDrawCommands();
+
+	void EndRenderPass();
+
+	void FlushCommands(bool finish, bool lastsubmit = false);
+	void WaitForCommands(bool finish);
+
 	std::unique_ptr<VKSharedVertexBuffer> mSharedVertexBuffers[2];
 
 	std::list<VKTexture*> mTextures;
@@ -90,11 +102,48 @@ public:
 	std::unique_ptr<VulkanDevice> Device;
 	std::unique_ptr<Win32Window> Window;
 
+	std::unique_ptr<VulkanSwapChain> swapChain;
+	uint32_t presentImageIndex = 0xffffffff;
+
+	struct FrameDeleteList
+	{
+		std::vector<std::unique_ptr<VulkanImage>> Images;
+		std::vector<std::unique_ptr<VulkanImageView>> ImageViews;
+		std::vector<std::unique_ptr<VulkanFramebuffer>> Framebuffers;
+		std::vector<std::unique_ptr<VulkanBuffer>> Buffers;
+		std::vector<std::unique_ptr<VulkanDescriptorSet>> Descriptors;
+		std::vector<std::unique_ptr<VulkanDescriptorPool>> DescriptorPools;
+		std::vector<std::unique_ptr<VulkanCommandBuffer>> CommandBuffers;
+	} FrameDeleteList;
+
 private:
+	void DeleteFrameObjects();
+	void FlushCommands(VulkanCommandBuffer** commands, size_t count, bool finish, bool lastsubmit);
+
+	int GetClientWidth();
+	int GetClientHeight();
+	void DrawPresentTexture();
+
+	std::unique_ptr<VulkanCommandPool> mCommandPool;
+	std::unique_ptr<VulkanCommandBuffer> mDrawCommands;
+	std::unique_ptr<VulkanCommandBuffer> mTransferCommands;
+
+	enum { maxConcurrentSubmitCount = 8 };
+	std::unique_ptr<VulkanSemaphore> mSubmitSemaphore[maxConcurrentSubmitCount];
+	std::unique_ptr<VulkanFence> mSubmitFence[maxConcurrentSubmitCount];
+	VkFence mSubmitWaitFences[maxConcurrentSubmitCount];
+	int mNextSubmit = 0;
+
+	std::unique_ptr<VulkanSemaphore> mSwapChainImageAvailableSemaphore;
+	std::unique_ptr<VulkanSemaphore> mRenderFinishedSemaphore;
+
 	struct DeleteList
 	{
 		std::vector<VKVertexBuffer*> VertexBuffers;
 		std::vector<VKIndexBuffer*> IndexBuffers;
 		std::vector<VKTexture*> Textures;
 	} mDeleteList;
+
+	std::unique_ptr<VkShaderManager> mShaderManager;
+	std::unique_ptr<VkRenderPassManager> mRenderPassManager;
 };
