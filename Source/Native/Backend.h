@@ -29,7 +29,7 @@ enum class VertexFormat : int32_t { Flat, World };
 enum class DeclarationUsage : int32_t { Position, Color, TextureCoordinate, Normal };
 
 enum class Cull : int { None, Clockwise };
-enum class Blend : int { InverseSourceAlpha, SourceAlpha, One };
+enum class Blend : int { InverseSourceAlpha, SourceAlpha, One, Zero };
 enum class BlendOperation : int { Add, ReverseSubtract };
 enum class FillMode : int { Solid, Wireframe };
 enum class TextureAddress : int { Wrap, Clamp };

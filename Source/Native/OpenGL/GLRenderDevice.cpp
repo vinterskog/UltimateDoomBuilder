@@ -775,7 +775,7 @@ bool GLRenderDevice::ApplyBlendState()
 	if (mAlphaBlend)
 	{
 		static const GLenum blendOp2GL[] = { GL_FUNC_ADD, GL_FUNC_REVERSE_SUBTRACT };
-		static const GLenum blendFunc2GL[] = { GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE };
+		static const GLenum blendFunc2GL[] = { GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE, GL_ZERO };
 
 		glEnable(GL_BLEND);
 		glBlendEquation(blendOp2GL[(int)mBlendOperation]);
