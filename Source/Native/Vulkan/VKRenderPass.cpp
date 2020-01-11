@@ -31,14 +31,14 @@ VkRenderPassManager::VkRenderPassManager(VKRenderDevice* fb) : fb(fb)
 
 VkRenderPassManager::~VkRenderPassManager()
 {
-	StreamSet.reset(); // Needed since it must come before destruction of StreamDescriptorPool
+	UniformSet.reset(); // Needed since it must come before destruction of UniformDescriptorPool
 }
 
 void VkRenderPassManager::Init()
 {
-	CreateStreamSetLayout();
+	CreateUniformSetLayout();
 	CreateDescriptorPool();
-	CreateStreamSet();
+	CreateUniformSet();
 }
 
 void VkRenderPassManager::RenderBuffersReset()
@@ -103,13 +103,13 @@ VkVertexFormat* VkRenderPassManager::GetVertexFormat(int index)
 	return &VertexFormats[index];
 }
 
-void VkRenderPassManager::CreateStreamSetLayout()
+void VkRenderPassManager::CreateUniformSetLayout()
 {
 	DescriptorSetLayoutBuilder builder;
 	builder.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 	builder.addBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-	StreamSetLayout = builder.create(fb->Device.get());
-	StreamSetLayout->SetDebugName("VkRenderPassManager.StreamSetLayout");
+	UniformSetLayout = builder.create(fb->Device.get());
+	UniformSetLayout->SetDebugName("VkRenderPassManager.UniformSetLayout");
 }
 
 VulkanDescriptorSetLayout* VkRenderPassManager::GetTextureSetLayout(int numLayers)
@@ -141,7 +141,7 @@ VulkanPipelineLayout* VkRenderPassManager::GetPipelineLayout(int numLayers)
 		return layout.get();
 
 	PipelineLayoutBuilder builder;
-	builder.addSetLayout(StreamSetLayout.get());
+	builder.addSetLayout(UniformSetLayout.get());
 	if (numLayers != 0)
 		builder.addSetLayout(GetTextureSetLayout(numLayers));
 	//builder.addPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants));
@@ -155,22 +155,22 @@ void VkRenderPassManager::CreateDescriptorPool()
 	DescriptorPoolBuilder builder;
 	builder.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 2);
 	builder.setMaxSets(1);
-	StreamDescriptorPool = builder.create(fb->Device.get());
-	StreamDescriptorPool->SetDebugName("VkRenderPassManager.StreamDescriptorPool");
+	UniformDescriptorPool = builder.create(fb->Device.get());
+	UniformDescriptorPool->SetDebugName("VkRenderPassManager.UniformDescriptorPool");
 }
 
-void VkRenderPassManager::CreateStreamSet()
+void VkRenderPassManager::CreateUniformSet()
 {
-	StreamSet = StreamDescriptorPool->allocate(StreamSetLayout.get());
-	if (!StreamSet)
-		throw std::runtime_error("CreateStreamSet failed");
+	UniformSet = UniformDescriptorPool->allocate(UniformSetLayout.get());
+	if (!UniformSet)
+		throw std::runtime_error("CreateUniformSet failed");
 }
 
-void VkRenderPassManager::UpdateStreamSet()
+void VkRenderPassManager::UpdateUniformSet()
 {
 	/*WriteDescriptors update;
-	update.addBuffer(StreamSet.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->MatrixBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(MatricesUBO));
-	update.addBuffer(StreamSet.get(), 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->StreamBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(StreamUBO));
+	update.addBuffer(UniformSet.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->MatrixBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(MatricesUBO));
+	update.addBuffer(UniformSet.get(), 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->StreamBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(StreamUBO));
 	update.updateSets(fb->Device.get());*/
 }
 
@@ -310,7 +310,7 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 	static const VkStencilOp op2vk[] = { VK_STENCIL_OP_KEEP, VK_STENCIL_OP_INCREMENT_AND_CLAMP, VK_STENCIL_OP_DECREMENT_AND_CLAMP };
 	static const VkCompareOp depthfunc2vk[] = { VK_COMPARE_OP_LESS, VK_COMPARE_OP_LESS_OR_EQUAL, VK_COMPARE_OP_ALWAYS };
 	static const VkBlendOp blendvk[] = { VK_BLEND_OP_ADD, VK_BLEND_OP_REVERSE_SUBTRACT };
-	static const VkBlendFactor blendfactorvk[] = { VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE };
+	static const VkBlendFactor blendfactorvk[] = { VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO };
 	static const VkPolygonMode vkpolymode[] = { VK_POLYGON_MODE_FILL, VK_POLYGON_MODE_LINE };
 
 	builder.setTopology(vktopology[(int)key.DrawType]);
@@ -326,7 +326,10 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 
 	builder.setColorWriteMask((VkColorComponentFlags)key.ColorMask);
 	builder.setStencil(VK_STENCIL_OP_KEEP, op2vk[key.StencilPassOp], VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL, 0xffffffff, 0xffffffff, 0);
-	builder.setBlendMode(blendvk[(int)key.BlendOp], blendfactorvk[(int)key.SrcBlend], blendfactorvk[(int)key.DestBlend]);
+
+	bool blendEnable = !(key.BlendOp == BlendOperation::Add && key.SrcBlend == Blend::One && key.DestBlend == Blend::Zero);
+	if (blendEnable)
+		builder.setBlendMode(blendvk[(int)key.BlendOp], blendfactorvk[(int)key.SrcBlend], blendfactorvk[(int)key.DestBlend]);
 	builder.setSubpassColorAttachmentCount(1);
 	builder.setRasterizationSamples((VkSampleCountFlagBits)PassKey.Samples);
 

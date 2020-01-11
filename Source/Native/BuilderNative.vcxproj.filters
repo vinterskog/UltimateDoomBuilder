@@ -194,6 +194,9 @@
     <ClCompile Include="Vulkan\VKShaderManager.cpp">
       <Filter>Vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="Vulkan\VKImageTransition.cpp">
+      <Filter>Vulkan</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Precomp.h" />
@@ -473,6 +476,9 @@
       <Filter>Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="Vulkan\VKShaderManager.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan\VKImageTransition.h">
       <Filter>Vulkan</Filter>
     </ClInclude>
   </ItemGroup>

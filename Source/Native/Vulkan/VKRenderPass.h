@@ -111,7 +111,7 @@ public:
 
 	void Init();
 	void RenderBuffersReset();
-	void UpdateStreamSet();
+	void UpdateUniformSet();
 	void TextureSetPoolReset();
 
 	VkRenderPassSetup* GetRenderPass(const VkRenderPassKey& key);
@@ -122,15 +122,15 @@ public:
 	std::unique_ptr<VulkanDescriptorSet> AllocateTextureDescriptorSet(int numLayers);
 	VulkanPipelineLayout* GetPipelineLayout(int numLayers);
 
-	std::unique_ptr<VulkanDescriptorSetLayout> StreamSetLayout;
+	std::unique_ptr<VulkanDescriptorSetLayout> UniformSetLayout;
 	std::map<VkRenderPassKey, std::unique_ptr<VkRenderPassSetup>> RenderPassSetup;
 
-	std::unique_ptr<VulkanDescriptorSet> StreamSet;
+	std::unique_ptr<VulkanDescriptorSet> UniformSet;
 
 private:
-	void CreateStreamSetLayout();
+	void CreateUniformSetLayout();
 	void CreateDescriptorPool();
-	void CreateStreamSet();
+	void CreateUniformSet();
 
 	VulkanDescriptorSetLayout* GetTextureSetLayout(int numLayers);
 
@@ -138,7 +138,7 @@ private:
 	int TextureDescriptorSetsLeft = 0;
 	int TextureDescriptorsLeft = 0;
 	std::vector<std::unique_ptr<VulkanDescriptorPool>> TextureDescriptorPools;
-	std::unique_ptr<VulkanDescriptorPool> StreamDescriptorPool;
+	std::unique_ptr<VulkanDescriptorPool> UniformDescriptorPool;
 	std::vector<std::unique_ptr<VulkanDescriptorSetLayout>> TextureSetLayouts;
 	std::vector<std::unique_ptr<VulkanPipelineLayout>> PipelineLayouts;
 	std::vector<VkVertexFormat> VertexFormats;

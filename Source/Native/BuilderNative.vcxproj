@@ -490,6 +490,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Vulkan\VKBackend.cpp" />
+    <ClCompile Include="Vulkan\VKImageTransition.cpp" />
     <ClCompile Include="Vulkan\VKIndexBuffer.cpp" />
     <ClCompile Include="Vulkan\VKRenderDevice.cpp" />
     <ClCompile Include="Vulkan\VKRenderPass.cpp" />
@@ -587,6 +588,7 @@
     <ClInclude Include="Vulkan\thirdparty\vulkan\vulkan_xlib.h" />
     <ClInclude Include="Vulkan\thirdparty\vulkan\vulkan_xlib_xrandr.h" />
     <ClInclude Include="Vulkan\VKBackend.h" />
+    <ClInclude Include="Vulkan\VKImageTransition.h" />
     <ClInclude Include="Vulkan\VKIndexBuffer.h" />
     <ClInclude Include="Vulkan\VKRenderDevice.h" />
     <ClInclude Include="Vulkan\VKRenderPass.h" />

@@ -24,6 +24,7 @@
 #include "../Backend.h"
 #include "System/VulkanDevice.h"
 #include "System/VulkanObjects.h"
+#include "VKRenderPass.h"
 #include <list>
 
 class VKSharedVertexBuffer;
@@ -32,6 +33,7 @@ class VKIndexBuffer;
 class VKTexture;
 class VkRenderPassManager;
 class VkShaderManager;
+class VkTextureImage;
 
 class VKRenderDevice : public RenderDevice
 {
@@ -89,8 +91,6 @@ public:
 	VulkanCommandBuffer* GetTransferCommands();
 	VulkanCommandBuffer* GetDrawCommands();
 
-	void EndRenderPass();
-
 	void FlushCommands(bool finish, bool lastsubmit = false);
 	void WaitForCommands(bool finish);
 
@@ -120,6 +120,22 @@ private:
 	void DeleteFrameObjects();
 	void FlushCommands(VulkanCommandBuffer** commands, size_t count, bool finish, bool lastsubmit);
 
+	void Apply(PrimitiveType drawtype);
+	void ApplyBlendState();
+	void ApplyPipeline(PrimitiveType drawtype);
+	void ApplyScissor();
+	void ApplyViewport();
+	void ApplyStencilRef();
+	void ApplyDepthBias();
+	void ApplyPushConstants();
+	void ApplyVertexBuffer();
+	void ApplyIndexBuffer();
+	void ApplyUniformSet();
+	void ApplyMaterial();
+
+	void BeginRenderPass(bool clear, int backcolor, Texture* target, bool usedepthbuffer);
+	void EndRenderPass();
+
 	int GetClientWidth();
 	int GetClientHeight();
 	void DrawPresentTexture();
@@ -146,4 +162,56 @@ private:
 
 	std::unique_ptr<VkShaderManager> mShaderManager;
 	std::unique_ptr<VkRenderPassManager> mRenderPassManager;
+
+	struct RenderTarget
+	{
+		VkTextureImage* Image = nullptr;
+		VulkanImageView* DepthStencil = nullptr;
+		int Width = 0;
+		int Height = 0;
+	} mRenderTarget;
+
+	struct SceneBuffers
+	{
+		std::unique_ptr<VkTextureImage> Image;
+		std::unique_ptr<VkTextureImage> DepthStencil;
+		int Width = 0;
+		int Height = 0;
+	} mSceneBuffers;
+
+	int mApplyCount = 0;
+
+	int mVertexBufferStartIndex = 0;
+
+	int mViewportX = 0;
+	int mViewportY = 0;
+	int mViewportWidth = -1;
+	int mViewportHeight = -1;
+	float mViewportDepthMin = 0.0f;
+	float mViewportDepthMax = 1.0f;
+
+	int mScissorX = 0;
+	int mScissorY = 0;
+	int mScissorWidth = -1;
+	int mScissorHeight = -1;
+
+	bool mAlphaBlend = false;
+	BlendOperation mBlendOperation = BlendOperation::Add;
+	Blend mSourceBlend = Blend::SourceAlpha;
+	Blend mDestinationBlend = Blend::InverseSourceAlpha;
+
+	bool mNeedApply = true;
+	bool mScissorChanged = true;
+	bool mViewportChanged = true;
+	bool mMaterialChanged = true;
+	bool mStencilRefChanged = true;
+	bool mDepthBiasChanged = true;
+	bool mBlendStateChanged = true;
+	bool mNeedPipeline = true;
+
+	VkPipelineKey mPipelineKey = {};
+	VkPipelineKey mBoundPipelineKey = {};
+
+	VulkanCommandBuffer* mCommandBuffer = nullptr;
+	VkRenderPassSetup* mPassSetup = nullptr;
 };

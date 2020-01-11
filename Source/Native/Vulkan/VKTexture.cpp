@@ -22,6 +22,7 @@
 #include "Precomp.h"
 #include "VKTexture.h"
 #include "VKRenderDevice.h"
+#include "VKImageTransition.h"
 #include <stdexcept>
 
 VKTexture::VKTexture()

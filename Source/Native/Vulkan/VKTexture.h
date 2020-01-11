@@ -25,6 +25,7 @@
 #include <list>
 
 class VKRenderDevice;
+class VkTextureImage;
 
 class VKTexture : public Texture
 {
@@ -43,6 +44,9 @@ public:
 
 	VKRenderDevice* Device = nullptr;
 	std::list<VKTexture*>::iterator ItTexture;
+
+	std::unique_ptr<VkTextureImage> Image;
+	std::unique_ptr<VkTextureImage> DepthStencil;
 
 private:
 	int mWidth = 0;

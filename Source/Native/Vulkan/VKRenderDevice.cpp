@@ -26,12 +26,21 @@
 #include "VKTexture.h"
 #include "VKShaderManager.h"
 #include "VKRenderPass.h"
+#include "VKImageTransition.h"
 #include "System/VulkanBuilders.h"
 #include "System/VulkanSwapChain.h"
 #include <stdexcept>
 #include <cstdarg>
 #include <algorithm>
 #include <cmath>
+
+namespace
+{
+	template<typename T> T clamp(T value, T minval, T maxval)
+	{
+		return std::max<T>(std::min<T>(value, maxval), minval);
+	}
+}
 
 VKRenderDevice::VKRenderDevice(void* disp, void* window)
 {
@@ -76,40 +85,71 @@ void VKRenderDevice::DeclareShader(ShaderName index, const char* name, const cha
 	mShaderManager->DeclareShader(index, name, vertexshader, fragmentshader);
 }
 
-void VKRenderDevice::SetVertexBuffer(VertexBuffer* ibuffer)
-{
-}
-
-void VKRenderDevice::SetIndexBuffer(IndexBuffer* buffer)
-{
-}
-
 void VKRenderDevice::SetAlphaBlendEnable(bool value)
 {
+	if (mAlphaBlend != value)
+	{
+		mAlphaBlend = value;
+		mNeedApply = true;
+		mBlendStateChanged = true;
+	}
 }
 
 void VKRenderDevice::SetAlphaTestEnable(bool value)
 {
+	if (mPipelineKey.AlphaTest != (int)value)
+	{
+		mPipelineKey.AlphaTest = value;
+		mNeedApply = true;
+	}
 }
 
 void VKRenderDevice::SetCullMode(Cull mode)
 {
+	if (mPipelineKey.CullMode != mode)
+	{
+		mPipelineKey.CullMode = mode;
+		mNeedApply = true;
+	}
 }
 
 void VKRenderDevice::SetBlendOperation(BlendOperation op)
 {
+	if (mBlendOperation != op)
+	{
+		mBlendOperation = op;
+		mNeedApply = true;
+		mBlendStateChanged = true;
+	}
 }
 
 void VKRenderDevice::SetSourceBlend(Blend blend)
 {
+	if (mSourceBlend != blend)
+	{
+		mSourceBlend = blend;
+		mNeedApply = true;
+		mBlendStateChanged = true;
+	}
 }
 
 void VKRenderDevice::SetDestinationBlend(Blend blend)
 {
+	if (mDestinationBlend != blend)
+	{
+		mDestinationBlend = blend;
+		mNeedApply = true;
+		mBlendStateChanged = true;
+	}
 }
 
 void VKRenderDevice::SetFillMode(FillMode mode)
 {
+	if (mPipelineKey.Fill != mode)
+	{
+		mPipelineKey.Fill = mode;
+		mNeedApply = true;
+	}
 }
 
 void VKRenderDevice::SetMultisampleAntialias(bool value)
@@ -118,9 +158,27 @@ void VKRenderDevice::SetMultisampleAntialias(bool value)
 
 void VKRenderDevice::SetZEnable(bool value)
 {
+	if (mPipelineKey.DepthTest != (int)value)
+	{
+		mPipelineKey.DepthTest = value;
+		mNeedApply = true;
+	}
 }
 
 void VKRenderDevice::SetZWriteEnable(bool value)
+{
+	if (mPipelineKey.DepthWrite != (int)value)
+	{
+		mPipelineKey.DepthWrite = value;
+		mNeedApply = true;
+	}
+}
+
+void VKRenderDevice::SetVertexBuffer(VertexBuffer* ibuffer)
+{
+}
+
+void VKRenderDevice::SetIndexBuffer(IndexBuffer* buffer)
 {
 }
 
@@ -138,11 +196,29 @@ void VKRenderDevice::SetSamplerState(TextureAddress address)
 
 bool VKRenderDevice::Draw(PrimitiveType type, int startIndex, int primitiveCount)
 {
+	static const int toVertexCount[] = { 2, 3, 1 };
+	static const int toVertexStart[] = { 0, 0, 2 };
+
+	if (mNeedApply)
+		Apply(type);
+
+	int vertexCount = toVertexStart[(int)type] + primitiveCount * toVertexCount[(int)type];
+	mCommandBuffer->draw(vertexCount, 1, mVertexBufferStartIndex + startIndex, 0);
+
 	return true;
 }
 
 bool VKRenderDevice::DrawIndexed(PrimitiveType type, int startIndex, int primitiveCount)
 {
+	static const int toVertexCount[] = { 2, 3, 1 };
+	static const int toVertexStart[] = { 0, 0, 2 };
+
+	if (mNeedApply)
+		Apply(type);
+
+	int vertexCount = toVertexStart[(int)type] + primitiveCount * toVertexCount[(int)type];
+	mCommandBuffer->drawIndexed(vertexCount, 1, startIndex, mVertexBufferStartIndex, 0);
+
 	return true;
 }
 
@@ -151,18 +227,34 @@ bool VKRenderDevice::DrawData(PrimitiveType type, int startIndex, int primitiveC
 	return true;
 }
 
-bool VKRenderDevice::StartRendering(bool clear, int backcolor, Texture* itarget, bool usedepthbuffer)
+bool VKRenderDevice::StartRendering(bool clear, int backcolor, Texture* target, bool usedepthbuffer)
 {
+	BeginRenderPass(clear, backcolor, target, usedepthbuffer);
+
+	mViewportX = 0;
+	mViewportY = 0;
+	mViewportWidth = mRenderTarget.Width;
+	mViewportHeight = mRenderTarget.Height;
+	mViewportChanged = true;
+
+	mScissorX = 0;
+	mScissorY = 0;
+	mScissorWidth = mRenderTarget.Width;
+	mScissorHeight = mRenderTarget.Height;
+	mScissorChanged = true;
+
 	return true;
 }
 
 bool VKRenderDevice::FinishRendering()
 {
+	EndRenderPass();
 	return true;
 }
 
 bool VKRenderDevice::Present()
 {
+	FlushCommands(true, true);
 	return true;
 }
 
@@ -213,9 +305,181 @@ bool VKRenderDevice::UnmapPBO(Texture* itexture)
 
 void VKRenderDevice::SetShader(ShaderName name)
 {
+	if (mPipelineKey.Shader != name)
+	{
+		mPipelineKey.Shader = name;
+		mNeedApply = true;
+	}
 }
 
 void VKRenderDevice::SetUniform(UniformName name, const void* values, int count, int bytesize)
+{
+}
+
+void VKRenderDevice::Apply(PrimitiveType drawtype)
+{
+	mApplyCount++;
+	if (mApplyCount >= 1000)
+	{
+		FlushCommands(false);
+		mApplyCount = 0;
+	}
+
+	ApplyBlendState();
+	ApplyPipeline(drawtype);
+	ApplyVertexBuffer();
+	ApplyIndexBuffer();
+	ApplyScissor();
+	ApplyViewport();
+	ApplyStencilRef();
+	ApplyDepthBias();
+	ApplyUniformSet();
+	ApplyPushConstants();
+	ApplyMaterial();
+	mNeedApply = false;
+}
+
+void VKRenderDevice::ApplyBlendState()
+{
+	if (mBlendStateChanged)
+	{
+		if (mAlphaBlend)
+		{
+			mPipelineKey.BlendOp = mBlendOperation;
+			mPipelineKey.SrcBlend = mSourceBlend;
+			mPipelineKey.DestBlend = mDestinationBlend;
+		}
+		else
+		{
+			mPipelineKey.BlendOp = BlendOperation::Add;
+			mPipelineKey.SrcBlend = Blend::One;
+			mPipelineKey.DestBlend = Blend::Zero;
+		}
+
+		mBlendStateChanged = false;
+	}
+}
+
+void VKRenderDevice::ApplyPipeline(PrimitiveType drawtype)
+{
+	mPipelineKey.DrawType = drawtype;
+
+	if (mNeedPipeline || mBoundPipelineKey != mPipelineKey)
+	{
+		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, mPassSetup->GetPipeline(mPipelineKey));
+		mBoundPipelineKey = mPipelineKey;
+	}
+}
+
+void VKRenderDevice::ApplyViewport()
+{
+	if (mViewportChanged)
+	{
+		VkViewport viewport;
+		if (mViewportWidth >= 0)
+		{
+			viewport.x = (float)mViewportX;
+			viewport.y = (float)mViewportY;
+			viewport.width = (float)mViewportWidth;
+			viewport.height = (float)mViewportHeight;
+		}
+		else
+		{
+			viewport.x = 0.0f;
+			viewport.y = 0.0f;
+			viewport.width = (float)mRenderTarget.Width;
+			viewport.height = (float)mRenderTarget.Height;
+		}
+		viewport.minDepth = mViewportDepthMin;
+		viewport.maxDepth = mViewportDepthMax;
+		mCommandBuffer->setViewport(0, 1, &viewport);
+		mViewportChanged = false;
+	}
+}
+
+void VKRenderDevice::ApplyScissor()
+{
+	if (mScissorChanged)
+	{
+		VkRect2D scissor;
+		if (mScissorWidth >= 0)
+		{
+			int x0 = clamp(mScissorX, 0, mRenderTarget.Width);
+			int y0 = clamp(mScissorY, 0, mRenderTarget.Height);
+			int x1 = clamp(mScissorX + mScissorWidth, 0, mRenderTarget.Width);
+			int y1 = clamp(mScissorY + mScissorHeight, 0, mRenderTarget.Height);
+
+			scissor.offset.x = x0;
+			scissor.offset.y = y0;
+			scissor.extent.width = x1 - x0;
+			scissor.extent.height = y1 - y0;
+		}
+		else
+		{
+			scissor.offset.x = 0;
+			scissor.offset.y = 0;
+			scissor.extent.width = mRenderTarget.Width;
+			scissor.extent.height = mRenderTarget.Height;
+		}
+		mCommandBuffer->setScissor(0, 1, &scissor);
+		mScissorChanged = false;
+	}
+}
+
+void VKRenderDevice::ApplyDepthBias()
+{
+	if (mDepthBiasChanged)
+	{
+		//mCommandBuffer->setDepthBias(mDepthBiasUnits, 0.0f, mDepthBiasFactor);
+		mDepthBiasChanged = false;
+	}
+}
+
+void VKRenderDevice::ApplyStencilRef()
+{
+	if (mStencilRefChanged)
+	{
+		//mCommandBuffer->setStencilReference(VK_STENCIL_FRONT_AND_BACK, mStencilRef);
+		mStencilRefChanged = false;
+	}
+}
+
+void VKRenderDevice::ApplyVertexBuffer()
+{
+	/*if (mVertexBuffer != mLastVertexBuffer || mVertexOffset != mLastVertexOffset)
+	{
+		const VkVertexFormat* format = mRenderPassManager->GetVertexFormat(mVertexBuffer->VertexFormat);
+		VkBuffer vertexBuffer = mVertexBuffer->buffer;
+		VkDeviceSize offset = 0;
+		mCommandBuffer->bindVertexBuffers(0, 1, &vertexBuffer, &offset);
+		mLastVertexBuffer = mVertexBuffer;
+		mLastVertexOffset = mVertexOffset;
+	}*/
+}
+
+void VKRenderDevice::ApplyIndexBuffer()
+{
+	/*if (mIndexBuffer != mLastIndexBuffer && mIndexBuffer)
+	{
+		mCommandBuffer->bindIndexBuffer(static_cast<VKIndexBuffer*>(mIndexBuffer)->mBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
+		mLastIndexBuffer = mIndexBuffer;
+	}*/
+}
+
+void VKRenderDevice::ApplyMaterial()
+{
+	if (mMaterialChanged)
+	{
+		//mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 1, mMaterial->GetDescriptorSet());
+		mMaterialChanged = false;
+	}
+}
+
+void VKRenderDevice::ApplyUniformSet()
+{
+}
+
+void VKRenderDevice::ApplyPushConstants()
 {
 }
 
@@ -392,8 +656,71 @@ void VKRenderDevice::WaitForCommands(bool finish)
 	mNextSubmit = 0;
 }
 
+void VKRenderDevice::BeginRenderPass(bool clear, int backcolor, Texture* target, bool usedepthbuffer)
+{
+	EndRenderPass();
+
+	mCommandBuffer = GetDrawCommands();
+
+	if (target)
+	{
+		VKTexture* vktarget = static_cast<VKTexture*>(target);
+
+		mRenderTarget.Image = vktarget->Image.get();
+		mRenderTarget.DepthStencil = usedepthbuffer ? vktarget->DepthStencil->View.get() : nullptr;
+		mRenderTarget.Width = vktarget->GetWidth();
+		mRenderTarget.Height = vktarget->GetHeight();
+	}
+	else
+	{
+		mRenderTarget.Image = mSceneBuffers.Image.get();
+		mRenderTarget.DepthStencil = usedepthbuffer ? mSceneBuffers.DepthStencil->View.get() : nullptr;
+		mRenderTarget.Width = mSceneBuffers.Width;
+		mRenderTarget.Height = mSceneBuffers.Height;
+	}
+
+	VkRenderPassKey key = {};
+	key.DrawBufferFormat = VK_FORMAT_R8G8B8A8_UNORM;
+	key.Samples = VK_SAMPLE_COUNT_1_BIT;
+	key.DepthStencil = usedepthbuffer;
+	key.DepthStencilFormat = VK_FORMAT_D32_SFLOAT;
+
+	mPassSetup = mRenderPassManager->GetRenderPass(key);
+
+	auto& framebuffer = mRenderTarget.Image->RSFramebuffers[key];
+	if (!framebuffer)
+	{
+		FramebufferBuilder builder;
+		builder.setRenderPass(mPassSetup->GetRenderPass(false, false, false));
+		builder.setSize(mRenderTarget.Width, mRenderTarget.Height);
+		builder.addAttachment(mRenderTarget.Image->View.get());
+		if (key.DepthStencil)
+			builder.addAttachment(mRenderTarget.DepthStencil);
+		framebuffer = builder.create(Device.get());
+		framebuffer->SetDebugName("VkRenderPassSetup.Framebuffer");
+	}
+
+	RenderPassBegin beginInfo;
+	beginInfo.setRenderPass(mPassSetup->GetRenderPass(clear, clear && usedepthbuffer, false));
+	beginInfo.setRenderArea(0, 0, mRenderTarget.Width, mRenderTarget.Height);
+	beginInfo.setFramebuffer(framebuffer.get());
+	beginInfo.addClearColor(RPART(backcolor) / 255.0f, GPART(backcolor) / 255.0f, BPART(backcolor) / 255.0f, APART(backcolor) / 255.0f);
+	beginInfo.addClearDepthStencil(1.0f, 0);
+	mCommandBuffer->beginRenderPass(beginInfo);
+
+	mNeedPipeline = true;
+	mScissorChanged = true;
+	mViewportChanged = true;
+}
+
 void VKRenderDevice::EndRenderPass()
 {
+	if (mCommandBuffer)
+	{
+		mCommandBuffer->endRenderPass();
+		mCommandBuffer = nullptr;
+		mBoundPipelineKey = {};
+	}
 }
 
 void VKRenderDevice::DrawPresentTexture()
