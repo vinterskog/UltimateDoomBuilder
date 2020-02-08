@@ -158,7 +158,12 @@ namespace CodeImp.DoomBuilder.CommentsPanel
 		// This finds all comments and updates the list
 		public void UpdateList()
 		{
-			if(!preventupdate)
+			if (General.Map.IsMapBeingEdited)
+			{
+				return;
+			}
+
+			if (!preventupdate)
 			{
 				// Update vertices
 				Dictionary<string, CommentInfo> newcomments = new Dictionary<string, CommentInfo>(StringComparer.Ordinal);
@@ -606,7 +611,12 @@ namespace CodeImp.DoomBuilder.CommentsPanel
 		// Check if the add comment box should be enabled
 		private void enabledtimer_Tick(object sender, EventArgs e)
 		{
-			if(General.Editing.Mode == null) return; //mxd
+			if (General.Map.IsMapBeingEdited)
+			{
+				return;
+			}
+
+			if (General.Editing.Mode == null) return; //mxd
 			switch(General.Editing.Mode.GetType().Name)
 			{
 				case "VerticesMode":

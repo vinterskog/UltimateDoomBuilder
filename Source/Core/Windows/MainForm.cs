@@ -997,7 +997,7 @@ namespace CodeImp.DoomBuilder.Windows
 		// This redraws the display on the next paint event
 		public void RedrawDisplay()
 		{
-			if((General.Map != null) && (General.Editing.Mode != null))
+			if((General.Map != null) && (General.Editing.Mode != null) && !General.Map.IsMapBeingEdited)
 			{
 				General.Plugins.OnEditRedrawDisplayBegin();
 				General.Editing.Mode.OnRedrawDisplay();
@@ -1032,6 +1032,12 @@ namespace CodeImp.DoomBuilder.Windows
 		// Redraw requested
 		private void redrawtimer_Tick(object sender, EventArgs e)
 		{
+			// ano - prevent race conditions / deadlocks / other problems
+			if (General.Map != null && General.Map.IsMapBeingEdited)
+			{
+				return;
+			}
+
 			// Disable timer (only redraw once)
 			redrawtimer.Enabled = false;
 
@@ -4380,6 +4386,12 @@ namespace CodeImp.DoomBuilder.Windows
 		// Processor event
 		private void processor_Tick(object sender, EventArgs e)
 		{
+			// ano - prevent race conditions / deadlocks / other problems
+			if (General.Map != null && General.Map.IsMapBeingEdited)
+			{
+				return;
+			}
+
 			long curtime = Clock.CurrentTime;
 			long deltatime = curtime - lastupdatetime;
 			lastupdatetime = curtime;

@@ -1098,7 +1098,7 @@ namespace CodeImp.DoomBuilder.DBXLua
                 }
             }
 
-            //General.Map.IsMapBeingEdited = true;
+            General.Map.IsMapBeingEdited = true;
             // if our script isnt done
             // let's ask the user if they wanna keep waiting
             if (!bScriptDone && !bScriptCancelled)
@@ -1110,7 +1110,7 @@ namespace CodeImp.DoomBuilder.DBXLua
             }
 
             scriptThread.Join();
-            //General.Map.IsMapBeingEdited = false;
+            General.Map.IsMapBeingEdited = false;
 
             General.Map.ThingsFilter.Update();
 

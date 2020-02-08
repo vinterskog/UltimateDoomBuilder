@@ -118,19 +118,14 @@ namespace CodeImp.DoomBuilder.DBXLua
                 v_object = (float)((double)v_object);
             }
 
-            try
-            {
-				UniValue v;
-
-				v = new UniValue(UniversalType.Integer, v_object);
-				element.Fields.Add(key, v);
-                // element.SetField(key, v_object);
-            }
-            catch (ArgumentException)
-            {
-                
-                throw new ScriptRuntimeException("error setting UDMF field " + key + ", must be int, float, string, double or bool, instead was " + v_object.GetType().ToString());
-            }
+			if (v_object is float)
+				UniFields.SetFloat(element.Fields, key, (float)v_object);
+			else if (v_object is int)
+				UniFields.SetInteger(element.Fields, key, (int)v_object);
+			else if (v_object is string)
+				UniFields.SetString(element.Fields, key, (string)v_object, String.Empty);
+			else
+				throw new ScriptRuntimeException("error setting UDMF field " + key + ", must be int, float, string, double or bool, instead was " + v_object.GetType().ToString());
         }
         
         public static Table GetUDMFTable(MapElement element)

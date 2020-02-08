@@ -61,6 +61,8 @@ namespace CodeImp.DoomBuilder
 		private bool changed;
 		private bool scriptschanged;
 		private bool maploading; //mxd
+		private int map_being_edited; // ano - see IsMapBeingEdited
+		private object map_edited_lock; // ano - see IsMapBeingEdited
 
 		// Map information
 		private string filetitle;
@@ -126,6 +128,14 @@ namespace CodeImp.DoomBuilder
 		public bool IsScriptsWindowOpen { get { return (scriptwindow != null) && !scriptwindow.IsDisposed; } }
 		internal WADReader TemporaryMapFile { get { return tempwadreader; } } //mxd
 
+		// ano - UI stuff on a timer should check this before interacting with the map
+		// in case the map is being edited in another thread
+		public bool IsMapBeingEdited
+		{
+			get { lock (map_edited_lock) { return map_being_edited > 0; } }
+			set { lock (map_edited_lock) { if (value) { map_being_edited++; } else { map_being_edited--; } } }
+		}
+
 		//mxd. Map format
 		public bool UDMF { get { return config.UDMF; } }
 		public bool HEXEN { get { return config.HEXEN; } }
@@ -163,6 +173,9 @@ namespace CodeImp.DoomBuilder
 			//mxd
 			numberedscripts = new Dictionary<int, ScriptItem>();
 			namedscripts = new Dictionary<string, ScriptItem>(StringComparer.OrdinalIgnoreCase);
+
+			map_being_edited = 0;
+			map_edited_lock = new object();
 		}
 
 		// Disposer
