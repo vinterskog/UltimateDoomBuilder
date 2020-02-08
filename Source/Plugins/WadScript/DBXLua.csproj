@@ -1,0 +1,167 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{E5B6F6F6-F9B5-42F9-B227-49C8E5DCD41F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>CodeImp.DoomBuilder.DBXLua</RootNamespace>
+    <AssemblyName>DBXLua</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\Build\Plugins\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\Build\Plugins\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+    <NoWarn>1591</NoWarn>
+    <DebugSymbols>true</DebugSymbols>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <NoWarn>1591</NoWarn>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Builder">
+      <HintPath>..\..\..\Build\Builder.exe</HintPath>
+    </Reference>
+    <Reference Include="MoonSharp.Interpreter, Version=2.0.0.0, Culture=neutral, PublicKeyToken=921e73ce94aa17f8, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\packages\MoonSharp.2.0.0.0\lib\net40-client\MoonSharp.Interpreter.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BuilderPlug.cs" />
+    <Compile Include="DBXDebugger.cs" />
+    <Compile Include="LuaDataManager.cs" />
+    <Compile Include="LuaLine2D.cs" />
+    <Compile Include="LuaLinedef.cs" />
+    <Compile Include="LuaMap.cs" />
+    <Compile Include="LuaMapFormat.cs" />
+    <Compile Include="LuaSidedef.cs" />
+    <Compile Include="LuaThing.cs" />
+    <Compile Include="LuaTypeConversion.cs" />
+    <Compile Include="LuaUI.cs" />
+    <Compile Include="LuaVector3D.cs" />
+    <Compile Include="Pen.cs" />
+    <Compile Include="PenVertex.cs" />
+    <Compile Include="LuaSector.cs" />
+    <Compile Include="LuaVector2D.cs" />
+    <Compile Include="LuaVertex.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ScriptContext.cs" />
+    <Compile Include="ScriptErrorForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ScriptErrorForm.Designer.cs">
+      <DependentUpon>ScriptErrorForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ScriptMessageForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ScriptMessageForm.Designer.cs">
+      <DependentUpon>ScriptMessageForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ScriptMode.cs" />
+    <Compile Include="ScriptParamForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ScriptParamForm.Designer.cs">
+      <DependentUpon>ScriptParamForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ScriptTimeoutForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ScriptTimeoutForm.Designer.cs">
+      <DependentUpon>ScriptTimeoutForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ScriptWarningForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ScriptWarningForm.Designer.cs">
+      <DependentUpon>ScriptWarningForm.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Actions.cfg" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ScriptErrorForm.resx">
+      <DependentUpon>ScriptErrorForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ScriptMessageForm.resx">
+      <DependentUpon>ScriptMessageForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ScriptParamForm.resx">
+      <DependentUpon>ScriptParamForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ScriptTimeoutForm.resx">
+      <DependentUpon>ScriptTimeoutForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ScriptWarningForm.resx">
+      <DependentUpon>ScriptWarningForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="wadscripticon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy "$(TargetDir)$(TargetName)$(TargetExt)" "$(SolutionDir)Build\Plugins\$(TargetName)$(TargetExt)"
+copy "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)Build\Plugins\$(TargetName).pdb"
+copy "$(TargetDir)MoonSharp.Interpreter.dll" "$(SolutionDir)Build\Plugins\Dependencies\MoonSharp.Interpreter.dll"
+copy "$(TargetDir)MoonSharp.Interpreter.xml" "$(SolutionDir)Build\Plugins\Dependencies\MoonSharp.Interpreter.xml"
+copy "$(TargetDir)MoonSharp.Interpreter.pdb" "$(SolutionDir)Build\Plugins\Dependencies\MoonSharp.Interpreter.pdb"</PostBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

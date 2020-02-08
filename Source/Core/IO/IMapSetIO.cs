@@ -28,6 +28,7 @@ namespace CodeImp.DoomBuilder.IO
 	{
 		int MaxSidedefs { get; }
 		int VertexDecimals { get; }
+		float MinLineLength { get; }
 		string DecimalsFormat { get; }
 		int MaxVertices { get; }
 		int MaxLinedefs { get; }

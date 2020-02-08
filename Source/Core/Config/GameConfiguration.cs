@@ -59,6 +59,7 @@ namespace CodeImp.DoomBuilder.Config
 		private readonly string impassableflag;
 		private readonly string upperunpeggedflag;
 		private readonly string lowerunpeggedflag;
+		private readonly string soundlinedefflag;
 		private readonly bool mixtexturesflats;
 		private readonly bool generalizedactions;
 		private readonly bool generalizedeffects;
@@ -198,6 +199,7 @@ namespace CodeImp.DoomBuilder.Config
 		public string ImpassableFlag { get { return impassableflag; } }
 		public string UpperUnpeggedFlag { get { return upperunpeggedflag; } }
 		public string LowerUnpeggedFlag { get { return lowerunpeggedflag; } }
+		public string SoundLinedefFlag { get { return soundlinedefflag; } }
 		public bool MixTexturesFlats { get { return mixtexturesflats; } }
 		public bool GeneralizedActions { get { return generalizedactions; } }
 		public bool GeneralizedEffects { get { return generalizedeffects; } }
@@ -434,6 +436,8 @@ namespace CodeImp.DoomBuilder.Config
 			if(obj is int) upperunpeggedflag = ((int)obj).ToString(CultureInfo.InvariantCulture); else upperunpeggedflag = obj.ToString();
 			obj = cfg.ReadSettingObject("lowerunpeggedflag", 0);
 			if(obj is int) lowerunpeggedflag = ((int)obj).ToString(CultureInfo.InvariantCulture); else lowerunpeggedflag = obj.ToString();
+			obj = cfg.ReadSettingObject("soundlinedefflag", 0);
+			if (obj is int) soundlinedefflag = ((int)obj).ToString(CultureInfo.InvariantCulture); else soundlinedefflag = obj.ToString();
 
 			// Get texture and flat sources
 			textureranges = cfg.ReadSetting("textures", new Hashtable());

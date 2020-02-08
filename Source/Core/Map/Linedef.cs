@@ -99,6 +99,7 @@ namespace CodeImp.DoomBuilder.Map
 		public float LengthSq { get { return lengthsq; } }
 		public float Length { get { return length; } }
 		public float LengthInv { get { return lengthinv; } }
+		public float LengthSqInv { get { return lengthsqinv; } }
 		public float Angle { get { return angle; } }
 		public int AngleDeg { get { return (int)(angle * Angle2D.PIDEG); } }
 		public RectangleF Rect { get { return rect; } }
@@ -316,7 +317,101 @@ namespace CodeImp.DoomBuilder.Map
 			l.UpdateColorPreset();//mxd
 			base.CopyPropertiesTo(l);
 		}
-		
+
+		// ano - used for swapping indices, sort of,
+		// except not really, because we're really swapping
+		// all the data of the linedef.
+		// the reason for this approach is related to
+		// architectural complications
+		// with the way the undo system works.
+		public void SwapProperties(Linedef l)
+		{
+			/*
+			l.BeforePropsChange();
+			BeforePropsChange();
+
+			// ano - a bit ugly, but i don't see a better solution
+			// because of the inability to make a Linedef that
+			// is not a part of the MapSet and doesn't pollute
+			// the undo state either
+			int tempaction = l.action;
+			int[] tempargs = l.args;
+			Dictionary<string, bool> tempflags = l.flags;
+			int temptag = l.tag;
+			int tempactivate = l.activate;
+			bool tempimpassableflag = l.impassableflag;
+			bool tempblocksoundflag = l.blocksoundflag;
+			UniFields tempfields = l.fields;
+
+			l.fields = fields;
+			l.action = action;
+			l.args = args;
+			l.flags = flags;
+			l.tag = tag;
+			l.activate = activate;
+			l.impassableflag = impassableflag;
+			l.blocksoundflag = blocksoundflag;
+
+			action = tempaction;
+			args = tempargs;
+			flags = tempflags;
+			tag = temptag;
+			activate = tempactivate;
+			impassableflag = tempimpassableflag;
+			blocksoundflag = tempblocksoundflag;
+			fields = tempfields;
+
+			// ano - ok so we have a choice here
+			// choice 1: add selection groups to the undo manager
+			// choice 2: swapping linedef indices does not swap the selection
+			//           group, meaning the selection group appears to "swap"
+			// choice 3: swapping linedef indices DOES swap, making it appear
+			//           normal, until you undo, which does not revert that,
+			//           making it appear to swap on undo.
+
+			// choice 2 & 3 essentially appear to the enduser as bugs (yuck)
+			// but i really do not have the energy to deal with choice 1 at
+			// this time, and i'm unsure of the larger architectural
+			// consquences. also. a quick poll of discord shows that mappers
+			// seems unaware that the selection group feature exists??
+			// (need to examine if this is just bad discoverability,
+			// or if it's just actually not very useful?)
+
+			// so for now we are doing choice #3
+			l.SwapSelectionGroup(this);
+
+			// flipping this boolean makes sure that we
+			// vertices don't get auto deleted when we detach them
+			// (i would not have architected this with this pseudo-global)
+			bool oldautoremove = General.Map.Map.AutoRemove;
+			General.Map.Map.AutoRemove = false;
+
+			// note that calling setstartvertex / setendvertex handles setting updateneeded
+			Vertex tempstart = start;
+			SetStartVertex(l.start);
+			l.SetStartVertex(tempstart);
+
+			Vertex tempend = end;
+			SetEndVertex(l.end);
+			l.SetEndVertex(tempend);
+
+			// have to record before detaching and call Attach P version
+			// because otherwise detaching wont record undo correctly
+			Sidedef tempfront = front;
+			General.Map.UndoRedo.RecRefLinedefFront(l);
+			AttachFront(l.front);
+			l.AttachFrontP(tempfront);
+
+			Sidedef tempback = back;
+			General.Map.UndoRedo.RecRefLinedefBack(l);
+			AttachBack(l.back);
+			l.AttachBackP(tempback);
+
+
+			General.Map.Map.AutoRemove = oldautoremove;
+			*/
+		}
+
 		// This attaches a sidedef on the front
 		internal void AttachFront(Sidedef s)
 		{
