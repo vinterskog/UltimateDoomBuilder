@@ -35,8 +35,8 @@ public:
 
 	void Finalize();
 
-	void Set2DImage(int width, int height) override;
-	void SetCubeImage(int size) override;
+	void Set2DImage(int width, int height, PixelFormat format) override;
+	void SetCubeImage(int size, PixelFormat format) override;
 
 	bool IsCubeTexture() const { return mCubeTexture; }
 	int GetWidth() const { return mWidth; }
@@ -51,6 +51,7 @@ public:
 private:
 	int mWidth = 0;
 	int mHeight = 0;
+	PixelFormat mPixelFormat = PixelFormat::Rgba8;
 	bool mCubeTexture = false;
 	bool mPBOTexture = false;
 };

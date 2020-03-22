@@ -21,6 +21,7 @@
 
 #include "Precomp.h"
 #include "VKShaderManager.h"
+#include "System/VulkanBuilders.h"
 
 VkShaderManager::VkShaderManager(VKRenderDevice* fb) : fb(fb)
 {
@@ -28,7 +29,35 @@ VkShaderManager::VkShaderManager(VKRenderDevice* fb) : fb(fb)
 
 void VkShaderManager::DeclareShader(ShaderName index, const char* name, const char* vertexshader, const char* fragmentshader)
 {
-	// To do: compile the shaders
+	std::string prefixNAT = R"(
+		#version 450
+		#define VULKAN
+		#line 1
+	)";
+	std::string prefixAT = R"(
+		#version 450
+		#define VULKAN
+		#define ALPHA_TEST
+		#line 1
+	)";
+
+	mShaders[index] = CreateProgram(prefixNAT + vertexshader, prefixNAT + fragmentshader);
+	mShadersAlphaTest[index] = CreateProgram(prefixAT + vertexshader, prefixAT + fragmentshader);
+}
+
+std::unique_ptr<VkShaderProgram> VkShaderManager::CreateProgram(const std::string& vertexsrc, const std::string& fragmentsrc)
+{
+	std::unique_ptr<VkShaderProgram> program(new VkShaderProgram());
+
+	ShaderBuilder vertbuilder;
+	vertbuilder.setVertexShader(vertexsrc);
+	program->vert = vertbuilder.create(fb->Device.get());
+
+	ShaderBuilder fragbuilder;
+	fragbuilder.setFragmentShader(fragmentsrc);
+	program->frag = fragbuilder.create(fb->Device.get());
+
+	return program;
 }
 
 VkShaderProgram* VkShaderManager::Get(ShaderName index, bool alphatest)

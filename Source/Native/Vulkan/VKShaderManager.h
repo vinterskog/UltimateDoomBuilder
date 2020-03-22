@@ -39,6 +39,8 @@ public:
 	VkShaderProgram* Get(ShaderName index, bool alphatest);
 
 private:
+	std::unique_ptr<VkShaderProgram> CreateProgram(const std::string& vertexsrc, const std::string& fragmentsrc);
+
 	VKRenderDevice* fb = nullptr;
 	std::map<ShaderName, std::unique_ptr<VkShaderProgram>> mShaders;
 	std::map<ShaderName, std::unique_ptr<VkShaderProgram>> mShadersAlphaTest;

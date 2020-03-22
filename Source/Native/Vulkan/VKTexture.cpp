@@ -43,7 +43,7 @@ void VKTexture::Finalize()
 	}
 }
 
-void VKTexture::Set2DImage(int width, int height)
+void VKTexture::Set2DImage(int width, int height, PixelFormat format)
 {
 	if (width < 1) width = 1;
 	if (height < 1) height = 1;
@@ -52,9 +52,11 @@ void VKTexture::Set2DImage(int width, int height)
 	mHeight = height;
 }
 
-void VKTexture::SetCubeImage(int size)
+void VKTexture::SetCubeImage(int size, PixelFormat format)
 {
+	if (size < 1) size = 1;
 	mCubeTexture = true;
 	mWidth = size;
 	mHeight = size;
+	mPixelFormat = format;
 }
