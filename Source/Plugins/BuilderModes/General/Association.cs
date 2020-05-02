@@ -65,6 +65,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			eventlines = new List<EventLine>();
 		}
 
+		/// <summary>
+		/// Sets the association to a map element. Only works with an instance of Thing, Sector, or Linedef.
+		/// Also gets the forward and reverse associations
+		/// </summary>
+		/// <param name="element">An instance of Thing, Sector, or Linedef</param>
 		public void Set(SelectableElement element)
 		{
 			this.element = element;
@@ -80,8 +85,6 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 				type = UniversalType.SectorTag;
 				tags = new HashSet<int>(s.Tags);
-
-				GetAssociationsTo();
 			}
 			else if(element is Linedef)
 			{
@@ -90,9 +93,6 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 				type = UniversalType.LinedefTag;
 				tags = new HashSet<int>(ld.Tags);
-
-				GetAssociationsFrom();
-				GetAssociationsTo();
 			}
 			else if(element is Thing)
 			{
@@ -104,12 +104,15 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 				type = UniversalType.ThingTag;
 				tags = new HashSet<int>(new int[] { t.Tag });
-
-				GetAssociationsFrom();
-				GetAssociationsTo();
 			}
+
+			// Get forward and reverse associations
+			GetAssociations();
 		}
 
+		/// <summary>
+		/// Clears out all lists so that the association appears empty
+		/// </summary>
 		public void Clear()
 		{
 			tags = new HashSet<int>();
@@ -119,105 +122,19 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			eventlines = new List<EventLine>();
 		}
 
-		private void GetAssociationsTo()
+		/// <summary>
+		/// Get the forward and reverse associations between the element and other map elements
+		/// </summary>
+		private void GetAssociations()
 		{
-			// Tag must be above zero
-			if (General.GetByIndex(tags, 0) < 1) return;
+			Dictionary<int, HashSet<int>> actiontags = new Dictionary<int, HashSet<int>>();
 
-			// Doom style referencing to sectors?
-			if (General.Map.Config.LineTagIndicatesSectors && (type == UniversalType.SectorTag))
-			{
-				// Linedefs
-				foreach (Linedef l in General.Map.Map.Linedefs)
-				{
-					// Any action on this line?
-					if (l.Action <= 0 || !tags.Overlaps(l.Tags)) continue;
-					if (!linedefs.Contains(l)) linedefs.Add(l);
-					eventlines.Add(new EventLine(l.GetCenterPoint(), center));
-				}
-			}
-
-			// Reverse association to Linedefs
-			foreach (Linedef l in General.Map.Map.Linedefs)
-			{
-				// Known action on this line?
-				if ((l.Action > 0) && General.Map.Config.LinedefActions.ContainsKey(l.Action))
-				{
-					LinedefActionInfo action = General.Map.Config.LinedefActions[l.Action];
-					if (((action.Args[0].Type == (int)type) && (tags.Contains(l.Args[0]))) ||
-						((action.Args[1].Type == (int)type) && (tags.Contains(l.Args[1]))) ||
-						((action.Args[2].Type == (int)type) && (tags.Contains(l.Args[2]))) ||
-						((action.Args[3].Type == (int)type) && (tags.Contains(l.Args[3]))) ||
-						((action.Args[4].Type == (int)type) && (tags.Contains(l.Args[4]))))
-					{
-						if (!linedefs.Contains(l)) linedefs.Add(l);
-						eventlines.Add(new EventLine(l.GetCenterPoint(), center));
-					}
-				}
-			}
-
-			// Doom format things don't have actions or tags, so stop here
-			if (General.Map.DOOM)
-				return;
-
-			foreach (Thing t in General.Map.Map.Things)
-			{
-				// Get the thing type info
-				ThingTypeInfo ti = General.Map.Data.GetThingInfoEx(t.Type);
-
-				// Known action on this thing?
-				if ((t.Action > 0) && General.Map.Config.LinedefActions.ContainsKey(t.Action))
-				{
-					//Do not draw the association if this is a child link.
-					//  This prevents a reverse link to a thing via an argument, when it should be a direct tag-to-tag link instead.
-					if (ti != null && directlinktype < 0 && directlinktype != -t.Type)
-						continue;
-
-					LinedefActionInfo action = General.Map.Config.LinedefActions[t.Action];
-					if (((action.Args[0].Type == (int)type) && (tags.Contains(t.Args[0]))) ||
-						 ((action.Args[1].Type == (int)type) && (tags.Contains(t.Args[1]))) ||
-						 ((action.Args[2].Type == (int)type) && (tags.Contains(t.Args[2]))) ||
-						 ((action.Args[3].Type == (int)type) && (tags.Contains(t.Args[3]))) ||
-						 ((action.Args[4].Type == (int)type) && (tags.Contains(t.Args[4]))))
-					{
-						if (!things.Contains(t)) things.Add(t);
-						eventlines.Add(new EventLine(t.Position, center));
-					}
-
-					//If there is a link setup on this thing, and it matches the association, then draw a direct link to any matching tag
-					if (ti != null && directlinktype == t.Type && tags.Contains(t.Tag))
-					{
-						if (!things.Contains(t)) things.Add(t);
-						eventlines.Add(new EventLine(t.Position, center));
-					}
-				}
-				//mxd. Thing action on this thing?
-				else if (t.Action == 0)
-				{
-					// Gets the association, unless it is a child link.
-					// This prevents a reverse link to a thing via an argument, when it should be a direct tag-to-tag link instead.
-					if (ti != null && directlinktype >= 0 && Math.Abs(directlinktype) != t.Type)
-					{
-						if (((ti.Args[0].Type == (int)type) && (tags.Contains(t.Args[0]))) ||
-							 ((ti.Args[1].Type == (int)type) && (tags.Contains(t.Args[1]))) ||
-							 ((ti.Args[2].Type == (int)type) && (tags.Contains(t.Args[2]))) ||
-							 ((ti.Args[3].Type == (int)type) && (tags.Contains(t.Args[3]))) ||
-							 ((ti.Args[4].Type == (int)type) && (tags.Contains(t.Args[4]))))
-						{
-							if (!things.Contains(t)) things.Add(t);
-							eventlines.Add(new EventLine(t.Position, center));
-						}
-					}
-				}
-			}
-		}
-
-		private void GetAssociationsFrom()
-		{
-			// Use the line tag to highlight sectors (Doom style)
+			// Get forward associations. For Doom format style referencing a linedef tag will be
+			// associated with a sector. For other formats the associations depend on the parameters
+			// of the action
 			if (General.Map.Config.LineTagIndicatesSectors && element is Linedef)
 			{
-				foreach(Sector s in General.Map.Map.Sectors)
+				foreach (Sector s in General.Map.Map.Sectors)
 				{
 					if (tags.Contains(s.Tag))
 						sectors.Add(s);
@@ -225,110 +142,263 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			}
 			else
 			{
-				LinedefActionInfo action = null;
-				int[] actionargs = new int[5];
-				Dictionary<int, HashSet<int>> actiontags = new Dictionary<int, HashSet<int>>();
+				actiontags = GetTagsByType();
+			}
 
-				// Get the action and its arguments from a linedef or a thing, if they have them
-				if (element is Linedef)
+			// Store presence of different types once, so that we don't have to do a lookup for each map element
+			bool hassectortags = actiontags.ContainsKey((int)UniversalType.SectorTag);
+			bool haslinedeftags = actiontags.ContainsKey((int)UniversalType.LinedefTag);
+			bool hasthingtag = actiontags.ContainsKey((int)UniversalType.ThingTag);
+
+			// Process all sectors in the map
+			foreach (Sector s in General.Map.Map.Sectors)
+			{
+				bool addforward = false;
+				bool addreverse = false;
+
+				// Check for forward association (from the element to the sector)
+				if (hassectortags && actiontags[(int)UniversalType.SectorTag].Overlaps(s.Tags))
+					addforward = true;
+
+				// Check the reverse association (from the sector to the element)
+				// Nothing here yet
+
+				if (addforward || addreverse)
 				{
-					Linedef ld = element as Linedef;
+					Vector2D sectorcenter = (s.Labels.Count > 0 ? s.Labels[0].position : new Vector2D(s.BBox.X + s.BBox.Width / 2, s.BBox.Y + s.BBox.Height / 2));
 
-					if (ld.Action > 0 && General.Map.Config.LinedefActions.ContainsKey(ld.Action))
-						action = General.Map.Config.LinedefActions[ld.Action];
+					sectors.Add(s);
 
-					actionargs = ld.Args;
+					if (addforward)
+						eventlines.Add(new EventLine(center, sectorcenter));
+
+					if (addreverse)
+						eventlines.Add(new EventLine(sectorcenter, center));
 				}
-				else if(element is Thing)
+			}
+
+			// Process all linedefs in the map
+			foreach(Linedef ld in General.Map.Map.Linedefs)
+			{
+				bool addforward = false;
+				bool addreverse = false;
+
+				// Check the forward association (from the element to the linedef)
+				if (haslinedeftags && actiontags[(int)UniversalType.LinedefTag].Overlaps(ld.Tags))
+					addforward = true;
+
+				// Check the reverse association (from the linedef to the element)
+				if (IsAssociatedToLinedef(ld))
+					addreverse = true;
+
+				if (addforward || addreverse)
 				{
-					Thing t = element as Thing;
+					linedefs.Add(ld);
 
-					if (t.Action > 0 && General.Map.Config.LinedefActions.ContainsKey(t.Action))
-						action = General.Map.Config.LinedefActions[t.Action];
+					if (addforward)
+						eventlines.Add(new EventLine(center, ld.GetCenterPoint()));
 
-					actionargs = t.Args;
+					if (addreverse)
+						eventlines.Add(new EventLine(ld.GetCenterPoint(), center));
 				}
+			}
 
-				if (action != null)
+			// Process all things in the map
+			foreach(Thing t in General.Map.Map.Things)
+			{
+				bool addforward = false;
+				bool addreverse = false;
+
+				// Check the forward association (from the element to the thing)
+				if (hasthingtag && actiontags[(int)UniversalType.ThingTag].Contains(t.Tag))
+					addforward = true;
+
+				// Check the reverse association (from the thing to the element). Only works for Hexen and UDMF,
+				// as Doom format doesn't have any way to reference other map elements
+				if (!General.Map.DOOM && IsAssociatedToThing(t))
+					addreverse = true;
+
+				if (addforward || addreverse)
 				{
-					// Collect what map element the action arguments are referencing
-					for (int i = 0; i < Linedef.NUM_ARGS; i++)
-					{
-						if ((action.Args[i].Type == (int)UniversalType.SectorTag ||
-							action.Args[i].Type == (int)UniversalType.LinedefTag ||
-							action.Args[i].Type == (int)UniversalType.ThingTag))
-						{
-							if (!actiontags.ContainsKey(action.Args[i].Type))
-								actiontags[action.Args[i].Type] = new HashSet<int>();
+					things.Add(t);
 
-							actiontags[action.Args[i].Type].Add(actionargs[i]);
-						}
-					}
-				}
-				else if (element is Thing && directlinktype >= 0 && Math.Abs(directlinktype) != ((Thing)element).Type)
-				{
-					Thing t = element as Thing;
+					if (addforward)
+						eventlines.Add(new EventLine(center, t.Position));
 
-					ThingTypeInfo ti = General.Map.Data.GetThingInfoEx(t.Type);
-
-					if (ti != null && directlinktype >= 0 && Math.Abs(directlinktype) != t.Type)
-					{
-						for (int i = 0; i < Linedef.NUM_ARGS; i++)
-						{
-							if ((ti.Args[i].Type == (int)UniversalType.SectorTag ||
-								ti.Args[i].Type == (int)UniversalType.LinedefTag ||
-								ti.Args[i].Type == (int)UniversalType.ThingTag))
-							{
-								if (!actiontags.ContainsKey(ti.Args[i].Type))
-									actiontags[ti.Args[i].Type] = new HashSet<int>();
-
-								actiontags[ti.Args[i].Type].Add(actionargs[i]);
-							}
-
-						}
-					}
-				}
-
-				foreach(KeyValuePair<int, HashSet<int>> kvp in actiontags)
-				{
-					if(kvp.Key == (int)UniversalType.SectorTag)
-					{
-						foreach(Sector s in General.Map.Map.Sectors)
-						{
-							if (kvp.Value.Overlaps(s.Tags) && !sectors.Contains(s))
-							{
-								sectors.Add(s);
-								Vector2D sectorcenter = (s.Labels.Count > 0 ? s.Labels[0].position : new Vector2D(s.BBox.X + s.BBox.Width / 2, s.BBox.Y + s.BBox.Height / 2));
-								eventlines.Add(new EventLine(center, sectorcenter));
-							}
-						}
-					}
-					else if(kvp.Key == (int)UniversalType.LinedefTag)
-					{
-						foreach(Linedef ld in General.Map.Map.Linedefs)
-						{
-							if(kvp.Value.Overlaps(ld.Tags))
-							{
-								linedefs.Add(ld);
-								eventlines.Add(new EventLine(center, ld.GetCenterPoint()));
-							}
-						}
-					}
-					else if(kvp.Key == (int)UniversalType.ThingTag)
-					{
-						foreach(Thing t in General.Map.Map.Things)
-						{
-							if(kvp.Value.Contains(t.Tag) && !things.Contains(t))
-							{
-								things.Add(t);
-								eventlines.Add(new EventLine(center, t.Position));
-							}
-						}
-					}
+					if (addreverse)
+						eventlines.Add(new EventLine(t.Position, center));
 				}
 			}
 		}
 
+		/// <summary>
+		/// Gets a dictionary of sector tags, linedef tags, and thing tags, grouped by their type, that the map element is referencing
+		/// </summary>
+		/// <returns>Dictionary of sector tags, linedef tags, and thing tags that the map element is referencing</returns>
+		private Dictionary<int, HashSet<int>> GetTagsByType()
+		{
+			LinedefActionInfo action = null;
+			int[] actionargs = new int[5];
+			Dictionary<int, HashSet<int>> actiontags = new Dictionary<int, HashSet<int>>();
+
+			// Get the action and its arguments from a linedef or a thing, if they have them
+			if (element is Linedef)
+			{
+				Linedef ld = element as Linedef;
+
+				if (ld.Action > 0 && General.Map.Config.LinedefActions.ContainsKey(ld.Action))
+					action = General.Map.Config.LinedefActions[ld.Action];
+
+				actionargs = ld.Args;
+			}
+			else if (element is Thing)
+			{
+				Thing t = element as Thing;
+
+				if (t.Action > 0 && General.Map.Config.LinedefActions.ContainsKey(t.Action))
+					action = General.Map.Config.LinedefActions[t.Action];
+
+				actionargs = t.Args;
+			}
+			else // element is a Sector
+			{
+				return actiontags;
+			}
+
+			if (action != null)
+			{
+				// Collect what map element the action arguments are referencing
+				for (int i = 0; i < Linedef.NUM_ARGS; i++)
+				{
+					if ((action.Args[i].Type == (int)UniversalType.SectorTag ||
+						action.Args[i].Type == (int)UniversalType.LinedefTag ||
+						action.Args[i].Type == (int)UniversalType.ThingTag))
+					{
+						if (!actiontags.ContainsKey(action.Args[i].Type))
+							actiontags[action.Args[i].Type] = new HashSet<int>();
+
+						actiontags[action.Args[i].Type].Add(actionargs[i]);
+					}
+				}
+			}
+			else if (element is Thing && directlinktype >= 0 && Math.Abs(directlinktype) != ((Thing)element).Type)
+			{
+				// The direct link shenanigans if the thing doesn't have an action, but still reference something through
+				// the action parameters
+				Thing t = element as Thing;
+				ThingTypeInfo ti = General.Map.Data.GetThingInfoEx(t.Type);
+
+				if (ti != null && directlinktype >= 0 && Math.Abs(directlinktype) != t.Type)
+				{
+					for (int i = 0; i < Linedef.NUM_ARGS; i++)
+					{
+						if ((ti.Args[i].Type == (int)UniversalType.SectorTag ||
+							ti.Args[i].Type == (int)UniversalType.LinedefTag ||
+							ti.Args[i].Type == (int)UniversalType.ThingTag))
+						{
+							if (!actiontags.ContainsKey(ti.Args[i].Type))
+								actiontags[ti.Args[i].Type] = new HashSet<int>();
+
+							actiontags[ti.Args[i].Type].Add(actionargs[i]);
+						}
+
+					}
+				}
+			}
+
+			return actiontags;
+		}
+
+		/// <summary>
+		/// Checks if there's an association between the element and a Linedef
+		/// </summary>
+		/// <param name="linedef">Linedef to check the association against</param>
+		/// <returns>true if the Linedef and the element are associated, false if not</returns>
+		private bool IsAssociatedToLinedef(Linedef linedef)
+		{
+			// Doom style reference from linedef to sector?
+			if (General.Map.Config.LineTagIndicatesSectors && element is Sector)
+			{
+				if (linedef.Action > 0 && tags.Overlaps(linedef.Tags))
+					return true;
+			}
+
+			// Known action on this line?
+			if ((linedef.Action > 0) && General.Map.Config.LinedefActions.ContainsKey(linedef.Action))
+			{
+				LinedefActionInfo action = General.Map.Config.LinedefActions[linedef.Action];
+				if (((action.Args[0].Type == (int)type) && (tags.Contains(linedef.Args[0]))) ||
+					((action.Args[1].Type == (int)type) && (tags.Contains(linedef.Args[1]))) ||
+					((action.Args[2].Type == (int)type) && (tags.Contains(linedef.Args[2]))) ||
+					((action.Args[3].Type == (int)type) && (tags.Contains(linedef.Args[3]))) ||
+					((action.Args[4].Type == (int)type) && (tags.Contains(linedef.Args[4]))))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Checks if there's an association between the element and a Thing
+		/// </summary>
+		/// <param name="thing">Thing to check the association against</param>
+		/// <returns>true if the Thing and the element are associated, false if not</returns>
+		private bool IsAssociatedToThing(Thing thing)
+		{
+			// Get the thing type info
+			ThingTypeInfo ti = General.Map.Data.GetThingInfoEx(thing.Type);
+
+			// Known action on this thing?
+			if ((thing.Action > 0) && General.Map.Config.LinedefActions.ContainsKey(thing.Action))
+			{
+				//Do not draw the association if this is a child link.
+				//  This prevents a reverse link to a thing via an argument, when it should be a direct tag-to-tag link instead.
+				if (ti != null && directlinktype < 0 && directlinktype != -thing.Type)
+					return false;
+
+				LinedefActionInfo action = General.Map.Config.LinedefActions[thing.Action];
+				if (((action.Args[0].Type == (int)type) && (tags.Contains(thing.Args[0]))) ||
+					 ((action.Args[1].Type == (int)type) && (tags.Contains(thing.Args[1]))) ||
+					 ((action.Args[2].Type == (int)type) && (tags.Contains(thing.Args[2]))) ||
+					 ((action.Args[3].Type == (int)type) && (tags.Contains(thing.Args[3]))) ||
+					 ((action.Args[4].Type == (int)type) && (tags.Contains(thing.Args[4]))))
+				{
+					return true;
+				}
+
+				//If there is a link setup on this thing, and it matches the association, then draw a direct link to any matching tag
+				if (ti != null && directlinktype == thing.Type && tags.Contains(thing.Tag))
+				{
+					return true;
+				}
+			}
+			//mxd. Thing action on this thing?
+			else if (thing.Action == 0)
+			{
+				// Gets the association, unless it is a child link.
+				// This prevents a reverse link to a thing via an argument, when it should be a direct tag-to-tag link instead.
+				if (ti != null && directlinktype >= 0 && Math.Abs(directlinktype) != thing.Type)
+				{
+					if (((ti.Args[0].Type == (int)type) && (tags.Contains(thing.Args[0]))) ||
+						 ((ti.Args[1].Type == (int)type) && (tags.Contains(thing.Args[1]))) ||
+						 ((ti.Args[2].Type == (int)type) && (tags.Contains(thing.Args[2]))) ||
+						 ((ti.Args[3].Type == (int)type) && (tags.Contains(thing.Args[3]))) ||
+						 ((ti.Args[4].Type == (int)type) && (tags.Contains(thing.Args[4]))))
+					{
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Renders associated things and sectors in the indication color.
+		/// Also renders event lines, if that option is enabled
+		/// </summary>
 		public void Render()
 		{
 			List<Line3D> lines = new List<Line3D>(eventlines.Count);
@@ -346,12 +416,18 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				renderer.RenderGeometry(verts, null, true);
 			}
 
-			foreach (EventLine el in eventlines)
-				lines.Add(el.Line);
+			if (General.Settings.GZShowEventLines)
+			{
+				foreach (EventLine el in eventlines)
+					lines.Add(el.Line);
 
-			renderer.RenderArrows(lines);
+				renderer.RenderArrows(lines);
+			}
 		}
 
+		/// <summary>
+		/// Plots associated linedefs and sectors
+		/// </summary>
 		public void Plot()
 		{
 			foreach(Linedef ld in linedefs)
