@@ -106,6 +106,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				tags = new HashSet<int>(new int[] { t.Tag });
 			}
 
+			// Remove the tag 0, because nothing sensible will come from it
+			tags.Remove(0);
+
 			// Get forward and reverse associations
 			GetAssociations();
 		}
@@ -132,7 +135,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// Special handling for Doom format maps where there the linedef's tag references sectors
 			if (General.Map.Config.LineTagIndicatesSectors)
 			{
-				if (General.GetByIndex(tags, 0) < 1)
+				if (tags.Count == 0)
 					return;
 
 				// Forward association from linedef to sector
@@ -296,12 +299,14 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 			if (action != null)
 			{
-				// Collect what map element the action arguments are referencing
+				// Collect what map element the action arguments are referencing. Ignore the argument if it's 0, so that they
+				// are not associated to everything untagged
 				for (int i = 0; i < Linedef.NUM_ARGS; i++)
 				{
 					if ((action.Args[i].Type == (int)UniversalType.SectorTag ||
 						action.Args[i].Type == (int)UniversalType.LinedefTag ||
-						action.Args[i].Type == (int)UniversalType.ThingTag))
+						action.Args[i].Type == (int)UniversalType.ThingTag) &&
+						actionargs[i] > 0)
 					{
 						if (!actiontags.ContainsKey(action.Args[i].Type))
 							actiontags[action.Args[i].Type] = new HashSet<int>();
@@ -356,11 +361,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			if ((linedef.Action > 0) && General.Map.Config.LinedefActions.ContainsKey(linedef.Action))
 			{
 				LinedefActionInfo action = General.Map.Config.LinedefActions[linedef.Action];
-				if (((action.Args[0].Type == (int)type) && (tags.Contains(linedef.Args[0]))) ||
-					((action.Args[1].Type == (int)type) && (tags.Contains(linedef.Args[1]))) ||
-					((action.Args[2].Type == (int)type) && (tags.Contains(linedef.Args[2]))) ||
-					((action.Args[3].Type == (int)type) && (tags.Contains(linedef.Args[3]))) ||
-					((action.Args[4].Type == (int)type) && (tags.Contains(linedef.Args[4]))))
+				if (((action.Args[0].Type == (int)type) && (linedef.Args[0] != 0) && (tags.Contains(linedef.Args[0]))) ||
+					((action.Args[1].Type == (int)type) && (linedef.Args[1] != 0) && (tags.Contains(linedef.Args[1]))) ||
+					((action.Args[2].Type == (int)type) && (linedef.Args[2] != 0) && (tags.Contains(linedef.Args[2]))) ||
+					((action.Args[3].Type == (int)type) && (linedef.Args[3] != 0) && (tags.Contains(linedef.Args[3]))) ||
+					((action.Args[4].Type == (int)type) && (linedef.Args[4] != 0) && (tags.Contains(linedef.Args[4]))))
 				{
 					return true;
 				}
