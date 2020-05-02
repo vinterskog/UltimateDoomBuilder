@@ -194,8 +194,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				//mxd. Thing action on this thing?
 				else if (t.Action == 0)
 				{
-					//Draw the association, unless it is a child link.
-					//  This prevents a reverse link to a thing via an argument, when it should be a direct tag-to-tag link instead.
+					// Gets the association, unless it is a child link.
+					// This prevents a reverse link to a thing via an argument, when it should be a direct tag-to-tag link instead.
 					if (ti != null && directlinktype >= 0 && Math.Abs(directlinktype) != t.Type)
 					{
 						if (((ti.Args[0].Type == (int)type) && (tags.Contains(t.Args[0]))) ||
@@ -229,7 +229,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				int[] actionargs = new int[5];
 				Dictionary<int, HashSet<int>> actiontags = new Dictionary<int, HashSet<int>>();
 
-				// Check if we can find the linedefs action
+				// Get the action and its arguments from a linedef or a thing, if they have them
 				if (element is Linedef)
 				{
 					Linedef ld = element as Linedef;

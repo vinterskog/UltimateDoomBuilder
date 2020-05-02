@@ -151,6 +151,7 @@
     <Compile Include="General\Association.cs" />
     <Compile Include="General\BuilderPlug.cs" />
     <Compile Include="General\CopyStructures.cs" />
+    <Compile Include="General\EventLine.cs" />
     <Compile Include="Interface\ErrorCheckForm.cs">
       <SubType>Form</SubType>
     </Compile>
