@@ -129,21 +129,46 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		{
 			Dictionary<int, HashSet<int>> actiontags = new Dictionary<int, HashSet<int>>();
 
-			// Get forward associations. For Doom format style referencing a linedef tag will be
-			// associated with a sector. For other formats the associations depend on the parameters
-			// of the action
-			if (General.Map.Config.LineTagIndicatesSectors && element is Linedef)
+			// Special handling for Doom format maps where there the linedef's tag references sectors
+			if (General.Map.Config.LineTagIndicatesSectors)
 			{
-				foreach (Sector s in General.Map.Map.Sectors)
+				if (General.GetByIndex(tags, 0) < 1)
+					return;
+
+				// Forward association from linedef to sector
+				if (element is Linedef)
 				{
-					if (tags.Contains(s.Tag))
-						sectors.Add(s);
+					foreach (Sector s in General.Map.Map.Sectors)
+					{
+						if (tags.Contains(s.Tag))
+						{
+							Vector2D sectorcenter = (s.Labels.Count > 0 ? s.Labels[0].position : new Vector2D(s.BBox.X + s.BBox.Width / 2, s.BBox.Y + s.BBox.Height / 2));
+
+							sectors.Add(s);
+
+							eventlines.Add(new EventLine(center, sectorcenter));
+						}
+					}
 				}
+				else if(element is Sector)
+				{
+					foreach(Linedef ld in General.Map.Map.Linedefs)
+					{
+						if(tags.Contains(ld.Tag))
+						{
+							linedefs.Add(ld);
+
+							eventlines.Add(new EventLine(ld.GetCenterPoint(), center));
+						}
+					}
+				}
+
+				return;
 			}
-			else
-			{
+
+			// Get tags of map elements the element is referencing. This is used for the forward associations
+			if (element is Linedef || element is Thing)
 				actiontags = GetTagsByType();
-			}
 
 			// Store presence of different types once, so that we don't have to do a lookup for each map element
 			bool hassectortags = actiontags.ContainsKey((int)UniversalType.SectorTag);
@@ -203,6 +228,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				}
 			}
 
+			// Doom format only knows associations between linedefs and sectors, but not thing, so stop here
+			if (General.Map.DOOM)
+				return;
+
 			// Process all things in the map
 			foreach(Thing t in General.Map.Map.Things)
 			{
@@ -215,7 +244,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 				// Check the reverse association (from the thing to the element). Only works for Hexen and UDMF,
 				// as Doom format doesn't have any way to reference other map elements
-				if (!General.Map.DOOM && IsAssociatedToThing(t))
+				if (IsAssociatedToThing(t))
 					addreverse = true;
 
 				if (addforward || addreverse)
