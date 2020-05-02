@@ -131,6 +131,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private void GetAssociations()
 		{
 			Dictionary<int, HashSet<int>> actiontags = new Dictionary<int, HashSet<int>>();
+			bool showforwardlabel = BuilderPlug.Me.EventLineLabelVisibility == 1 || BuilderPlug.Me.EventLineLabelVisibility == 3;
+			bool showreverselabel = BuilderPlug.Me.EventLineLabelVisibility == 2 || BuilderPlug.Me.EventLineLabelVisibility == 3;
 
 			// Special handling for Doom format maps where there the linedef's tag references sectors
 			if (General.Map.Config.LineTagIndicatesSectors)
@@ -149,7 +151,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 							sectors.Add(s);
 
-							eventlines.Add(new EventLine(center, sectorcenter));
+							eventlines.Add(new EventLine(center, sectorcenter, showforwardlabel ? GetActionDescription(element) : null));
 						}
 					}
 				}
@@ -161,7 +163,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						{
 							linedefs.Add(ld);
 
-							eventlines.Add(new EventLine(ld.GetCenterPoint(), center));
+							eventlines.Add(new EventLine(ld.GetCenterPoint(), center, showreverselabel ? GetActionDescription(ld) : null));
 						}
 					}
 				}
@@ -198,10 +200,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					sectors.Add(s);
 
 					if (addforward)
-						eventlines.Add(new EventLine(center, sectorcenter));
+						eventlines.Add(new EventLine(center, sectorcenter, showforwardlabel ? GetActionDescription(element) : null));
 
 					if (addreverse)
-						eventlines.Add(new EventLine(sectorcenter, center));
+						eventlines.Add(new EventLine(sectorcenter, center, showreverselabel ? GetActionDescription(element) : null));
 				}
 			}
 
@@ -224,10 +226,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					linedefs.Add(ld);
 
 					if (addforward)
-						eventlines.Add(new EventLine(center, ld.GetCenterPoint()));
+						eventlines.Add(new EventLine(center, ld.GetCenterPoint(), showforwardlabel ? GetActionDescription(element) : null));
 
 					if (addreverse)
-						eventlines.Add(new EventLine(ld.GetCenterPoint(), center));
+						eventlines.Add(new EventLine(ld.GetCenterPoint(), center, showreverselabel ? GetActionDescription(ld) : null));
 				}
 			}
 
@@ -255,10 +257,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					things.Add(t);
 
 					if (addforward)
-						eventlines.Add(new EventLine(center, t.Position));
+						eventlines.Add(new EventLine(center, t.Position, showforwardlabel ? GetActionDescription(element) : null));
 
 					if (addreverse)
-						eventlines.Add(new EventLine(t.Position, center));
+						eventlines.Add(new EventLine(t.Position, center, GetActionDescription(t)));
 				}
 			}
 		}
@@ -430,13 +432,71 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		}
 
 		/// <summary>
+		/// Returns a string that contains the description of the action and its arguments, based on the given Linedef or Thing
+		/// </summary>
+		/// <param name="se">An instance of Thing or Linedef</param>
+		/// <returns>String that contains the description of the action and its arguments for a given Linedef or Thing</returns>
+		private string GetActionDescription(SelectableElement se)
+		{
+			int action = 0;
+			int[] actionargs = new int[5];
+
+			if (se is Thing)
+			{
+				action = ((Thing)se).Action;
+				actionargs = ((Thing)se).Args;
+			}
+			else if(se is Linedef)
+			{
+				action = ((Linedef)se).Action;
+				actionargs = ((Linedef)se).Args;
+			}
+
+			if (action > 0)
+			{
+				LinedefActionInfo lai = General.Map.Config.GetLinedefActionInfo(action);
+				List<string> argdescription = new List<string>();
+
+				string description = lai.Index + ": " + lai.Title;
+
+				// Label style: only action, or if the element can't have any parameters
+				if (BuilderPlug.Me.EventLineLabelStyle == 0 || General.Map.Config.LineTagIndicatesSectors)
+					return description;
+
+				for (int i=0; i < 5; i++)
+				{
+					if(lai.Args[i].Used)
+					{
+						string argstring = "";
+
+						if(BuilderPlug.Me.EventLineLabelStyle == 2) // Label style: full arguments
+							argstring = lai.Args[i].Title + ": ";
+
+						EnumItem ei = lai.Args[i].Enum.GetByEnumIndex(actionargs[i].ToString());
+
+						if (ei != null && BuilderPlug.Me.EventLineLabelStyle == 2) // Label style: full arguments
+							argstring += ei.ToString();
+						else // Argument has no EnumItem or label style: short arguments
+							argstring += actionargs[i].ToString();
+
+						argdescription.Add(argstring);
+					}
+				}
+
+				description += " (" + string.Join(", ", argdescription) + ")";
+
+				return description;
+			}
+
+			return null;
+		}
+
+		/// <summary>
 		/// Renders associated things and sectors in the indication color.
 		/// Also renders event lines, if that option is enabled
 		/// </summary>
 		public void Render()
 		{
-			List<Line3D> lines = new List<Line3D>(eventlines.Count);
-
 			foreach (Thing t in things)
 				renderer.RenderThing(t, General.Colors.Indication, General.Settings.ActiveThingsAlpha);
 
@@ -452,10 +512,19 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 			if (General.Settings.GZShowEventLines)
 			{
+				List<Line3D> lines = new List<Line3D>(eventlines.Count);
+				List<TextLabel> labels = new List<TextLabel>(eventlines.Count);
+
 				foreach (EventLine el in eventlines)
+				{
 					lines.Add(el.Line);
 
+					if (el.Label != null && !string.IsNullOrEmpty(el.Label.Text))
+						labels.Add(el.Label);
+				}
+
 				renderer.RenderArrows(lines);
+				renderer.RenderText(labels.ToArray());
 			}
 		}
 
