@@ -13,7 +13,6 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private Vector3D start;
 		private Vector3D end;
 		private Line3D line;
-		private string text;
 		private TextLabel label;
 
 		public Line3D Line { get { return line; } }
@@ -28,12 +27,16 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			label = null;
 		}
 
-		public EventLine(Vector3D start, Vector3D end, string text)
+		public EventLine(Vector3D start, Vector3D end, string text) : this(start, end, text, General.Colors.InfoLine)
+		{
+		}
+
+		public EventLine(Vector3D start, Vector3D end, string text, PixelColor color)
 		{
 			this.start = start;
 			this.end = end;
 
-			line = new Line3D(start, end);
+			line = new Line3D(start, end, color.WithAlpha(255));
 
 			if (!string.IsNullOrEmpty(text))
 			{
@@ -43,13 +46,19 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				label.Location = Line2D.GetCoordinatesAt(start, end, 0.5f);
 				label.AlignX = TextAlignmentX.Center;
 				label.AlignY = TextAlignmentY.Middle;
-				label.Color = General.Colors.InfoLine;
-				label.BackColor = General.Colors.Background.WithAlpha(255);
+				label.Color = color.WithAlpha(255);
+				label.BackColor = General.Colors.Background; // .WithAlpha(255);
 			}
 			else
 			{
 				label = null;
 			}
+		}
+
+		public void SetColor(PixelColor color)
+		{
+			line.Color = color;
+			label.Color = color;
 		}
 	}
 }

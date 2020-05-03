@@ -37,6 +37,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private List<EventLine> eventlines;
 		private IRenderer2D renderer;
 		private SelectableElement element;
+		private List<PixelColor> distinctcolors;
 
 		// Map elements that are associated
 		private List<Thing> things;
@@ -63,6 +64,34 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			sectors = new List<Sector>();
 			linedefs = new List<Linedef>();
 			eventlines = new List<EventLine>();
+
+			distinctcolors = new List<PixelColor>
+			{
+				PixelColor.FromInt(0x84d5a4).WithAlpha(255),
+				PixelColor.FromInt(0xc059cb).WithAlpha(255),
+				PixelColor.FromInt(0xd0533d).WithAlpha(255),
+				// PixelColor.FromInt(0x415354).WithAlpha(255), // too dark
+				PixelColor.FromInt(0xcea953).WithAlpha(255),
+				PixelColor.FromInt(0x91d44b).WithAlpha(255),
+				PixelColor.FromInt(0xcd5b89).WithAlpha(255),
+				PixelColor.FromInt(0xa8b6c0).WithAlpha(255),
+				PixelColor.FromInt(0x797ecb).WithAlpha(255),
+				// PixelColor.FromInt(0x567539).WithAlpha(255), // too dark
+				// PixelColor.FromInt(0x72422f).WithAlpha(255), // too dark
+				// PixelColor.FromInt(0x5d3762).WithAlpha(255), // too dark
+				PixelColor.FromInt(0xffed6f).WithAlpha(255),
+				PixelColor.FromInt(0xccebc5).WithAlpha(255),
+				PixelColor.FromInt(0xbc80bd).WithAlpha(255),
+				// PixelColor.FromInt(0xd9d9d9).WithAlpha(255), // too gray
+				PixelColor.FromInt(0xfccde5).WithAlpha(255),
+				PixelColor.FromInt(0x80b1d3).WithAlpha(255),
+				PixelColor.FromInt(0xfdb462).WithAlpha(255),
+				PixelColor.FromInt(0xb3de69).WithAlpha(255),
+				PixelColor.FromInt(0xfb8072).WithAlpha(255),
+				PixelColor.FromInt(0xbebada).WithAlpha(255), // too blue/gray?
+				PixelColor.FromInt(0xffffb3).WithAlpha(255),
+				PixelColor.FromInt(0x8dd3c7).WithAlpha(255),
+			};
 		}
 
 		/// <summary>
@@ -111,6 +140,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 			// Get forward and reverse associations
 			GetAssociations();
+
+			SetEventLineColors();
 		}
 
 		/// <summary>
@@ -260,7 +291,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						eventlines.Add(new EventLine(center, t.Position, showforwardlabel ? GetActionDescription(element) : null));
 
 					if (addreverse)
-						eventlines.Add(new EventLine(t.Position, center, GetActionDescription(t)));
+						eventlines.Add(new EventLine(t.Position, center, showreverselabel ? GetActionDescription(t) : null));
 				}
 			}
 		}
@@ -489,6 +520,22 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			}
 
 			return null;
+		}
+
+		/// <summary>
+		/// Sets a different color for each event line
+		/// </summary>
+		private void SetEventLineColors()
+		{
+			int colorindex = 0;
+
+			foreach (EventLine el in eventlines)
+			{
+				el.SetColor(distinctcolors[colorindex]);
+
+				if (++colorindex >= distinctcolors.Count)
+					colorindex = 0;
+			}
 		}
 
 		/// <summary>
