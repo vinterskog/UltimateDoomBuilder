@@ -133,13 +133,13 @@ namespace CodeImp.DoomBuilder.Controls
 					}
 					else if(textbox.AllowDecimal)
 					{
-						float stepsizemod; //mxd
+						double stepsizemod; //mxd
 						if(usemodifierkeys)
 							stepsizemod = (ctrl ? stepsizeSmall : (shift ? stepsizeBig : stepsizeFloat));
 						else
 							stepsizemod = stepsizeFloat;
 						
-						float newvalue = (float)Math.Round(textbox.GetResultFloat(0.0f) - (buttons.Value * stepsizemod), General.Map.FormatInterface.VertexDecimals);
+						double newvalue = Math.Round(textbox.GetResultFloat(0.0f) - (buttons.Value * stepsizemod), General.Map.FormatInterface.VertexDecimals);
 						if((newvalue < 0.0f) && !textbox.AllowNegative) newvalue = 0.0f;
 						textbox.Text = newvalue.ToString();
 					}
@@ -213,13 +213,13 @@ namespace CodeImp.DoomBuilder.Controls
 		}
 		
 		// This determines the result value
-		public float GetResultFloat(float original)
+		public double GetResultFloat(double original)
 		{
 			return textbox.GetResultFloat(original);
 		}
 
 		//mxd. This determines the result value at given inremental step
-		public float GetResultFloat(float original, int step)
+		public double GetResultFloat(double original, int step)
 		{
 			return textbox.GetResultFloat(original, step);
 		}

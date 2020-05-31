@@ -90,12 +90,12 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			public SectorTextureInfo(Sector s)
 			{
 				// Get transform properties
-				Floor.Offset = new Vector2D(UniFields.GetFloat(s.Fields, "xpanningfloor", 0f), UniFields.GetFloat(s.Fields, "ypanningfloor", 0f));
-				Ceiling.Offset = new Vector2D(UniFields.GetFloat(s.Fields, "xpanningceiling", 0f), UniFields.GetFloat(s.Fields, "ypanningceiling", 0f));
-				Floor.Scale = new Vector2D(UniFields.GetFloat(s.Fields, "xscalefloor", 1.0f), -UniFields.GetFloat(s.Fields, "yscalefloor", 1.0f));
-				Ceiling.Scale = new Vector2D(UniFields.GetFloat(s.Fields, "xscaleceiling", 1.0f), -UniFields.GetFloat(s.Fields, "yscaleceiling", 1.0f));
-				Floor.Rotation = Angle2D.DegToRad(UniFields.GetFloat(s.Fields, "rotationfloor", 0f));
-				Ceiling.Rotation = Angle2D.DegToRad(UniFields.GetFloat(s.Fields, "rotationceiling", 0f));
+				Floor.Offset = new Vector2D(UniFields.GetFloat(s.Fields, "xpanningfloor", 0.0), UniFields.GetFloat(s.Fields, "ypanningfloor", 0.0));
+				Ceiling.Offset = new Vector2D(UniFields.GetFloat(s.Fields, "xpanningceiling", 0.0), UniFields.GetFloat(s.Fields, "ypanningceiling", 0.0));
+				Floor.Scale = new Vector2D(UniFields.GetFloat(s.Fields, "xscalefloor", 1.0), -UniFields.GetFloat(s.Fields, "yscalefloor", 1.0));
+				Ceiling.Scale = new Vector2D(UniFields.GetFloat(s.Fields, "xscaleceiling", 1.0), -UniFields.GetFloat(s.Fields, "yscaleceiling", 1.0));
+				Floor.Rotation = Angle2D.DegToRad(UniFields.GetFloat(s.Fields, "rotationfloor", 0.0));
+				Ceiling.Rotation = Angle2D.DegToRad(UniFields.GetFloat(s.Fields, "rotationceiling", 0.0));
 
 				// Get texture sizes
 				Floor.TextureSize = GetTextureSize(s.LongFloorTexture);
@@ -124,7 +124,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			public Vector2D Offset;
 			public Vector2D Scale;
 			public Size TextureSize;
-			public float Rotation;
+			public double Rotation;
 			public string Part;
 		}
 
@@ -166,14 +166,13 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private ICollection<Linedef> selectedlines;
 		private List<Vector2D> vertexpos;
 		private List<Vector2D> thingpos;
-		private List<float> thingangle;
+		private List<double> thingangle;
 		private ICollection<Vertex> unselectedvertices;
 		private ICollection<Linedef> unselectedlines;
 		private ICollection<Linedef> unstablelines; //mxd
-		private Dictionary<Sector, float[]> slopeheights;
 
 		// Modification
-		private float rotation;
+		private double rotation;
 		private Vector2D offset;
 		private Vector2D size;
 		private Vector2D scale = new Vector2D(1.0f, 1.0f); //mxd
@@ -200,7 +199,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private Vector2D edgevector;
 		private Line2D resizeaxis;
 		private int stickcorner;
-		private float rotategripangle;
+		private double rotategripangle;
 		private bool autopanning;
 		
 		// Rectangle components
@@ -276,55 +275,55 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		
 		// The following functions set different properties and update
 		
-		public void SetAbsPosX(float posx)
+		public void SetAbsPosX(double posx)
 		{
 			offset.x = posx;
 			UpdateAllChanges();
 		}
 		
-		public void SetAbsPosY(float posy)
+		public void SetAbsPosY(double posy)
 		{
 			offset.y = posy;
 			UpdateAllChanges();
 		}
 		
-		public void SetRelPosX(float posx)
+		public void SetRelPosX(double posx)
 		{
 			offset.x = posx + baseoffset.x;
 			UpdateAllChanges();
 		}
 		
-		public void SetRelPosY(float posy)
+		public void SetRelPosY(double posy)
 		{
 			offset.y = posy + baseoffset.y;
 			UpdateAllChanges();
 		}
 		
-		public void SetAbsSizeX(float sizex)
+		public void SetAbsSizeX(double sizex)
 		{
 			size.x = sizex;
 			UpdateAllChanges();
 		}
 		
-		public void SetAbsSizeY(float sizey)
+		public void SetAbsSizeY(double sizey)
 		{
 			size.y = sizey;
 			UpdateAllChanges();
 		}
 		
-		public void SetRelSizeX(float sizex)
+		public void SetRelSizeX(double sizex)
 		{
 			size.x = basesize.x * (sizex / 100.0f);
 			UpdateAllChanges();
 		}
 		
-		public void SetRelSizeY(float sizey)
+		public void SetRelSizeY(double sizey)
 		{
 			size.y = basesize.y * (sizey / 100.0f);
 			UpdateAllChanges();
 		}
 
-		public void SetAbsRotation(float absrot)
+		public void SetAbsRotation(double absrot)
 		{
 			rotation = absrot;
 			UpdateAllChanges();
@@ -452,7 +451,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					case Grip.SizeW:
 					case Grip.SizeN:
 						// Pick the best matching cursor depending on rotation and side
-						float resizeangle = rotation;
+						double resizeangle = rotation;
 						if((mousegrip == Grip.SizeE) || (mousegrip == Grip.SizeW)) resizeangle += Angle2D.PIHALF;
 						resizeangle = Angle2D.Normalized(resizeangle);
 						if(resizeangle > Angle2D.PI) resizeangle -= Angle2D.PI;
@@ -494,7 +493,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						// Snap to nearest vertex?
 						if(snaptonearest && (highlighted != null))
 						{
-							float vrange = BuilderPlug.Me.StitchRange / renderer.Scale;
+							double vrange = BuilderPlug.Me.StitchRange / renderer.Scale;
 
 							// Try the nearest vertex
 							Vertex nv = MapSet.NearestVertexSquareRange(unselectedvertices, transformedpos, vrange);
@@ -515,10 +514,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 									{
 										// Get grid intersection coordinates
 										List<Vector2D> coords = nl.GetGridIntersections();
-										
+
 										// Find nearest grid intersection
-										float found_distance = float.MaxValue;
-										Vector2D found_pos = new Vector2D(float.NaN, float.NaN);
+										double found_distance = double.MaxValue;
+										Vector2D found_pos = new Vector2D(double.NaN, double.NaN);
 										foreach(Vector2D v in coords)
 										{
 											Vector2D dist = transformedpos - v;
@@ -534,7 +533,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 										}
 
 										// Found something?
-										if(!float.IsNaN(found_pos.x))
+										if(!double.IsNaN(found_pos.x))
 										{
 											// Change offset to snap to target
 											offset += found_pos - transformedpos;
@@ -587,17 +586,17 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						
 						// Keep corner position
 						Vector2D oldcorner = corners[stickcorner];
-						
+
 						// Change size with the scale from the ruler
-						float newscale = resizeaxis.GetNearestOnLine(snappedmappos);
+						double newscale = resizeaxis.GetNearestOnLine(snappedmappos);
 						size = (basesize * resizefilter) * newscale + size * (1.0f - resizefilter);
 
 						//mxd. Update scale
 						newscale = 1f / newscale;
-						if(float.IsInfinity(newscale) || float.IsNaN(newscale)) newscale = 99999f;
+						if(double.IsInfinity(newscale) || double.IsNaN(newscale)) newscale = 99999f;
 						scale = (newscale * resizefilter) + scale * (1.0f - resizefilter);
-						if(float.IsInfinity(scale.x) || float.IsNaN(scale.x)) scale.x = 99999f;
-						if(float.IsInfinity(scale.y) || float.IsNaN(scale.y)) scale.y = 99999f;
+						if(double.IsInfinity(scale.x) || double.IsNaN(scale.x)) scale.x = 99999f;
+						if(double.IsInfinity(scale.y) || double.IsNaN(scale.y)) scale.y = 99999f;
 						
 						// Adjust corner position
 						Vector2D newcorner = TransformedPoint(originalcorners[stickcorner]);
@@ -605,9 +604,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						
 						// Show the extension line so that the user knows what it is aligning to
 						Vector2D sizefiltered = (size * resizefilter);
-						float sizelength = sizefiltered.x + sizefiltered.y;
+						double sizelength = sizefiltered.x + sizefiltered.y;
 						Line2D edgeline = new Line2D(resizeaxis.v1 + resizevector * sizelength, resizeaxis.v1 + resizevector * sizelength - edgevector);
-						float nearestonedge = edgeline.GetNearestOnLine(snappedmappos);
+						double nearestonedge = edgeline.GetNearestOnLine(snappedmappos);
 						if(nearestonedge > 0.5f)
 							extensionline = new Line2D(edgeline.v1, snappedmappos);
 						else
@@ -630,18 +629,18 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						if(dosnaptogrid)
 						{
 							// We make 24 vectors that the rotation can snap to
-							float founddistance = float.MaxValue;
-							float foundrotation = rotation;
+							double founddistance = double.MaxValue;
+							double foundrotation = rotation;
 							Vector3D rotvec = Vector2D.FromAngle(rotation);
 							
 							for(int i = 0; i < 24; i++)
 							{
 								// Make the vectors
-								float angle = i * Angle2D.PI * 0.08333333333f; //mxd. 15-degree increments
+								double angle = i * Angle2D.PI * 0.08333333333f; //mxd. 15-degree increments
 								Vector2D gridvec = Vector2D.FromAngle(angle);
-								
+
 								// Check distance
-								float dist = 2.0f - Vector2D.DotProduct(gridvec, rotvec);
+								double dist = 2.0f - Vector2D.DotProduct(gridvec, rotvec);
 								if(dist < founddistance)
 								{
 									foundrotation = angle;
@@ -748,7 +747,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		// This moves all things and vertices to match the current transformation
 		private void UpdateGeometry()
 		{
-			float[] newthingangle = thingangle.ToArray();
+			double[] newthingangle = thingangle.ToArray();
 			int index;
 
 			// Flip things horizontally
@@ -891,16 +890,16 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private void UpdateTextureTransform(UniFields fields, SurfaceTextureInfo si, bool transformoffsets, bool rotateoffsets, bool scaleoffsets)
 		{
 			// Get offset-ready values
-			float texrotation = Angle2D.PI2 - rotation;
+			double texrotation = Angle2D.PI2 - rotation;
 
 			// Update texture offsets
 			if (transformoffsets)
 			{
-				float trotation = rotateoffsets ? (si.Rotation + texrotation) : (si.Rotation);
+				double trotation = rotateoffsets ? (si.Rotation + texrotation) : (si.Rotation);
 				Vector2D offset = selectioncenter.GetRotated(trotation);
 
-				fields["xpanning" + si.Part] = new UniValue(UniversalType.Float, (float)Math.Round(-offset.x, General.Map.FormatInterface.VertexDecimals));
-				fields["ypanning" + si.Part] = new UniValue(UniversalType.Float, (float)Math.Round(offset.y, General.Map.FormatInterface.VertexDecimals));
+				fields["xpanning" + si.Part] = new UniValue(UniversalType.Float, Math.Round(-offset.x, General.Map.FormatInterface.VertexDecimals));
+				fields["ypanning" + si.Part] = new UniValue(UniversalType.Float, Math.Round(offset.y, General.Map.FormatInterface.VertexDecimals));
 
 			}
 			// Restore texture offsets
@@ -912,7 +911,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 			// Update rotation
 			if(rotateoffsets)
-				fields["rotation" + si.Part] = new UniValue(UniversalType.AngleDegreesFloat, General.ClampAngle((float)Math.Round(Angle2D.RadToDeg(si.Rotation + texrotation), General.Map.FormatInterface.VertexDecimals)));
+				fields["rotation" + si.Part] = new UniValue(UniversalType.AngleDegreesFloat, General.ClampAngle(Math.Round(Angle2D.RadToDeg(si.Rotation + texrotation), General.Map.FormatInterface.VertexDecimals)));
 			// Restore rotation
 			else 
 				fields["rotation" + si.Part] = new UniValue(UniversalType.AngleDegreesFloat, Angle2D.RadToDeg(si.Rotation));
@@ -920,8 +919,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// Update scale
 			if(scaleoffsets)
 			{
-				fields["xscale" + si.Part] = new UniValue(UniversalType.Float, (float) Math.Round(si.Scale.x * scale.x, General.Map.FormatInterface.VertexDecimals));
-				fields["yscale" + si.Part] = new UniValue(UniversalType.Float, (float) Math.Round(-si.Scale.y * scale.y, General.Map.FormatInterface.VertexDecimals));
+				fields["xscale" + si.Part] = new UniValue(UniversalType.Float, Math.Round(si.Scale.x * scale.x, General.Map.FormatInterface.VertexDecimals));
+				fields["yscale" + si.Part] = new UniValue(UniversalType.Float, Math.Round(-si.Scale.y * scale.y, General.Map.FormatInterface.VertexDecimals));
 			}
 			// Restore scale
 			else 
@@ -984,18 +983,18 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				cornerverts[i].z = 1.0f;
 				cornerverts[i].c = rectcolor.ToInt();
 			}
-			cornerverts[0].x = corners[0].x;
-			cornerverts[0].y = corners[0].y;
-			cornerverts[1].x = corners[1].x;
-			cornerverts[1].y = corners[1].y;
-			cornerverts[2].x = corners[2].x;
-			cornerverts[2].y = corners[2].y;
-			cornerverts[3].x = corners[0].x;
-			cornerverts[3].y = corners[0].y;
-			cornerverts[4].x = corners[2].x;
-			cornerverts[4].y = corners[2].y;
-			cornerverts[5].x = corners[3].x;
-			cornerverts[5].y = corners[3].y;
+			cornerverts[0].x = (float)corners[0].x;
+			cornerverts[0].y = (float)corners[0].y;
+			cornerverts[1].x = (float)corners[1].x;
+			cornerverts[1].y = (float)corners[1].y;
+			cornerverts[2].x = (float)corners[2].x;
+			cornerverts[2].y = (float)corners[2].y;
+			cornerverts[3].x = (float)corners[0].x;
+			cornerverts[3].y = (float)corners[0].y;
+			cornerverts[4].x = (float)corners[2].x;
+			cornerverts[4].y = (float)corners[2].y;
+			cornerverts[5].x = (float)corners[3].x;
+			cornerverts[5].y = (float)corners[3].y;
 			
 			// Middle points between corners
 			Vector2D middle01 = corners[0] + (corners[1] - corners[0]) * 0.5f;
@@ -1005,32 +1004,32 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			
 			// Resize grips
 			resizegrips = new RectangleF[4];
-			resizegrips[0] = new RectangleF(middle01.x - gripsize * 0.5f,
-											middle01.y - gripsize * 0.5f,
+			resizegrips[0] = new RectangleF((float)(middle01.x - gripsize * 0.5f),
+											(float)(middle01.y - gripsize * 0.5f),
 											gripsize, gripsize);
-			resizegrips[1] = new RectangleF(middle12.x - gripsize * 0.5f,
-											middle12.y - gripsize * 0.5f,
+			resizegrips[1] = new RectangleF((float)(middle12.x - gripsize * 0.5f),
+											(float)(middle12.y - gripsize * 0.5f),
 											gripsize, gripsize);
-			resizegrips[2] = new RectangleF(middle23.x - gripsize * 0.5f,
-											middle23.y - gripsize * 0.5f,
+			resizegrips[2] = new RectangleF((float)(middle23.x - gripsize * 0.5f),
+											(float)(middle23.y - gripsize * 0.5f),
 											gripsize, gripsize);
-			resizegrips[3] = new RectangleF(middle30.x - gripsize * 0.5f,
-											middle30.y - gripsize * 0.5f,
+			resizegrips[3] = new RectangleF((float)(middle30.x - gripsize * 0.5f),
+											(float)(middle30.y - gripsize * 0.5f),
 											gripsize, gripsize);
 
 			// Rotate grips
 			rotategrips = new RectangleF[4];
-			rotategrips[0] = new RectangleF(corners[0].x - gripsize * 0.5f,
-											corners[0].y - gripsize * 0.5f,
+			rotategrips[0] = new RectangleF((float)(corners[0].x - gripsize * 0.5f),
+											(float)(corners[0].y - gripsize * 0.5f),
 											gripsize, gripsize);
-			rotategrips[1] = new RectangleF(corners[1].x - gripsize * 0.5f,
-											corners[1].y - gripsize * 0.5f,
+			rotategrips[1] = new RectangleF((float)(corners[1].x - gripsize * 0.5f),
+											(float)(corners[1].y - gripsize * 0.5f),
 											gripsize, gripsize);
-			rotategrips[2] = new RectangleF(corners[2].x - gripsize * 0.5f,
-											corners[2].y - gripsize * 0.5f,
+			rotategrips[2] = new RectangleF((float)(corners[2].x - gripsize * 0.5f),
+											(float)(corners[2].y - gripsize * 0.5f),
 											gripsize, gripsize);
-			rotategrips[3] = new RectangleF(corners[3].x - gripsize * 0.5f,
-											corners[3].y - gripsize * 0.5f,
+			rotategrips[3] = new RectangleF((float)(corners[3].x - gripsize * 0.5f),
+											(float)(corners[3].y - gripsize * 0.5f),
 											gripsize, gripsize);
 
 			//mxd. Update selection center
@@ -1065,7 +1064,37 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// Done
 			linesflipped = !linesflipped;
 		}
-		
+
+		/// <summary>
+		/// Returns a transformed Vector2D
+		/// </summary>
+		/// <param name="v">The Vector2D to transform</param>
+		/// <returns>Transformed Vector2D</returns>
+		private Vector2D GetTransformedVector(Vector2D v)
+		{
+			// We use optimized versions of the TransformedPoint depending on what needs to be done.
+			// This is mainly done because 0.0 rotation and 1.0 scale may still give slight inaccuracies.
+			bool norotate = Math.Abs(rotation) < 0.0001f;
+			bool noscale = Math.Abs(size.x - basesize.x) + Math.Abs(size.y - basesize.y) < 0.0001f;
+
+			if (norotate && noscale)
+			{
+				return new Vector2D(TransformedPointNoRotateNoScale(v));
+			}
+			else if (norotate)
+			{
+				return new Vector2D(TransformedPointNoRotate(v));
+			}
+			else if (noscale)
+			{
+				return new Vector2D(TransformedPointNoScale(v));
+			}
+			else
+			{
+				return new Vector2D(TransformedPoint(v));
+			}
+		}
+
 		#endregion
 
 		#region ================== Sector height adjust methods (mxd)
@@ -1152,9 +1181,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if(General.Map.UDMF)
 				{
 					// Adjust slope height?
-					if(s.FloorSlope.GetLengthSq() > 0 && !float.IsNaN(s.FloorSlopeOffset / s.FloorSlope.z))
+					if(s.FloorSlope.GetLengthSq() > 0 && !double.IsNaN(s.FloorSlopeOffset / s.FloorSlope.z))
 					{
-						s.FloorSlopeOffset -= flooroffset * (float)Math.Sin(s.FloorSlope.GetAngleZ());
+						s.FloorSlopeOffset -= flooroffset * Math.Sin(s.FloorSlope.GetAngleZ());
 					}
 					// Adjust vertex height?
 					else if(s.Sidedefs.Count == 3)
@@ -1170,7 +1199,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						// Offset verts
 						foreach(Vertex v in verts)
 						{
-							if(!float.IsNaN(v.ZFloor)) v.ZFloor += flooroffset;
+							if(!double.IsNaN(v.ZFloor)) v.ZFloor += flooroffset;
 						}
 					}
 				}
@@ -1185,9 +1214,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if(General.Map.UDMF)
 				{
 					// Adjust slope height?
-					if(s.CeilSlope.GetLengthSq() > 0 && !float.IsNaN(s.CeilSlopeOffset / s.CeilSlope.z))
+					if(s.CeilSlope.GetLengthSq() > 0 && !double.IsNaN(s.CeilSlopeOffset / s.CeilSlope.z))
 					{
-						s.CeilSlopeOffset -= ceiloffset * (float)Math.Sin(s.CeilSlope.GetAngleZ());
+						s.CeilSlopeOffset -= ceiloffset * Math.Sin(s.CeilSlope.GetAngleZ());
 					}
 					// Adjust vertex height?
 					else if(s.Sidedefs.Count == 3)
@@ -1203,7 +1232,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						// Offset verts
 						foreach(Vertex v in verts)
 						{
-							if(!float.IsNaN(v.ZCeiling)) v.ZCeiling += ceiloffset;
+							if(!double.IsNaN(v.ZCeiling)) v.ZCeiling += ceiloffset;
 						}
 					}
 				}
@@ -1266,8 +1295,6 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					sd.Line.Start.Marked = true;
 					sd.Line.End.Marked = true;
 				}
-
-				if(General.Map.UDMF) selectedsectors.Add(s, new SectorTextureInfo(s));
 			}
 			selectedvertices = General.Map.Map.GetMarkedVertices(true);
 			selectedthings = General.Map.Map.GetMarkedThings(true);
@@ -1280,11 +1307,17 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			selectedlines = General.Map.Map.LinedefsFromMarkedVertices(false, true, false);
 			unselectedlines = General.Map.Map.LinedefsFromMarkedVertices(true, false, false);
 			unstablelines = (pasting ? new List<Linedef>() : General.Map.Map.LinedefsFromMarkedVertices(false, false, true)); //mxd
+
+			if (General.Map.UDMF)
+			{
+				foreach (Sector s in General.Map.Map.GetSectorsFromLinedefs(selectedlines))
+						selectedsectors.Add(s, new SectorTextureInfo(s));
+			}
 			
 			// Array to keep original coordinates
 			vertexpos = new List<Vector2D>(selectedvertices.Count);
 			thingpos = new List<Vector2D>(selectedthings.Count);
-			thingangle = new List<float>(selectedthings.Count);
+			thingangle = new List<double>(selectedthings.Count);
 			fixedrotationthingtypes = new List<int>(); //mxd
 
 			// A selection must be made!
@@ -1328,32 +1361,6 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					thingangle.Add(t.Angle);
 				}
 
-				// Get z heights of floor and ceiling slopes (from the center of the sector). This is used
-				// to easily compute the new slope after moving and rotating. We can't simply use the sector
-				// heights, since they might be wrong (as sector heights are technically irrelevant for slopes)
-				// Floor/ceiling heights are stored if there is no slope, but they won't get used anyway
-				// Important: this has to be done before the first call to UpdateGeometry, since that will change
-				// the sector and subsequently the bounding box, but not the slope
-				slopeheights = new Dictionary<Sector, float[]>();
-
-				foreach(Sector s in sectors)
-				{
-					// Make sure the sector has a valid bounding box
-					s.UpdateBBox();
-
-					Vector2D center = new Vector2D(s.BBox.X + s.BBox.Width / 2, s.BBox.Y + s.BBox.Height / 2);
-					float floorz = s.FloorHeight;
-					float ceilingz = s.CeilHeight;
-
-					if (!float.IsNaN(s.FloorSlopeOffset) && s.FloorSlope.IsNormalized())
-						floorz = new Plane(s.FloorSlope, s.FloorSlopeOffset).GetZ(center);
-
-					if (!float.IsNaN(s.CeilSlopeOffset) && s.CeilSlope.IsNormalized())
-						ceilingz = new Plane(s.CeilSlope, s.CeilSlopeOffset).GetZ(center);
-
-					slopeheights.Add(s, new float[] { floorz, ceilingz });
-				}
-				
 				// Calculate size
 				size = right - offset;
 				
@@ -1567,43 +1574,170 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				// Resume normal undo/redo recording
 				General.Map.UndoRedo.IgnorePropChanges = false;
 
-				//mxd. Update sector slopes?
-				if(General.Map.UDMF)
-				{
-					// We need a different kind of offset...
-					Vector2D relativeoffset = offset - baseoffset;
-					
-					foreach(Sector s in selectedsectors.Keys)
-					{
-						// Update floor slope?
-						if(s.FloorSlope.GetLengthSq() > 0 && !float.IsNaN(s.FloorSlopeOffset / s.FloorSlope.z)) 
-						{
-							Vector3D center = new Vector3D(s.BBox.X + s.BBox.Width / 2, s.BBox.Y + s.BBox.Height / 2, slopeheights[s][0]);
-							Plane p = new Plane(center, s.FloorSlope.GetAngleXY() + rotation + Angle2D.PIHALF, -s.FloorSlope.GetAngleZ(), true);
-							s.FloorSlope = p.Normal;
-							s.FloorSlopeOffset = p.Offset;
-						}
-
-						// Update ceiling slope?
-						if(s.CeilSlope.GetLengthSq() > 0 && !float.IsNaN(s.CeilSlopeOffset / s.CeilSlope.z)) 
-						{
-							Vector3D center = new Vector3D(s.BBox.X + s.BBox.Width / 2, s.BBox.Y + s.BBox.Height / 2, slopeheights[s][1]);
-							Plane p = new Plane(center, s.CeilSlope.GetAngleXY() + rotation + Angle2D.PIHALF, -s.CeilSlope.GetAngleZ(), false);
-							s.CeilSlope = p.Normal;
-							s.CeilSlopeOffset = p.Offset;
-						}
-					}
-				}
-
 				// Mark selected geometry
 				General.Map.Map.ClearAllMarks(false);
 				General.Map.Map.MarkAllSelectedGeometry(true, true, true, true, false);
 				
+				//mxd. Update sector slopes?
+				// Do this after UpdateGeometry() because it makes calculating the new slopes much easier
+				if (General.Map.UDMF)
+				{
+					Dictionary<Sector, List<Sector>> controlsectors = new Dictionary<Sector, List<Sector>>();
+
+					// Keep track which floors and ceilings were already updated, otherwise it could happen that they are updated multiple times,
+					// resulting in wrong offsets
+					List<Sector> updatedcsfloors = new List<Sector>();
+					List<Sector> updatedcsceilings = new List<Sector>();
+
+					// Create cache of 3D floor control sectors that reference the selected sectors. Only do it if not pasting, since the slopes
+					// will only be updated when not pasting, since it'd otherwise screw up the original slopes 
+					if (!pasting)
+					{
+						foreach (Linedef ld in General.Map.Map.Linedefs)
+						{
+							if (ld.Action != 160) // Action 160 defines a 3D floor
+								continue;
+
+							if (ld.Args[0] == 0) // First argument of the action is the sector tag. 0 is not a valid value
+								continue;
+
+							Sector cs = ld.Front.Sector;
+
+							// Skip sectors that don't have a slope
+							if ((cs.FloorSlope.GetLengthSq() <= 0 || double.IsNaN(cs.FloorSlopeOffset / cs.FloorSlope.z)) && (cs.CeilSlope.GetLengthSq() <= 0 || double.IsNaN(cs.CeilSlopeOffset / cs.CeilSlope.z)))
+								continue;
+
+							foreach (Sector s in selectedsectors.Keys)
+							{
+								if (!s.Tags.Contains(ld.Args[0]))
+									continue;
+
+								if (!controlsectors.ContainsKey(s))
+									controlsectors.Add(s, new List<Sector>());
+
+								controlsectors[s].Add(cs);
+							}
+						}
+					}
+
+					foreach (Sector s in selectedsectors.Keys)
+					{
+						// Manually update the sector bounding boxes, because they still contain the old values
+						s.UpdateBBox();
+
+						// Update floor slope?
+						if (s.FloorSlope.GetLengthSq() > 0 && !double.IsNaN(s.FloorSlopeOffset / s.FloorSlope.z))
+						{
+							// Flip the plane normal if necessary
+							Vector3D normal = s.FloorSlope;
+							if (size.x < 0.0f) normal.x *= -1;
+							if (size.y < 0.0f) normal.y *= -1;
+
+							double angle = normal.GetAngleXY() + rotation + Angle2D.PIHALF;
+
+							// Get the center of the *new* sector position. Use the z value of the center *old* sector position
+							Vector2D originalcenter = new Vector2D(s.BBox.X + s.BBox.Width / 2, s.BBox.Y + s.BBox.Height / 2);
+							Vector3D newcenter = GetTransformedVector(originalcenter);
+							newcenter.z = new Plane(s.FloorSlope, s.FloorSlopeOffset).GetZ(originalcenter);
+
+							Plane p = new Plane(newcenter, angle, -s.FloorSlope.GetAngleZ(), true);
+							s.FloorSlope = p.Normal;
+							s.FloorSlopeOffset = p.Offset;
+						}
+
+						// Update the slopes of 3D floor control sectors. Only do it if not pasting, since it'd otherwise screw up the original slopes 
+						if (!pasting && controlsectors.ContainsKey(s))
+						{
+							foreach (Sector cs in controlsectors[s])
+							{
+								// Floor of the control sector already uptated?
+								if (updatedcsfloors.Contains(cs))
+									continue;
+
+								// Is the floor sloped?
+								if (cs.FloorSlope.GetLengthSq() <= 0 || double.IsNaN(cs.FloorSlopeOffset / cs.FloorSlope.z))
+									continue;
+
+								// Flip the plane normal if necessary
+								Vector3D normal = cs.FloorSlope;
+								if (size.x < 0.0f) normal.x *= -1;
+								if (size.y < 0.0f) normal.y *= -1;
+
+								double angle = normal.GetAngleXY() + rotation + Angle2D.PIHALF;
+
+								// Get the center of the *new* tagged sector position. Use the z value of the center *old* tagged sector position
+								Vector2D originalcenter = new Vector2D(s.BBox.X + s.BBox.Width / 2, s.BBox.Y + s.BBox.Height / 2);
+								Vector3D newcenter = GetTransformedVector(originalcenter);
+								newcenter.z = new Plane(cs.FloorSlope, cs.FloorSlopeOffset).GetZ(originalcenter);
+
+								Plane p = new Plane(newcenter, angle, -cs.FloorSlope.GetAngleZ(), true);
+								cs.FloorSlope = p.Normal;
+								cs.FloorSlopeOffset = p.Offset;
+
+								updatedcsfloors.Add(cs);
+							}
+						}
+
+						// Update ceiling slope?
+						if (s.CeilSlope.GetLengthSq() > 0 && !double.IsNaN(s.CeilSlopeOffset / s.CeilSlope.z))
+						{
+							// Flip the plane normal if necessary
+							Vector3D normal = s.CeilSlope;
+							if (size.x < 0.0f) normal.x *= -1;
+							if (size.y < 0.0f) normal.y *= -1;
+
+							double angle = normal.GetAngleXY() + rotation + Angle2D.PIHALF;
+
+							// Get the center of the *new* sector position. Use the z value of the center *old* sector position
+							Vector2D originalcenter = new Vector2D(s.BBox.X + s.BBox.Width / 2, s.BBox.Y + s.BBox.Height / 2);
+							Vector3D newcenter = GetTransformedVector(originalcenter);
+							newcenter.z = new Plane(s.CeilSlope, s.CeilSlopeOffset).GetZ(originalcenter);
+
+							Plane p = new Plane(newcenter, angle, -s.CeilSlope.GetAngleZ(), false);
+							s.CeilSlope = p.Normal;
+							s.CeilSlopeOffset = p.Offset;
+						}
+
+						// Update the slopes of 3D floor control sectors. Only do it if not pasting, since it'd otherwise screw up the original slopes 
+						if (!pasting && controlsectors.ContainsKey(s))
+						{
+							foreach (Sector cs in controlsectors[s])
+							{
+								// Ceiling of the controlsector already updated?
+								if (updatedcsceilings.Contains(cs))
+									continue;
+								
+								// Is the ceiling sloped?
+								if (cs.CeilSlope.GetLengthSq() <= 0 || double.IsNaN(cs.CeilSlopeOffset / cs.CeilSlope.z))
+									continue;
+
+								// Flip the plane normal if necessary
+								Vector3D normal = cs.CeilSlope;
+								if (size.x < 0.0f) normal.x *= -1;
+								if (size.y < 0.0f) normal.y *= -1;
+
+								double angle = normal.GetAngleXY() + rotation + Angle2D.PIHALF;
+
+								// Get the center of the *new* tagged sector position. Use the z value of the center *old* tagged sector position
+								Vector2D originalcenter = new Vector2D(s.BBox.X + s.BBox.Width / 2, s.BBox.Y + s.BBox.Height / 2);
+								Vector3D newcenter = GetTransformedVector(originalcenter);
+								newcenter.z = new Plane(cs.CeilSlope, cs.CeilSlopeOffset).GetZ(originalcenter);
+
+								Plane p = new Plane(newcenter, angle, -cs.CeilSlope.GetAngleZ(), false);
+								cs.CeilSlope = p.Normal;
+								cs.CeilSlopeOffset = p.Offset;
+
+								updatedcsceilings.Add(cs);
+							}
+						}
+					}
+				}
+
 				// Move geometry to new position
 				UpdateGeometry();
 
 				//mxd. Update floor/ceiling texture settings
-				if(General.Map.UDMF) UpdateTextureTransform();
+				if (General.Map.UDMF) UpdateTextureTransform();
 				
 				General.Map.Map.Update(true, true);
 				
@@ -1713,6 +1847,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 				//mxd. We'll need sidedefs marked by StitchGeometry, not all sidedefs from selection...
 				General.Map.Map.ClearMarkedSidedefs(false);
+
+				// Snap to map format accuracy. We need to do that before stitching geometry because vertices that are very very slightly off the grid (like 0.00001) can
+				// cause problems with BlockMapGetBlockCoordinates in the 32bit version
+				General.Map.Map.SnapAllToAccuracy(General.Map.UDMF && usepreciseposition);
 
 				// Stitch geometry
 				General.Map.Map.StitchGeometry(General.Settings.MergeGeometryMode);

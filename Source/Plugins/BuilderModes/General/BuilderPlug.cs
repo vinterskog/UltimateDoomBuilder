@@ -132,6 +132,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private bool marqueSelectTouching; //mxd. Select elements partially/fully inside of marque selection?
 		private bool syncSelection; //mxd. Sync selection between Visual and Classic modes.
 		private bool lockSectorTextureOffsetsWhileDragging; //mxd
+		private bool lock3DFloorSectorTextureOffsetsWhileDragging;
 		private bool syncthingedit; //mxd
 		private bool alphabasedtexturehighlighting; //mxd
 		private bool showlightradii; //mxd
@@ -188,6 +189,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		public bool MarqueSelectTouching { get { return marqueSelectTouching; } set { marqueSelectTouching = value; } } //mxd
 		public bool SyncSelection { get { return syncSelection; } set { syncSelection = value; } } //mxd
 		public bool LockSectorTextureOffsetsWhileDragging { get { return lockSectorTextureOffsetsWhileDragging; } internal set { lockSectorTextureOffsetsWhileDragging = value; } } //mxd
+		public bool Lock3DFloorSectorTextureOffsetsWhileDragging { get { return lock3DFloorSectorTextureOffsetsWhileDragging; } internal set { lock3DFloorSectorTextureOffsetsWhileDragging = value; } } //mxd
 		public bool SyncronizeThingEdit { get { return syncthingedit; } internal set { syncthingedit = value; } } //mxd
 		public bool AlphaBasedTextureHighlighting { get { return alphabasedtexturehighlighting; } internal set { alphabasedtexturehighlighting = value; } } //mxd
 		public bool ShowLightRadii { get { return showlightradii; } internal set { showlightradii = value; } } //mxd
@@ -219,6 +221,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			menusform = new MenusForm();
 			menusform.Register();
 			menusform.TextureOffsetLock.Checked = lockSectorTextureOffsetsWhileDragging; //mxd
+			menusform.TextureOffset3DFloorLock.Checked = lock3DFloorSectorTextureOffsetsWhileDragging;
 			menusform.SyncronizeThingEditButton.Checked = syncthingedit; //mxd
 			menusform.SyncronizeThingEditSectorsItem.Checked = syncthingedit; //mxd
 			menusform.SyncronizeThingEditLinedefsItem.Checked = syncthingedit; //mxd
@@ -306,6 +309,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private void LoadUISettings()
 		{
 			lockSectorTextureOffsetsWhileDragging = General.Settings.ReadPluginSetting("locktextureoffsets", false);
+			lock3DFloorSectorTextureOffsetsWhileDragging = General.Settings.ReadPluginSetting("lock3dfloortextureoffsets", false);
 			viewselectionnumbers = General.Settings.ReadPluginSetting("viewselectionnumbers", true);
 			viewselectioneffects = General.Settings.ReadPluginSetting("viewselectioneffects", true);
 			syncthingedit = General.Settings.ReadPluginSetting("syncthingedit", true);
@@ -318,6 +322,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private void SaveUISettings() 
 		{
 			General.Settings.WritePluginSetting("locktextureoffsets", lockSectorTextureOffsetsWhileDragging);
+			General.Settings.WritePluginSetting("lock3dfloortextureoffsets", lock3DFloorSectorTextureOffsetsWhileDragging);
 			General.Settings.WritePluginSetting("viewselectionnumbers", viewselectionnumbers);
 			General.Settings.WritePluginSetting("viewselectioneffects", viewselectioneffects);
 			General.Settings.WritePluginSetting("syncthingedit", syncthingedit);
@@ -350,11 +355,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if(General.Map.UDMF) 
 				{
 					// Fetch ZDoom fields
-					Vector2D offset = new Vector2D(s.Fields.GetValue("xpanningfloor", 0.0f),
-												   s.Fields.GetValue("ypanningfloor", 0.0f));
-					Vector2D scale = new Vector2D(s.Fields.GetValue("xscalefloor", 1.0f),
-												  s.Fields.GetValue("yscalefloor", 1.0f));
-					float rotate = s.Fields.GetValue("rotationfloor", 0.0f);
+					Vector2D offset = new Vector2D(s.Fields.GetValue("xpanningfloor", 0.0),
+												   s.Fields.GetValue("ypanningfloor", 0.0));
+					Vector2D scale = new Vector2D(s.Fields.GetValue("xscalefloor", 1.0),
+												  s.Fields.GetValue("yscalefloor", 1.0));
+					double rotate = s.Fields.GetValue("rotationfloor", 0.0);
 					int color, light;
 					bool absolute;
 
@@ -410,11 +415,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if(General.Map.UDMF) 
 				{
 					// Fetch ZDoom fields
-					Vector2D offset = new Vector2D(s.Fields.GetValue("xpanningceiling", 0.0f),
-												   s.Fields.GetValue("ypanningceiling", 0.0f));
-					Vector2D scale = new Vector2D(s.Fields.GetValue("xscaleceiling", 1.0f),
-												  s.Fields.GetValue("yscaleceiling", 1.0f));
-					float rotate = s.Fields.GetValue("rotationceiling", 0.0f);
+					Vector2D offset = new Vector2D(s.Fields.GetValue("xpanningceiling", 0.0),
+												   s.Fields.GetValue("ypanningceiling", 0.0));
+					Vector2D scale = new Vector2D(s.Fields.GetValue("xscaleceiling", 1.0),
+												  s.Fields.GetValue("yscaleceiling", 1.0));
+					double rotate = s.Fields.GetValue("rotationceiling", 0.0);
 					int color, light;
 					bool absolute;
 
@@ -580,7 +585,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		//mxd. merged from GZDoomEditing plugin
 		// This applies the given values on the vertices
 		private static void SetupSurfaceVertices(FlatVertex[] vertices, Sector s, ImageData img, Vector2D offset,
-										  Vector2D scale, float rotate, int color, int light, bool absolute) 
+										  Vector2D scale, double rotate, int color, int light, bool absolute) 
 		{
 			// Prepare for math!
 			rotate = Angle2D.DegToRad(rotate);
@@ -598,8 +603,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				pos = pos.GetRotated(rotate);
 				pos.y = -pos.y;
 				pos = (pos + offset) * scale * texscale;
-				vertices[i].u = pos.x;
-				vertices[i].v = pos.y;
+				vertices[i].u = (float)pos.x;
+				vertices[i].v = (float)pos.y;
 				vertices[i].c = color;
 			}
 		}

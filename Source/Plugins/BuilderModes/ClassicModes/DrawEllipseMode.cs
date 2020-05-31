@@ -27,7 +27,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private DrawEllipseOptionsPanel panel;
 
 		// Drawing
-		private float angle; // in radians
+		private double angle; // in radians
 
 		#endregion
 
@@ -115,25 +115,25 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			Vector2D[] shape = new Vector2D[subdivisions + 1];
 
 			bool doBevel = false;
-			float hw = width / 2.0f;
-			float hh = height / 2.0f;
+			double hw = width / 2.0;
+			double hh = height / 2.0;
 
 			Vector2D center = new Vector2D(pStart.x + hw, pStart.y + hh);
-			float curAngle = angle;
-			float angleStep = -Angle2D.PI / subdivisions * 2;
+			double curAngle = angle;
+			double angleStep = -Angle2D.PI / subdivisions * 2;
 
 			for(int i = 0; i < subdivisions; i++) 
 			{
-				float px, py;
+				double px, py;
 				if(doBevel) 
 				{
-					px = (center.x - (float)Math.Sin(curAngle) * (hw + currentbevelwidth));
-					py = (center.y - (float)Math.Cos(curAngle) * (hh + currentbevelwidth));
+					px = (center.x - Math.Sin(curAngle) * (hw + currentbevelwidth));
+					py = (center.y - Math.Cos(curAngle) * (hh + currentbevelwidth));
 				} 
 				else 
 				{
-					px = (center.x - (float)Math.Sin(curAngle) * hw);
-					py = (center.y - (float)Math.Cos(curAngle) * hh);
+					px = (center.x - Math.Sin(curAngle) * hw);
+					py = (center.y - Math.Cos(curAngle) * hh);
 				}
 				doBevel = !doBevel;
 				shape[i] = new Vector2D(px, py);
@@ -144,10 +144,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			shape[subdivisions] = shape[0];
 
 			// Now fit it inside the bounding box
-			float minx = float.MaxValue;
-			float miny = float.MaxValue;
-			float maxx = float.MinValue;
-			float maxy = float.MinValue;
+			double minx = float.MaxValue;
+			double miny = float.MaxValue;
+			double maxx = float.MinValue;
+			double maxy = float.MinValue;
 
 			// Calculate shape extents
 			foreach(Vector2D v in shape)
@@ -159,8 +159,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			}
 
 			// Calculate scalers
-			float scalerx = 1.0f;
-			float scalery = 1.0f;
+			double scalerx = 1.0;
+			double scalery = 1.0;
 			
 			if(minx != pStart.x || maxx != pEnd.x)
 				scalerx = (pEnd.x - pStart.x) / (maxx - minx);
@@ -192,7 +192,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			if(miny != pStart.y) offset.y = pStart.y - miny;
 
 			// Apply offset...
-			if(offset.x != 0.0f || offset.y != 0.0f)
+			if(offset.x != 0.0 || offset.y != 0.0)
 				for(int i = 0; i < shape.Length; i++) shape[i] += offset;
 
 			// Done

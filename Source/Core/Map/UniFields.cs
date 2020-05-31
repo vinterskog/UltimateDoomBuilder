@@ -100,8 +100,8 @@ namespace CodeImp.DoomBuilder.Map
 		#region ================== mxd. Static methods
 
 		// float
-		public static void SetFloat(UniFields fields, string key, float value) { SetFloat(fields, key, value, 0f); }
-		public static void SetFloat(UniFields fields, string key, float value, float defaultvalue)
+		public static void SetFloat(UniFields fields, string key, double value) { SetFloat(fields, key, value, 0.0); }
+		public static void SetFloat(UniFields fields, string key, double value, double defaultvalue)
 		{
 			if(fields == null) return;
 			if(value != defaultvalue)
@@ -116,8 +116,8 @@ namespace CodeImp.DoomBuilder.Map
 			}
 		}
 
-		public static float GetFloat(UniFields fields, string key) { return GetFloat(fields, key, 0f); }
-		public static float GetFloat(UniFields fields, string key, float defaultvalue)
+		public static double GetFloat(UniFields fields, string key) { return GetFloat(fields, key, 0.0); }
+		public static double GetFloat(UniFields fields, string key, double defaultvalue)
 		{
 			if(fields == null) return defaultvalue;
 			return fields.GetValue(key, defaultvalue);
@@ -226,6 +226,7 @@ namespace CodeImp.DoomBuilder.Map
 			if(val1.Type != val2.Type) return false;
 			if(val1.Value is int) return (int)val1.Value == (int)val2.Value;
 			if(val1.Value is float) return (float)val1.Value == (float)val2.Value;
+			if(val1.Value is double) return (double)val1.Value == (double)val2.Value;
 			if(val1.Value is bool) return (bool)val1.Value == (bool)val2.Value;
 			if(val1.Value is string) return (string)val1.Value == (string)val2.Value;
 			throw new NotImplementedException("Unknown Custom Field type: " + val1.Value.GetType());

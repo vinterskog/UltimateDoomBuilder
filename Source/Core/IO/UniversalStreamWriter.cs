@@ -172,8 +172,8 @@ namespace CodeImp.DoomBuilder.IO
 				UniversalCollection coll = new UniversalCollection();
 				coll.Add("x", v.Position.x);
 				coll.Add("y", v.Position.y);
-				if(!float.IsNaN(v.ZCeiling)) coll.Add("zceiling", v.ZCeiling); //mxd
-				if(!float.IsNaN(v.ZFloor)) coll.Add("zfloor", v.ZFloor); //mxd
+				if(!double.IsNaN(v.ZCeiling)) coll.Add("zceiling", v.ZCeiling); //mxd
+				if(!double.IsNaN(v.ZFloor)) coll.Add("zfloor", v.ZFloor); //mxd
 				coll.Comment = v.Index.ToString();
 
 				// Add custom fields
@@ -298,20 +298,26 @@ namespace CodeImp.DoomBuilder.IO
 				//mxd. Slopes
 				if(s.FloorSlope.GetLengthSq() > 0) 
 				{
+					/*
 					coll.Add("floorplane_a", Math.Round(s.FloorSlope.x, Sector.SLOPE_DECIMALS));
 					coll.Add("floorplane_b", Math.Round(s.FloorSlope.y, Sector.SLOPE_DECIMALS));
 					coll.Add("floorplane_c", Math.Round(s.FloorSlope.z, Sector.SLOPE_DECIMALS));
 					coll.Add("floorplane_d",
-						(float.IsNaN(s.FloorSlopeOffset) ? 0f : Math.Round(s.FloorSlopeOffset, Sector.SLOPE_DECIMALS)));
+						(double.IsNaN(s.FloorSlopeOffset) ? 0f : Math.Round(s.FloorSlopeOffset, Sector.SLOPE_DECIMALS)));
+					*/
+					coll.Add("floorplane_a", s.FloorSlope.x);
+					coll.Add("floorplane_b", s.FloorSlope.y);
+					coll.Add("floorplane_c", s.FloorSlope.z);
+					coll.Add("floorplane_d", double.IsNaN(s.FloorSlopeOffset) ? 0.0 : s.FloorSlopeOffset);
 				}
 
-				if(s.CeilSlope.GetLengthSq() > 0) 
+				if (s.CeilSlope.GetLengthSq() > 0) 
 				{
 					coll.Add("ceilingplane_a", Math.Round(s.CeilSlope.x, Sector.SLOPE_DECIMALS));
 					coll.Add("ceilingplane_b", Math.Round(s.CeilSlope.y, Sector.SLOPE_DECIMALS));
 					coll.Add("ceilingplane_c", Math.Round(s.CeilSlope.z, Sector.SLOPE_DECIMALS));
 					coll.Add("ceilingplane_d",
-						(float.IsNaN(s.CeilSlopeOffset) ? 0f : Math.Round(s.CeilSlopeOffset, Sector.SLOPE_DECIMALS)));
+						(double.IsNaN(s.CeilSlopeOffset) ? 0f : Math.Round(s.CeilSlopeOffset, Sector.SLOPE_DECIMALS)));
 				}
 
 				//mxd. Flags

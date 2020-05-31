@@ -46,8 +46,8 @@ namespace CodeImp.DoomBuilder.Map
 		private Vector2D pos;
 
 		//mxd. Height
-		private float zfloor;
-		private float zceiling;
+		private double zfloor;
+		private double zceiling;
 
 		// References
 		private LinkedList<Linedef> linedefs;
@@ -65,7 +65,7 @@ namespace CodeImp.DoomBuilder.Map
 		public Vector2D Position { get { return pos; } }
 		internal Vertex Clone { get { return clone; } set { clone = value; } }
 		internal int SerializedIndex { get { return serializedindex; } set { serializedindex = value; } }
-		public float ZCeiling {	//mxd
+		public double ZCeiling {	//mxd
 			get { return zceiling; }
 			set {
 				if(zceiling != value) 
@@ -75,7 +75,7 @@ namespace CodeImp.DoomBuilder.Map
 				}
 			}
 		}
-		public float ZFloor { //mxd
+		public double ZFloor { //mxd
 			get { return zfloor; }
 			set {
 				if(zfloor != value) 
@@ -95,8 +95,8 @@ namespace CodeImp.DoomBuilder.Map
 		{
             // [ZZ] Check coordinates
             //      Something in GZDB creates vertices with NaN coordinates. This needs to be found.
-            if (float.IsNaN(pos.x) ||
-                float.IsNaN(pos.y))
+            if (double.IsNaN(pos.x) ||
+				double.IsNaN(pos.y))
             {
                 throw new Exception("Tried to create a vertex at coordinates NaN,NaN");
             }
@@ -199,8 +199,8 @@ namespace CodeImp.DoomBuilder.Map
 			base.ReadWrite(s);
 			
 			s.rwVector2D(ref pos);
-			s.rwFloat(ref zceiling); //mxd
-			s.rwFloat(ref zfloor); //mxd
+			s.rwDouble(ref zceiling); //mxd
+			s.rwDouble(ref zfloor); //mxd
 			
 			if(s.IsWriting)
 			{
@@ -241,13 +241,13 @@ namespace CodeImp.DoomBuilder.Map
 		}
 		
 		// This returns the distance from given coordinates
-		public float DistanceToSq(Vector2D p)
+		public double DistanceToSq(Vector2D p)
 		{
 			return (p.x - pos.x) * (p.x - pos.x) + (p.y - pos.y) * (p.y - pos.y);
 		}
 		
 		// This returns the distance from given coordinates
-		public float DistanceTo(Vector2D p)
+		public double DistanceTo(Vector2D p)
 		{
 			return Vector2D.Distance(p, pos);
 		}
@@ -267,8 +267,8 @@ namespace CodeImp.DoomBuilder.Map
 				pos = newpos;
 
 				#if DEBUG
-				if(float.IsNaN(pos.x) || float.IsNaN(pos.y) ||
-				   float.IsInfinity(pos.x) || float.IsInfinity(pos.y))
+				if(double.IsNaN(pos.x) || double.IsNaN(pos.y) ||
+				   double.IsInfinity(pos.x) || double.IsInfinity(pos.y))
 				{
 					General.Fail("Invalid vertex position! The given vertex coordinates cannot be NaN or Infinite.");
 				}
@@ -290,8 +290,8 @@ namespace CodeImp.DoomBuilder.Map
 		public void SnapToAccuracy(bool usepreciseposition)
 		{
 			// Round the coordinates
-			Vector2D newpos = new Vector2D((float)Math.Round(pos.x, (usepreciseposition ? General.Map.FormatInterface.VertexDecimals : 0)),
-										   (float)Math.Round(pos.y, (usepreciseposition ? General.Map.FormatInterface.VertexDecimals : 0)));
+			Vector2D newpos = new Vector2D(Math.Round(pos.x, (usepreciseposition ? General.Map.FormatInterface.VertexDecimals : 0)),
+										   Math.Round(pos.y, (usepreciseposition ? General.Map.FormatInterface.VertexDecimals : 0)));
 			this.Move(newpos);
 		}
 
@@ -307,8 +307,8 @@ namespace CodeImp.DoomBuilder.Map
 		public void Join(Vertex other)
 		{
 			// biwa. Preserve z coords in a smart way
-			if (float.IsNaN(other.ZCeiling)) other.ZCeiling = zceiling;
-			if (float.IsNaN(other.ZFloor)) other.ZFloor = zfloor;
+			if (double.IsNaN(other.ZCeiling)) other.ZCeiling = zceiling;
+			if (double.IsNaN(other.ZFloor)) other.ZFloor = zfloor;
 
 			// If either of the two vertices was selected, keep the other selected
 			if(this.Selected) other.Selected = true;

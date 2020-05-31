@@ -20,7 +20,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 		private readonly SectorLevel level;
 		private readonly bool up;
 		private Vector3D pickintersect;
-		private float pickrayu;
+		private double pickrayu;
 		private Plane plane;
 
 		#endregion
@@ -84,6 +84,9 @@ namespace CodeImp.DoomBuilder.VisualModes
 		/// </summary>
 		public override bool PickFastReject(Vector3D from, Vector3D to, Vector3D dir)
 		{
+			if (sidedef.IsDisposed || sidedef.Sector.IsDisposed)
+				return false;
+
 			RectangleF bbox = sidedef.Sector.BBox;
 
 			if ((up && plane.Distance(from) > 0.0f) || (!up && plane.Distance(from) < 0.0f))
@@ -107,13 +110,13 @@ namespace CodeImp.DoomBuilder.VisualModes
 		/// This is called when the thing must be tested for line intersection. This should perform
 		/// accurate hit detection and set u_ray to the position on the ray where this hits the geometry.
 		/// </summary>
-		public override bool PickAccurate(Vector3D from, Vector3D to, Vector3D dir, ref float u_ray)
+		public override bool PickAccurate(Vector3D from, Vector3D to, Vector3D dir, ref double u_ray)
 		{
 			u_ray = pickrayu;
 
 			Sidedef sd = MapSet.NearestSidedef(sidedef.Sector.Sidedefs, pickintersect);
 			if (sd == sidedef) {
-				float side = sd.Line.SideOfLine(pickintersect);
+				double side = sd.Line.SideOfLine(pickintersect);
 
 				if ((side <= 0.0f && sd.IsFront) || (side > 0.0f && !sd.IsFront))
 					return true;
@@ -241,13 +244,11 @@ namespace CodeImp.DoomBuilder.VisualModes
 				Plane downplane = plane.GetInverted();
 				level.sector.CeilSlope = downplane.Normal;
 				level.sector.CeilSlopeOffset = downplane.Offset;
-				level.sector.CeilHeight = (int)new Plane(level.sector.CeilSlope, level.sector.CeilSlopeOffset).GetZ(center);
 			}
 			else
 			{
 				level.sector.FloorSlope = plane.Normal;
 				level.sector.FloorSlopeOffset = plane.Offset;
-				level.sector.FloorHeight = (int)new Plane(level.sector.FloorSlope, level.sector.FloorSlopeOffset).GetZ(center);
 			}
 
 			// Rebuild sector
@@ -315,9 +316,9 @@ namespace CodeImp.DoomBuilder.VisualModes
 			Plane pivotplane = ((VisualSidedefSlope)pivothandle).Level.plane;
 
 			// Build a new plane. p1 and p2 are the points of the slope handle that is modified, p3 is on the line of the pivot handle
-			Vector3D p1 = new Vector3D(sidedef.Line.Start.Position, (float)Math.Round(originalplane.GetZ(sidedef.Line.Start.Position)));
-			Vector3D p2 = new Vector3D(sidedef.Line.End.Position, (float)Math.Round(originalplane.GetZ(sidedef.Line.End.Position)));
-			Vector3D p3 = new Vector3D(((VisualSidedefSlope)pivothandle).Sidedef.Line.Line.GetCoordinatesAt(0.5f), (float)Math.Round(pivotplane.GetZ(((VisualSidedefSlope)pivothandle).Sidedef.Line.Line.GetCoordinatesAt(0.5f))));
+			Vector3D p1 = new Vector3D(sidedef.Line.Start.Position, Math.Round(originalplane.GetZ(sidedef.Line.Start.Position)));
+			Vector3D p2 = new Vector3D(sidedef.Line.End.Position, Math.Round(originalplane.GetZ(sidedef.Line.End.Position)));
+			Vector3D p3 = new Vector3D(((VisualSidedefSlope)pivothandle).Sidedef.Line.Line.GetCoordinatesAt(0.5f), Math.Round(pivotplane.GetZ(((VisualSidedefSlope)pivothandle).Sidedef.Line.Line.GetCoordinatesAt(0.5f))));
 
 			// Move the points of the handle up/down
 			p1 += new Vector3D(0f, 0f, amount);

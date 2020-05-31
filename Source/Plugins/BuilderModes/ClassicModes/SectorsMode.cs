@@ -593,8 +593,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				//check endpoints
 				foreach(Sidedef side in s.Sidedefs) 
 				{
-					if((selectionrect.Contains(side.Line.Start.Position.x, side.Line.Start.Position.y)
-						|| selectionrect.Contains(side.Line.End.Position.x, side.Line.End.Position.y))) 
+					if((selectionrect.Contains((float)side.Line.Start.Position.x, (float)side.Line.Start.Position.y)
+						|| selectionrect.Contains((float)side.Line.End.Position.x, (float)side.Line.End.Position.y))) 
 						return true;
 				}
 
@@ -629,20 +629,20 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if(s1 == s2) return 0;
 
 				// Get closest distance from s1 to selectstart
-				float closest1 = float.MaxValue;
+				double closest1 = double.MaxValue;
 				foreach(Sidedef side in s1.Sidedefs)
 				{
 					Vector2D pos = (side.IsFront ? side.Line.Start : side.Line.End).Position;
-					float curdistance = Vector2D.DistanceSq(pos, targetpoint);
+					double curdistance = Vector2D.DistanceSq(pos, targetpoint);
 					if(curdistance < closest1) closest1 = curdistance;
 				}
 
 				// Get closest distance from s2 to selectstart
-				float closest2 = float.MaxValue;
+				double closest2 = double.MaxValue;
 				foreach(Sidedef side in s2.Sidedefs)
 				{
 					Vector2D pos = (side.IsFront ? side.Line.Start : side.Line.End).Position;
-					float curdistance = Vector2D.DistanceSq(pos, targetpoint);
+					double curdistance = Vector2D.DistanceSq(pos, targetpoint);
 					if(curdistance < closest2) closest2 = curdistance;
 				}
 
@@ -711,7 +711,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			General.Interface.AddButton(BuilderPlug.Me.MenusForm.SeparatorSectors3); //mxd
 			General.Interface.AddButton(BuilderPlug.Me.MenusForm.MarqueSelectTouching); //mxd
 			General.Interface.AddButton(BuilderPlug.Me.MenusForm.SyncronizeThingEditButton); //mxd
-			if(General.Map.UDMF) General.Interface.AddButton(BuilderPlug.Me.MenusForm.TextureOffsetLock, ToolbarSection.Geometry); //mxd
+			if (General.Map.UDMF)
+			{
+				General.Interface.AddButton(BuilderPlug.Me.MenusForm.TextureOffsetLock, ToolbarSection.Geometry); //mxd
+				General.Interface.AddButton(BuilderPlug.Me.MenusForm.TextureOffset3DFloorLock, ToolbarSection.Geometry);
+			}
 			General.Interface.EndToolbarUpdate(); //mxd
 			
 			// Convert geometry selection to sectors only
@@ -771,6 +775,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			General.Interface.RemoveButton(BuilderPlug.Me.MenusForm.MarqueSelectTouching); //mxd
 			General.Interface.RemoveButton(BuilderPlug.Me.MenusForm.SyncronizeThingEditButton); //mxd
 			General.Interface.RemoveButton(BuilderPlug.Me.MenusForm.TextureOffsetLock); //mxd
+			General.Interface.RemoveButton(BuilderPlug.Me.MenusForm.TextureOffset3DFloorLock);
 			General.Interface.EndToolbarUpdate(); //mxd
 			
 			// Keep only sectors selected
@@ -1053,7 +1058,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if(l != null) 
 				{
 					// Check on which side of the linedef the mouse is
-					float side = l.SideOfLine(mousemappos);
+					double side = l.SideOfLine(mousemappos);
 					if(side > 0) 
 					{
 						// Is there a sidedef here?
@@ -1101,7 +1106,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if(l != null)
 				{
 					// Check on which side of the linedef the mouse is
-					float side = l.SideOfLine(mousemappos);
+					double side = l.SideOfLine(mousemappos);
 					if(side > 0)
 					{
 						// Is there a sidedef here?
@@ -1451,7 +1456,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		//mxd
 		private void RenderComment(Sector s, Vector2D center, int iconindex)
 		{
-			RectangleF rect = new RectangleF(center.x - 8 / renderer.Scale, center.y + 8 / renderer.Scale, 16 / renderer.Scale, -16 / renderer.Scale);
+			RectangleF rect = new RectangleF((float)(center.x - 8 / renderer.Scale), (float)(center.y + 8 / renderer.Scale), 16 / renderer.Scale, -16 / renderer.Scale);
 			PixelColor c = (s == highlighted ? General.Colors.Highlight : PixelColor.FromColor(Color.White));
 			renderer.RenderRectangleFilled(rect, c, true, General.Map.Data.CommentTextures[iconindex]);
 		}
@@ -2012,8 +2017,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						foreach(Sector s in orderedselection) 
 						{
 							s.Fields.BeforeFieldsChange();
-							float u = index / (float) (orderedselection.Count - 1);
-							float b = (float)Math.Round(InterpolationTools.Interpolate(startbrightness, endbrightness, u, interpolationmode));
+							double u = index / (orderedselection.Count - 1);
+							double b = Math.Round(InterpolationTools.Interpolate(startbrightness, endbrightness, u, interpolationmode));
 
 							//absolute flag set?
 							if(s.Fields.GetValue(lightAbsKey, false)) 

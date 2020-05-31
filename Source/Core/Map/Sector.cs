@@ -91,9 +91,9 @@ namespace CodeImp.DoomBuilder.Map
 
 		//mxd. Slopes
 		private Vector3D floorslope;
-		private float flooroffset;
+		private double flooroffset;
 		private Vector3D ceilslope;
-		private float ceiloffset;
+		private double ceiloffset;
 		
 		#endregion
 
@@ -128,21 +128,21 @@ namespace CodeImp.DoomBuilder.Map
 		//mxd. Rednering
 		public Color4 FogColor { get { return fogcolor; } }
 		public SectorFogMode FogMode { get { return fogmode; } }
-        public float Desaturation
+        public double Desaturation
         {
             get
             {
                 if (General.Map.UDMF && Fields.ContainsKey("desaturation"))
-                    return (float)Fields["desaturation"].Value;
+                    return (double)Fields["desaturation"].Value;
                 return 0f;
             }
         }
 
 		//mxd. Slopes
 		public Vector3D FloorSlope { get { return floorslope; } set { BeforePropsChange(); floorslope = value; updateneeded = true; } }
-		public float FloorSlopeOffset { get { return flooroffset; } set { BeforePropsChange(); flooroffset = value; updateneeded = true; } }
+		public double FloorSlopeOffset { get { return flooroffset; } set { BeforePropsChange(); flooroffset = value; updateneeded = true; } }
 		public Vector3D CeilSlope { get { return ceilslope; } set { BeforePropsChange(); ceilslope = value; updateneeded = true; } }
-		public float CeilSlopeOffset { get { return ceiloffset; } set { BeforePropsChange(); ceiloffset = value; updateneeded = true; } }
+		public double CeilSlopeOffset { get { return ceiloffset; } set { BeforePropsChange(); ceiloffset = value; updateneeded = true; } }
         internal int LastProcessed { get { return lastProcessed; } set { lastProcessed = value; } }
 
 		#endregion
@@ -292,9 +292,9 @@ namespace CodeImp.DoomBuilder.Map
 			}
 
 			//mxd. Slopes
-			s.rwFloat(ref flooroffset);
+			s.rwDouble(ref flooroffset);
 			s.rwVector3D(ref floorslope);
-			s.rwFloat(ref ceiloffset);
+			s.rwDouble(ref ceiloffset);
 			s.rwVector3D(ref ceilslope);
 		}
 		
@@ -393,8 +393,8 @@ namespace CodeImp.DoomBuilder.Map
 				flatvertices = new FlatVertex[triangles.Vertices.Count];
 				for(int i = 0; i < triangles.Vertices.Count; i++)
 				{
-					flatvertices[i].x = triangles.Vertices[i].x;
-					flatvertices[i].y = triangles.Vertices[i].y;
+					flatvertices[i].x = (float)triangles.Vertices[i].x;
+					flatvertices[i].y = (float)triangles.Vertices[i].y;
 					flatvertices[i].z = 1.0f;
 					flatvertices[i].c = brightint;
                     flatvertices[i].u = flatvertices[i].x;
@@ -584,10 +584,10 @@ namespace CodeImp.DoomBuilder.Map
 			if(sidedefs.Count == 0) return new RectangleF(); //mxd
 			
 			// Setup
-			float left = float.MaxValue;
-			float top = float.MaxValue;
-			float right = float.MinValue;
-			float bottom = float.MinValue;
+			double left = double.MaxValue;
+			double top = double.MaxValue;
+			double right = double.MinValue;
+			double bottom = double.MinValue;
 
 			HashSet<Vertex> processed = new HashSet<Vertex>(); //mxd
 
@@ -615,7 +615,7 @@ namespace CodeImp.DoomBuilder.Map
 			}
 			
 			// Return rectangle
-			return new RectangleF(left, top, right - left, bottom - top);
+			return new RectangleF((float)left, (float)top, (float)(right - left), (float)(bottom - top));
 		}
 
 		//mxd
@@ -652,7 +652,7 @@ namespace CodeImp.DoomBuilder.Map
 			if(General.Map.UDMF)
 			{
 				// UDMF Sector slope?
-				if(s.FloorSlope.GetLengthSq() > 0 && !float.IsNaN(s.FloorSlopeOffset / s.FloorSlope.z)) 
+				if(s.FloorSlope.GetLengthSq() > 0 && !double.IsNaN(s.FloorSlopeOffset / s.FloorSlope.z)) 
 					return new Geometry.Plane(s.FloorSlope, s.FloorSlopeOffset);
 
 				if(s.sidedefs.Count == 3)
@@ -671,7 +671,7 @@ namespace CodeImp.DoomBuilder.Map
 						verts[index] = new Vector3D(v.Position);
 
 						// Check floor
-						if(!float.IsNaN(v.ZFloor)) 
+						if(!double.IsNaN(v.ZFloor)) 
 						{
 							//vertex offset is absolute
 							verts[index].z = v.ZFloor;
@@ -700,11 +700,11 @@ namespace CodeImp.DoomBuilder.Map
 					
 					// Find the vertex furthest from the line
 					Vertex foundv = null;
-					float founddist = -1.0f;
+					double founddist = -1.0f;
 					foreach(Sidedef sd in s.Sidedefs) 
 					{
 						Vertex v = sd.IsFront ? sd.Line.Start : sd.Line.End;
-						float d = l.DistanceToSq(v.Position, false);
+						double d = l.DistanceToSq(v.Position, false);
 						if(d > founddist) 
 						{
 							foundv = v;
@@ -732,7 +732,7 @@ namespace CodeImp.DoomBuilder.Map
 			if(General.Map.UDMF) 
 			{
 				// UDMF Sector slope?
-				if(s.CeilSlope.GetLengthSq() > 0 && !float.IsNaN(s.CeilSlopeOffset / s.CeilSlope.z))
+				if(s.CeilSlope.GetLengthSq() > 0 && !double.IsNaN(s.CeilSlopeOffset / s.CeilSlope.z))
 					return new Geometry.Plane(s.CeilSlope, s.CeilSlopeOffset);
 
 				if(s.sidedefs.Count == 3) 
@@ -751,7 +751,7 @@ namespace CodeImp.DoomBuilder.Map
 						verts[index] = new Vector3D(v.Position);
 
 						// Check floor
-						if(!float.IsNaN(v.ZCeiling)) 
+						if(!double.IsNaN(v.ZCeiling)) 
 						{
 							//vertex offset is absolute
 							verts[index].z = v.ZCeiling;
@@ -780,11 +780,11 @@ namespace CodeImp.DoomBuilder.Map
 
 					// Find the vertex furthest from the line
 					Vertex foundv = null;
-					float founddist = -1.0f;
+					double founddist = -1.0f;
 					foreach(Sidedef sd in s.Sidedefs) 
 					{
 						Vertex v = sd.IsFront ? sd.Line.Start : sd.Line.End;
-						float d = l.DistanceToSq(v.Position, false);
+						double d = l.DistanceToSq(v.Position, false);
 						if(d > founddist) 
 						{
 							foundv = v;
@@ -827,7 +827,7 @@ namespace CodeImp.DoomBuilder.Map
 		}
 
 		//mxd. This updates all properties (UDMF version)
-		public void Update(int hfloor, int hceil, string tfloor, string tceil, int effect, Dictionary<string, bool> flags, List<int> tags, int brightness, float flooroffset, Vector3D floorslope, float ceiloffset, Vector3D ceilslope)
+		public void Update(int hfloor, int hceil, string tfloor, string tceil, int effect, Dictionary<string, bool> flags, List<int> tags, int brightness, double flooroffset, Vector3D floorslope, double ceiloffset, Vector3D ceilslope)
 		{
 			BeforePropsChange();
 			

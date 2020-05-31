@@ -71,7 +71,7 @@ namespace CodeImp.DoomBuilder.Map
 		public Sidedef Other { get { return (this == linedef.Front ? linedef.Back : linedef.Front); } }
 		public Sector Sector { get { return sector; } }
 		internal Dictionary<string, bool> Flags { get { return flags; } } //mxd
-		public float Angle { get { return (IsFront ? linedef.Angle : Angle2D.Normalized(linedef.Angle + Angle2D.PI)); } }
+		public double Angle { get { return (IsFront ? linedef.Angle : Angle2D.Normalized(linedef.Angle + Angle2D.PI)); } }
 		public int OffsetX { get { return offsetx; } set { BeforePropsChange(); offsetx = value; } }
 		public int OffsetY { get { return offsety; } set { BeforePropsChange(); offsety = value; } }
 		public string HighTexture { get { return texnamehigh; } }
@@ -407,10 +407,10 @@ namespace CodeImp.DoomBuilder.Map
 				//mxd. Check sloped ceilings...
 				if(General.Map.UDMF && this.sector != Other.Sector) 
 				{
-					float thisstartz = this.sector.CeilHeight;
-					float thisendz = this.sector.CeilHeight;
-					float otherstartz = Other.sector.CeilHeight;
-					float otherendz = Other.sector.CeilHeight;
+					double thisstartz = this.sector.CeilHeight;
+					double thisendz = this.sector.CeilHeight;
+					double otherstartz = Other.sector.CeilHeight;
+					double otherendz = Other.sector.CeilHeight;
 
 					// Check if this side is affected by UDMF slope (it overrides vertex heights, riiiiiight?..) TODO: check this!
 					if(this.sector.CeilSlope.GetLengthSq() > 0) 
@@ -421,8 +421,8 @@ namespace CodeImp.DoomBuilder.Map
 					} 
 					else if(this.sector.Sidedefs.Count == 3) // Check vertex heights on this side
 					{
-						if(!float.IsNaN(this.Line.Start.ZCeiling)) thisstartz = this.Line.Start.ZCeiling;
-						if(!float.IsNaN(this.Line.End.ZCeiling)) thisendz = this.Line.End.ZCeiling;
+						if(!double.IsNaN(this.Line.Start.ZCeiling)) thisstartz = this.Line.Start.ZCeiling;
+						if(!double.IsNaN(this.Line.End.ZCeiling)) thisendz = this.Line.End.ZCeiling;
 					}
 
 					// Check if other side is affected by UDMF slope (it overrides vertex heights, riiiiiight?..) TODO: check this!
@@ -434,8 +434,8 @@ namespace CodeImp.DoomBuilder.Map
 					} 
 					else if(Other.sector.Sidedefs.Count == 3) // Check other line's vertex heights
 					{
-						if(!float.IsNaN(this.Line.Start.ZCeiling)) otherstartz = this.Line.Start.ZCeiling;
-						if(!float.IsNaN(this.Line.End.ZCeiling)) otherendz = this.Line.End.ZCeiling;
+						if(!double.IsNaN(this.Line.Start.ZCeiling)) otherstartz = this.Line.Start.ZCeiling;
+						if(!double.IsNaN(this.Line.End.ZCeiling)) otherendz = this.Line.End.ZCeiling;
 					}
 
 					// Texture is required when our start or end vertex is higher than on the other side.
@@ -469,10 +469,10 @@ namespace CodeImp.DoomBuilder.Map
 				//mxd. Check sloped floors...
 				if(General.Map.UDMF && this.sector != Other.Sector)
 				{
-					float thisstartz = this.sector.FloorHeight;
-					float thisendz = this.sector.FloorHeight;
-					float otherstartz = Other.sector.FloorHeight;
-					float otherendz = Other.sector.FloorHeight;
+					double thisstartz = this.sector.FloorHeight;
+					double thisendz = this.sector.FloorHeight;
+					double otherstartz = Other.sector.FloorHeight;
+					double otherendz = Other.sector.FloorHeight;
 
 					// Check if this side is affected by UDMF slope (it overrides vertex heights, riiiiiight?..) TODO: check this!
 					if(this.sector.FloorSlope.GetLengthSq() > 0) 
@@ -483,8 +483,8 @@ namespace CodeImp.DoomBuilder.Map
 					} 
 					else if(this.sector.Sidedefs.Count == 3) // Check vertex heights on this side
 					{
-						if(!float.IsNaN(this.Line.Start.ZFloor)) thisstartz = this.Line.Start.ZFloor;
-						if(!float.IsNaN(this.Line.End.ZFloor)) thisendz = this.Line.End.ZFloor;
+						if(!double.IsNaN(this.Line.Start.ZFloor)) thisstartz = this.Line.Start.ZFloor;
+						if(!double.IsNaN(this.Line.End.ZFloor)) thisendz = this.Line.End.ZFloor;
 					}
 					
 					// Check if other side is affected by UDMF slope (it overrides vertex heights, riiiiiight?..) TODO: check this!
@@ -496,8 +496,8 @@ namespace CodeImp.DoomBuilder.Map
 					}
 					else if(Other.sector.Sidedefs.Count == 3) // Check other line's vertex heights
 					{
-						if(!float.IsNaN(this.Line.Start.ZFloor)) otherstartz = this.Line.Start.ZFloor;
-						if(!float.IsNaN(this.Line.End.ZFloor)) otherendz = this.Line.End.ZFloor;
+						if(!double.IsNaN(this.Line.Start.ZFloor)) otherstartz = this.Line.Start.ZFloor;
+						if(!double.IsNaN(this.Line.End.ZFloor)) otherendz = this.Line.End.ZFloor;
 					}
 
 					// Texture is required when our start or end vertex is lower than on the other side.
@@ -605,10 +605,10 @@ namespace CodeImp.DoomBuilder.Map
 				//mxd. Also copy UDMF offsets and scale
 				if(General.Map.UDMF)
 				{
-					UniFields.SetFloat(s.Fields, "offsetx_top", Fields.GetValue("offsetx_top", 0f), 0f);
-					UniFields.SetFloat(s.Fields, "offsety_top", Fields.GetValue("offsety_top", 0f), 0f);
-					UniFields.SetFloat(s.Fields, "scalex_top",  Fields.GetValue("scalex_top", 1.0f), 1.0f);
-					UniFields.SetFloat(s.Fields, "scaley_top",  Fields.GetValue("scaley_top", 1.0f), 1.0f);
+					UniFields.SetFloat(s.Fields, "offsetx_top", Fields.GetValue("offsetx_top", 0.0), 0.0);
+					UniFields.SetFloat(s.Fields, "offsety_top", Fields.GetValue("offsety_top", 0.0), 0.0);
+					UniFields.SetFloat(s.Fields, "scalex_top",  Fields.GetValue("scalex_top", 1.0), 1.0);
+					UniFields.SetFloat(s.Fields, "scaley_top",  Fields.GetValue("scaley_top", 1.0), 1.0);
 				}
 			}
 
@@ -625,10 +625,10 @@ namespace CodeImp.DoomBuilder.Map
 				//mxd. Also copy UDMF offsets and scale
 				if(General.Map.UDMF)
 				{
-					UniFields.SetFloat(s.Fields, "offsetx_mid", Fields.GetValue("offsetx_mid", 0f), 0f);
-					UniFields.SetFloat(s.Fields, "offsety_mid", Fields.GetValue("offsety_mid", 0f), 0f);
-					UniFields.SetFloat(s.Fields, "scalex_mid",  Fields.GetValue("scalex_mid", 1.0f), 1.0f);
-					UniFields.SetFloat(s.Fields, "scaley_mid",  Fields.GetValue("scaley_mid", 1.0f), 1.0f);
+					UniFields.SetFloat(s.Fields, "offsetx_mid", Fields.GetValue("offsetx_mid", 0.0), 0.0);
+					UniFields.SetFloat(s.Fields, "offsety_mid", Fields.GetValue("offsety_mid", 0.0), 0.0);
+					UniFields.SetFloat(s.Fields, "scalex_mid",  Fields.GetValue("scalex_mid", 1.0), 1.0);
+					UniFields.SetFloat(s.Fields, "scaley_mid",  Fields.GetValue("scaley_mid", 1.0), 1.0);
 				}
 			}
 
@@ -645,10 +645,10 @@ namespace CodeImp.DoomBuilder.Map
 				//mxd. Also copy UDMF offsets and scale
 				if(General.Map.UDMF)
 				{
-					UniFields.SetFloat(s.Fields, "offsetx_bottom", Fields.GetValue("offsetx_bottom", 0f), 0f);
-					UniFields.SetFloat(s.Fields, "offsety_bottom", Fields.GetValue("offsety_bottom", 0f), 0f);
-					UniFields.SetFloat(s.Fields, "scalex_bottom",  Fields.GetValue("scalex_bottom", 1.0f), 1.0f);
-					UniFields.SetFloat(s.Fields, "scaley_bottom",  Fields.GetValue("scaley_bottom", 1.0f), 1.0f);
+					UniFields.SetFloat(s.Fields, "offsetx_bottom", Fields.GetValue("offsetx_bottom", 0.0), 0.0);
+					UniFields.SetFloat(s.Fields, "offsety_bottom", Fields.GetValue("offsety_bottom", 0.0), 0.0);
+					UniFields.SetFloat(s.Fields, "scalex_bottom",  Fields.GetValue("scalex_bottom", 1.0), 1.0);
+					UniFields.SetFloat(s.Fields, "scaley_bottom",  Fields.GetValue("scaley_bottom", 1.0), 1.0);
 				}
 			}
 
@@ -752,10 +752,10 @@ namespace CodeImp.DoomBuilder.Map
 			if(longtexnamehigh != MapSet.EmptyLongName && General.Map.Data.GetTextureExists(texnamehigh)) 
 			{
 				ImageData texture = General.Map.Data.GetTextureImage(texnamehigh);
-				float scaleTop = Fields.GetValue("scalex_top", 1.0f);
+				double scaleTop = Fields.GetValue("scalex_top", 1.0);
 
-				float value = Fields.GetValue("offsetx_top", 0f);
-				float result = (float)(Math.Round(value + offset * scaleTop));
+				double value = Fields.GetValue("offsetx_top", 0.0);
+				double result = Math.Round(value + offset * scaleTop);
 				if(texture.IsImageLoaded) result %= texture.Width;
 				UniFields.SetFloat(Fields, "offsetx_top", result);
 			}
@@ -764,10 +764,10 @@ namespace CodeImp.DoomBuilder.Map
 			if(longtexnamemid != MapSet.EmptyLongName && General.Map.Data.GetTextureExists(texnamemid)) 
 			{
 				ImageData texture = General.Map.Data.GetTextureImage(texnamemid);
-				float scaleMid = Fields.GetValue("scalex_mid", 1.0f);
+				double scaleMid = Fields.GetValue("scalex_mid", 1.0);
 
-				float value = Fields.GetValue("offsetx_mid", 0f);
-				float result = (float)(Math.Round(value + offset * scaleMid));
+				double value = Fields.GetValue("offsetx_mid", 0.0);
+				double result = Math.Round(value + offset * scaleMid);
 				if(texture.IsImageLoaded) result %= texture.Width;
 				UniFields.SetFloat(Fields, "offsetx_mid", result);
 			}
@@ -776,10 +776,10 @@ namespace CodeImp.DoomBuilder.Map
 			if(longtexnamelow != MapSet.EmptyLongName && General.Map.Data.GetTextureExists(texnamelow)) 
 			{
 				ImageData texture = General.Map.Data.GetTextureImage(texnamelow);
-				float scaleLow = Fields.GetValue("scalex_bottom", 1.0f);
+				double scaleLow = Fields.GetValue("scalex_bottom", 1.0);
 
-				float value = Fields.GetValue("offsetx_bottom", 0f);
-				float result = (float)(Math.Round(value + offset * scaleLow));
+				double value = Fields.GetValue("offsetx_bottom", 0.0);
+				double result = Math.Round(value + offset * scaleLow);
 				if(texture.IsImageLoaded) result %= texture.Width;
 				UniFields.SetFloat(Fields, "offsetx_bottom", result);
 			}

@@ -925,7 +925,7 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 				if (l != null)
 				{
 					// Check on which side of the linedef the mouse is
-					float side = l.SideOfLine(mousemappos);
+					double side = l.SideOfLine(mousemappos);
 					if (side > 0)
 					{
 						// Is there a sidedef here?
@@ -1009,7 +1009,7 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 				if (l != null)
 				{
 					// Check on which side of the linedef the mouse is
-					float side = l.SideOfLine(mousemappos);
+					double side = l.SideOfLine(mousemappos);
 					if (side > 0)
 					{
 						// Is there a sidedef here?
