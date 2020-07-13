@@ -16,13 +16,16 @@
 
 #region ================== Namespaces
 
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
 using CodeImp.DoomBuilder.Config;
 using CodeImp.DoomBuilder.Geometry;
 using CodeImp.DoomBuilder.Map;
 using CodeImp.DoomBuilder.Rendering;
 using CodeImp.DoomBuilder.Types;
+using CodeImp.DoomBuilder.Windows;
 
 #endregion
 
@@ -34,10 +37,13 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private Vector2D center;
 		private UniversalType type;
 		private int directlinktype;
-		private List<EventLine> eventlines;
+		private Dictionary<string, List<Line3D>> eventlines;
 		private IRenderer2D renderer;
 		private SelectableElement element;
 		private List<PixelColor> distinctcolors;
+		private Font font;
+		private Dictionary<string, float> textwidths;
+		private Dictionary<string, List<TextLabel>> textlabels;
 
 		// Map elements that are associated
 		private List<Thing> things;
@@ -51,7 +57,6 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		public List<Thing> Things { get { return things; } }
 		public List<Sector> Sectors { get { return sectors; } }
 		public List<Linedef> Linedefs { get { return linedefs; } }
-		public List<EventLine> EventLines { get { return eventlines; } }
 		public bool IsEmpty { get { return things.Count == 0 && sectors.Count == 0 && linedefs.Count == 0; } }
 
 		//mxd. This sets up the association
@@ -63,7 +68,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			things = new List<Thing>();
 			sectors = new List<Sector>();
 			linedefs = new List<Linedef>();
-			eventlines = new List<EventLine>();
+			eventlines = new Dictionary<string, List<Line3D>>();
+
+			font = new Font(new FontFamily(General.Settings.TextLabelFontName), General.Settings.TextLabelFontSize, (General.Settings.TextLabelFontBold ? FontStyle.Bold : FontStyle.Regular));
 
 			distinctcolors = new List<PixelColor>
 			{
@@ -105,9 +112,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			things = new List<Thing>();
 			sectors = new List<Sector>();
 			linedefs = new List<Linedef>();
-			eventlines = new List<EventLine>();
+			eventlines = new Dictionary<string, List<Line3D>>();
 
-			if(element is Sector)
+			if (element is Sector)
 			{
 				Sector s = element as Sector;
 				center = (s.Labels.Count > 0 ? s.Labels[0].position : new Vector2D(s.BBox.X + s.BBox.Width / 2, s.BBox.Y + s.BBox.Height / 2));
@@ -141,6 +148,32 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// Get forward and reverse associations
 			GetAssociations();
 
+			// Cache width of label text and generate the labels
+			textwidths = new Dictionary<string, float>(eventlines.Count);
+			textlabels = new Dictionary<string, List<TextLabel>>(eventlines.Count);
+
+			foreach(KeyValuePair<string, List<Line3D>> kvp in eventlines)
+			{
+				SizeF size = General.Interface.MeasureString(kvp.Key, font);
+				textwidths[kvp.Key] = size.Width;
+
+				// Create one label for each line. We might not need them all, but better
+				// to have them all at the beginning than to generate them later
+				textlabels[kvp.Key] = new List<TextLabel>(kvp.Value.Count);
+
+				for (int i = 0; i < kvp.Value.Count; i++)
+				{
+					// We don't need to set the position here, since it'll be done on the fly later
+					TextLabel l = new TextLabel();
+					l.AlignX = TextAlignmentX.Center;
+					l.AlignY = TextAlignmentY.Middle;
+					l.TransformCoords = true;
+					l.Text = kvp.Key;
+
+					textlabels[kvp.Key].Add(l);
+				}
+			}
+
 			SetEventLineColors();
 		}
 
@@ -153,7 +186,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			things = new List<Thing>();
 			sectors = new List<Sector>();
 			linedefs = new List<Linedef>();
-			eventlines = new List<EventLine>();
+			eventlines = new Dictionary<string, List<Line3D>>();
 		}
 
 		/// <summary>
@@ -182,7 +215,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 							sectors.Add(s);
 
-							eventlines.Add(new EventLine(center, sectorcenter, showforwardlabel ? GetActionDescription(element) : null));
+							AddLineToAction(GetActionDescription(element), center, sectorcenter);
 						}
 					}
 				}
@@ -194,7 +227,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						{
 							linedefs.Add(ld);
 
-							eventlines.Add(new EventLine(ld.GetCenterPoint(), center, showreverselabel ? GetActionDescription(ld) : null));
+							AddLineToAction(GetActionDescription(ld), ld.GetCenterPoint(), center);
 						}
 					}
 				}
@@ -231,10 +264,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					sectors.Add(s);
 
 					if (addforward)
-						eventlines.Add(new EventLine(center, sectorcenter, showforwardlabel ? GetActionDescription(element) : null));
+						AddLineToAction(GetActionDescription(element), center, sectorcenter);
 
 					if (addreverse)
-						eventlines.Add(new EventLine(sectorcenter, center, showreverselabel ? GetActionDescription(element) : null));
+						AddLineToAction(GetActionDescription(element), sectorcenter, center);
 				}
 			}
 
@@ -257,10 +290,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					linedefs.Add(ld);
 
 					if (addforward)
-						eventlines.Add(new EventLine(center, ld.GetCenterPoint(), showforwardlabel ? GetActionDescription(element) : null));
+						AddLineToAction(GetActionDescription(element), center, ld.GetCenterPoint());
 
 					if (addreverse)
-						eventlines.Add(new EventLine(ld.GetCenterPoint(), center, showreverselabel ? GetActionDescription(ld) : null));
+						AddLineToAction(GetActionDescription(ld), ld.GetCenterPoint(), center);
 				}
 			}
 
@@ -288,10 +321,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					things.Add(t);
 
 					if (addforward)
-						eventlines.Add(new EventLine(center, t.Position, showforwardlabel ? GetActionDescription(element) : null));
+						AddLineToAction(GetActionDescription(element), center, t.Position);
 
 					if (addreverse)
-						eventlines.Add(new EventLine(t.Position, center, showreverselabel ? GetActionDescription(t) : null));
+						AddLineToAction(GetActionDescription(t), t.Position, center);
 				}
 			}
 		}
@@ -529,6 +562,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		{
 			int colorindex = 0;
 
+			/*
 			foreach (EventLine el in eventlines)
 			{
 				el.SetColor(distinctcolors[colorindex]);
@@ -536,7 +570,136 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if (++colorindex >= distinctcolors.Count)
 					colorindex = 0;
 			}
+			*/
 		}
+
+		/// <summary>
+		/// Adds a line to an action
+		/// </summary>
+		/// <param name="action">Name of the action</param>
+		/// <param name="start">Start of the line</param>
+		/// <param name="end">End of the line</param>
+		private void AddLineToAction(string action, Vector2D start, Vector2D end)
+		{
+			if (string.IsNullOrEmpty(action))
+				return;
+
+			if (!eventlines.ContainsKey(action))
+				eventlines[action] = new List<Line3D>();
+
+			eventlines[action].Add(new Line3D(start, end, true));
+		}
+
+		/// <summary>
+		/// Generates a label position given a start and end point of a line. Taken (with modifications) from LineLengthLabel.Move()
+		/// </summary>
+		/// <param name="start">Start of the line</param>
+		/// <param name="end">End of the line</param>
+		/// <returns></returns>
+		private Vector2D GetLabelPosition(Vector2D start, Vector2D end)
+		{
+			// Check if start/end point is on screen...
+			Vector2D lt = General.Map.Renderer2D.DisplayToMap(new Vector2D(0.0, General.Interface.Display.Size.Height));
+			Vector2D rb = General.Map.Renderer2D.DisplayToMap(new Vector2D(General.Interface.Display.Size.Width, 0.0));
+			RectangleF viewport = new RectangleF((float)lt.x, (float)lt.y, (float)(rb.x - lt.x), (float)(rb.y - lt.y));
+			bool startvisible = viewport.Contains((float)start.x, (float)start.y);
+			bool endvisible = viewport.Contains((float)end.x, (float)end.y);
+
+			// Do this only when one point is visible, an the other isn't 
+			if ((!startvisible && endvisible) || (startvisible && !endvisible))
+			{
+				Line2D drawnline = new Line2D(start, end);
+				Line2D[] viewportsides = new[] {
+					new Line2D(lt, rb.x, lt.y), // top
+					new Line2D(lt.x, rb.y, rb.x, rb.y), // bottom
+					new Line2D(lt, lt.x, rb.y), // left
+					new Line2D(rb.x, lt.y, rb.x, rb.y), // right
+				};
+
+				foreach (Line2D side in viewportsides)
+				{
+					// Modify the start point so it stays on screen
+					double u;
+					if (!startvisible && side.GetIntersection(drawnline, out u))
+					{
+						start = drawnline.GetCoordinatesAt(u);
+						break;
+					}
+
+					// Modify the end point so it stays on screen
+					if (!endvisible && side.GetIntersection(drawnline, out u))
+					{
+						end = drawnline.GetCoordinatesAt(u);
+						break;
+					}
+				}
+			}
+
+			// Create position
+			Vector2D delta = end - start;
+			return new Vector2D(start.x + delta.x * 0.5, start.y + delta.y * 0.5);
+		}
+
+		/// <summary>
+		/// Merges label positions based on a merge distance
+		/// </summary>
+		/// <param name="positions">Positions to merge</param>
+		/// <param name="distance">Distance to merge positions at</param>
+		/// <returns>List of new positions</returns>
+		List<Vector2D> MergePositions(List<Vector2D> positions, double distance)
+		{
+			List<Vector2D> allpositions = positions.OrderBy(o => o.x).ToList();
+			List<Vector2D> newpositions = new List<Vector2D>(positions.Count);
+			double mergedistance = distance / renderer.Scale;
+
+			// Keep going while we have positions me might want to merge
+			while (allpositions.Count > 0)
+			{
+				Vector2D curposition = allpositions[0];
+				allpositions.RemoveAt(0);
+
+				bool hasclosepositions = true;
+
+				// Keep merging as long as there are close positions nearby
+				while(hasclosepositions)
+				{
+					// Get all positions that are close to the current position
+					List<Vector2D> closepositions = allpositions.Where(o => Vector2D.Distance(o, curposition) < mergedistance).ToList();
+
+					if (closepositions.Count > 0)
+					{
+						Vector2D tl = curposition;
+						Vector2D br = curposition;
+
+						// Get the max dimensions of the positions...
+						foreach (Vector2D v in closepositions)
+						{
+							if (v.x < tl.x) tl.x = v.x;
+							if (v.x > br.x) br.x = v.x;
+							if (v.y > tl.y) tl.y = v.y;
+							if (v.y < br.y) br.y = v.y;
+
+							// Remove the position from the list so that it doesn't get checked again
+							allpositions.Remove(v);
+						}
+
+						// ... and set the current position to the center of that
+						curposition.x = tl.x + (br.x - tl.x) / 2.0;
+						curposition.y = tl.y + (br.y - tl.y) / 2.0;
+					}
+					else
+					{
+						// The current position is a new final position
+						newpositions.Add(curposition);
+						hasclosepositions = false;
+						allpositions.Reverse();
+					}
+				}
+			}
+
+			return newpositions;
+		}
+
 
 		/// <summary>
 		/// Renders associated things and sectors in the indication color.
@@ -560,18 +723,32 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			if (General.Settings.GZShowEventLines)
 			{
 				List<Line3D> lines = new List<Line3D>(eventlines.Count);
-				List<TextLabel> labels = new List<TextLabel>(eventlines.Count);
+				List<ITextLabel> labels = new List<ITextLabel>(eventlines.Count);
 
-				foreach (EventLine el in eventlines)
+				foreach(KeyValuePair<string, List<Line3D>> kvp in eventlines)
 				{
-					lines.Add(el.Line);
+					List<Vector2D> allpositions = new List<Vector2D>(kvp.Value.Count);
 
-					if (el.Label != null && !string.IsNullOrEmpty(el.Label.Text))
-						labels.Add(el.Label);
+					foreach(Line3D line in kvp.Value)
+					{
+						allpositions.Add(GetLabelPosition(line.Start, line.End));
+						lines.Add(line);
+					}
+
+					List<Vector2D> positions = MergePositions(allpositions, textwidths[kvp.Key]);
+					int labelcounter = 0;
+
+					// Set the position of the pre-generated labels. Only add the labels that are needed
+					foreach(Vector2D pos in positions)
+					{
+						textlabels[kvp.Key][labelcounter].Location = pos;
+						labels.Add(textlabels[kvp.Key][labelcounter]);
+						labelcounter++;
+					}
 				}
 
 				renderer.RenderArrows(lines);
-				renderer.RenderText(labels.ToArray());
+				renderer.RenderText(labels);
 			}
 		}
 
