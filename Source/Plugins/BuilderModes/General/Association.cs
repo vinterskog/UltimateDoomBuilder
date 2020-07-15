@@ -42,7 +42,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private SelectableElement element;
 		private List<PixelColor> distinctcolors;
 		private Font font;
-		private Dictionary<string, float> textwidths;
+		private Dictionary<string, Vector2D> textwidths;
 		private Dictionary<string, List<TextLabel>> textlabels;
 
 		// Map elements that are associated
@@ -74,6 +74,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 			distinctcolors = new List<PixelColor>
 			{
+				General.Colors.InfoLine,
 				PixelColor.FromInt(0x84d5a4).WithAlpha(255),
 				PixelColor.FromInt(0xc059cb).WithAlpha(255),
 				PixelColor.FromInt(0xd0533d).WithAlpha(255),
@@ -149,13 +150,13 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			GetAssociations();
 
 			// Cache width of label text and generate the labels
-			textwidths = new Dictionary<string, float>(eventlines.Count);
+			textwidths = new Dictionary<string, Vector2D>(eventlines.Count);
 			textlabels = new Dictionary<string, List<TextLabel>>(eventlines.Count);
 
 			foreach(KeyValuePair<string, List<Line3D>> kvp in eventlines)
 			{
 				SizeF size = General.Interface.MeasureString(kvp.Key, font);
-				textwidths[kvp.Key] = size.Width;
+				textwidths[kvp.Key] = new Vector2D(size.Width, size.Height);
 
 				// Create one label for each line. We might not need them all, but better
 				// to have them all at the beginning than to generate them later
@@ -172,6 +173,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 					textlabels[kvp.Key].Add(l);
 				}
+
+				textwidths[kvp.Key] = new Vector2D(textlabels[kvp.Key][0].TextSize.Width, textlabels[kvp.Key][0].TextSize.Height);
 			}
 
 			SetEventLineColors();
@@ -556,21 +559,23 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		}
 
 		/// <summary>
-		/// Sets a different color for each event line
+		/// Sets a different color for each event
 		/// </summary>
 		private void SetEventLineColors()
 		{
 			int colorindex = 0;
 
-			/*
-			foreach (EventLine el in eventlines)
+			foreach(KeyValuePair<string, List<TextLabel>> kvp in textlabels)
 			{
-				el.SetColor(distinctcolors[colorindex]);
+				foreach (Line3D l in eventlines[kvp.Key])
+					l.Color = distinctcolors[colorindex];
+
+				foreach (TextLabel l in kvp.Value)
+					l.Color = distinctcolors[colorindex];
 
 				if (++colorindex >= distinctcolors.Count)
 					colorindex = 0;
 			}
-			*/
 		}
 
 		/// <summary>
@@ -646,11 +651,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		/// <param name="positions">Positions to merge</param>
 		/// <param name="distance">Distance to merge positions at</param>
 		/// <returns>List of new positions</returns>
-		List<Vector2D> MergePositions(List<Vector2D> positions, double distance)
+		List<Vector2D> MergePositions(List<Vector2D> positions, Vector2D distance)
 		{
 			List<Vector2D> allpositions = positions.OrderBy(o => o.x).ToList();
 			List<Vector2D> newpositions = new List<Vector2D>(positions.Count);
-			double mergedistance = distance / renderer.Scale;
+			Vector2D mergedistance = distance / renderer.Scale * 1.5;
 
 			// Keep going while we have positions me might want to merge
 			while (allpositions.Count > 0)
@@ -664,7 +669,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				while(hasclosepositions)
 				{
 					// Get all positions that are close to the current position
-					List<Vector2D> closepositions = allpositions.Where(o => Vector2D.Distance(o, curposition) < mergedistance).ToList();
+					List<Vector2D> closepositions = allpositions.Where(o => Math.Abs(curposition.x - o.x) < mergedistance.x && Math.Abs(curposition.y - o.y) < mergedistance.y).ToList();
 
 					if (closepositions.Count > 0)
 					{
