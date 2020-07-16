@@ -218,7 +218,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 							sectors.Add(s);
 
-							AddLineToAction(GetActionDescription(element), center, sectorcenter);
+							AddLineToAction(showforwardlabel ? GetActionDescription(element) : string.Empty, center, sectorcenter);
 						}
 					}
 				}
@@ -230,7 +230,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						{
 							linedefs.Add(ld);
 
-							AddLineToAction(GetActionDescription(ld), ld.GetCenterPoint(), center);
+							AddLineToAction(showreverselabel ? GetActionDescription(ld) : string.Empty, ld.GetCenterPoint(), center);
 						}
 					}
 				}
@@ -267,10 +267,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					sectors.Add(s);
 
 					if (addforward)
-						AddLineToAction(GetActionDescription(element), center, sectorcenter);
+						AddLineToAction(showforwardlabel ? GetActionDescription(element) : string.Empty, center, sectorcenter);
 
 					if (addreverse)
-						AddLineToAction(GetActionDescription(element), sectorcenter, center);
+						AddLineToAction(showreverselabel ? GetActionDescription(element) : string.Empty, sectorcenter, center);
 				}
 			}
 
@@ -293,10 +293,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					linedefs.Add(ld);
 
 					if (addforward)
-						AddLineToAction(GetActionDescription(element), center, ld.GetCenterPoint());
+						AddLineToAction(showforwardlabel ? GetActionDescription(element) : string.Empty, center, ld.GetCenterPoint());
 
 					if (addreverse)
-						AddLineToAction(GetActionDescription(ld), ld.GetCenterPoint(), center);
+						AddLineToAction(showreverselabel ? GetActionDescription(ld) : string.Empty, ld.GetCenterPoint(), center);
 				}
 			}
 
@@ -324,10 +324,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					things.Add(t);
 
 					if (addforward)
-						AddLineToAction(GetActionDescription(element), center, t.Position);
+						AddLineToAction(showforwardlabel ? GetActionDescription(element) : string.Empty, center, t.Position);
 
 					if (addreverse)
-						AddLineToAction(GetActionDescription(t), t.Position, center);
+						AddLineToAction(showreverselabel ? GetActionDescription(t) : string.Empty, t.Position, center);
 				}
 			}
 		}
@@ -573,8 +573,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				foreach (TextLabel l in kvp.Value)
 					l.Color = distinctcolors[colorindex];
 
-				if (++colorindex >= distinctcolors.Count)
-					colorindex = 0;
+				if(BuilderPlug.Me.EventLineDistinctColors)
+					if (++colorindex >= distinctcolors.Count)
+						colorindex = 0;
 			}
 		}
 
@@ -586,7 +587,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		/// <param name="end">End of the line</param>
 		private void AddLineToAction(string action, Vector2D start, Vector2D end)
 		{
-			if (string.IsNullOrEmpty(action))
+			if (action == null)
 				return;
 
 			if (!eventlines.ContainsKey(action))
@@ -712,6 +713,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		/// </summary>
 		public void Render()
 		{
+			bool showlabels = BuilderPlug.Me.EventLineLabelVisibility > 0; // Show labels at all?
+
 			foreach (Thing t in things)
 				renderer.RenderThing(t, General.Colors.Indication, General.Settings.ActiveThingsAlpha);
 
@@ -732,28 +735,36 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 				foreach(KeyValuePair<string, List<Line3D>> kvp in eventlines)
 				{
+					bool emptylabel = string.IsNullOrEmpty(kvp.Key); // Can be true if only either forward or reverse labels are shown
 					List<Vector2D> allpositions = new List<Vector2D>(kvp.Value.Count);
 
-					foreach(Line3D line in kvp.Value)
+					foreach (Line3D line in kvp.Value)
 					{
-						allpositions.Add(GetLabelPosition(line.Start, line.End));
+						if (showlabels && !emptylabel)
+							allpositions.Add(GetLabelPosition(line.Start, line.End));
+
 						lines.Add(line);
 					}
 
-					List<Vector2D> positions = MergePositions(allpositions, textwidths[kvp.Key]);
-					int labelcounter = 0;
-
-					// Set the position of the pre-generated labels. Only add the labels that are needed
-					foreach(Vector2D pos in positions)
+					if (showlabels && !emptylabel)
 					{
-						textlabels[kvp.Key][labelcounter].Location = pos;
-						labels.Add(textlabels[kvp.Key][labelcounter]);
-						labelcounter++;
+						List<Vector2D> positions = MergePositions(allpositions, textwidths[kvp.Key]);
+						int labelcounter = 0;
+
+						// Set the position of the pre-generated labels. Only add the labels that are needed
+						foreach (Vector2D pos in positions)
+						{
+							textlabels[kvp.Key][labelcounter].Location = pos;
+							labels.Add(textlabels[kvp.Key][labelcounter]);
+							labelcounter++;
+						}
 					}
 				}
 
 				renderer.RenderArrows(lines);
-				renderer.RenderText(labels);
+
+				if (showlabels)
+					renderer.RenderText(labels);
 			}
 		}
 

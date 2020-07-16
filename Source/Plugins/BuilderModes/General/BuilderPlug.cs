@@ -140,6 +140,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private int scaletexturesonslopes; // 0 = base scale of 1, 1 = use current scale as base, 2 = don't scale
 		private int eventlinelabelvisibility; // 0 = never show, 1 = forward only, 2 = reverse only, 3 = forward + reverse
 		private int eventlinelabelstyle; // 0 = Action only, 1 = Action + short arguments, 2 = action + full arguments
+		private bool eventlinedistinctcolors;
 
 		#endregion
 
@@ -197,6 +198,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		public int ScaleTexturesOnSlopes { get { return scaletexturesonslopes; } internal set { scaletexturesonslopes = value; } }
 		public int EventLineLabelVisibility { get { return eventlinelabelvisibility; } internal set { eventlinelabelvisibility = value; } }
 		public int EventLineLabelStyle { get { return eventlinelabelstyle; } internal set { eventlinelabelstyle = value; } }
+		public bool EventLineDistinctColors { get { return eventlinedistinctcolors; } internal set { eventlinedistinctcolors = value; } }
 
 		//mxd. "Make Door" action persistent settings
 		internal MakeDoorSettings MakeDoor;
@@ -303,6 +305,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			scaletexturesonslopes = General.Settings.ReadPluginSetting("scaletexturesonslopes", 0);
 			eventlinelabelvisibility = General.Settings.ReadPluginSetting("eventlinelabelvisibility", 3);
 			eventlinelabelstyle = General.Settings.ReadPluginSetting("eventlinelabelstyle", 2);
+			eventlinedistinctcolors = General.Settings.ReadPluginSetting("eventlinedistinctcolors", true);
 		}
 
 		//mxd. Load settings, which can be changed via UI
