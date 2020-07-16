@@ -177,7 +177,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					{
 						Vector2D prevp = points[points.Count - 1].pos;
 						renderguidelabels = (curp.pos.x != prevp.x && curp.pos.y != prevp.y);
-						RenderGuidelines(prevp, curp.pos, General.Colors.Guideline.WithAlpha(80));
+						RenderGuidelines(prevp, curp.pos, General.Colors.Guideline.WithAlpha(80), -General.Map.Grid.GridRotate);
 					}
 					
 					// Render lines
@@ -232,9 +232,17 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			renderer.Present();
 		}
 
-		//mxd
 		protected void RenderGuidelines(Vector2D start, Vector2D end, PixelColor c)
 		{
+			RenderGuidelines(start, end, c, 0.0);
+		}
+
+		//mxd
+		protected void RenderGuidelines(Vector2D start, Vector2D end, PixelColor c, double angle)
+		{
+			start = start.GetRotated(angle);
+			end = end.GetRotated(angle);
+
 			if(end.x != start.x && end.y != start.y)
 			{
 				Vector2D tr = new Vector2D(Math.Max(end.x, start.x), Math.Max(end.y, start.y));
@@ -242,10 +250,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 				// Create guidelines
 				Line3D[] lines = new Line3D[5];
-				lines[0] = new Line3D(new Vector2D(tr.x, General.Map.Config.TopBoundary), new Vector2D(tr.x, General.Map.Config.BottomBoundary), c, false);
-				lines[1] = new Line3D(new Vector2D(bl.x, General.Map.Config.TopBoundary), new Vector2D(bl.x, General.Map.Config.BottomBoundary), c, false);
-				lines[2] = new Line3D(new Vector2D(General.Map.Config.LeftBoundary, tr.y), new Vector2D(General.Map.Config.RightBoundary, tr.y), c, false);
-				lines[3] = new Line3D(new Vector2D(General.Map.Config.LeftBoundary, bl.y), new Vector2D(General.Map.Config.RightBoundary, bl.y), c, false);
+				lines[0] = new Line3D(new Vector2D(tr.x, General.Map.Config.TopBoundary).GetRotated(-angle), new Vector2D(tr.x, General.Map.Config.BottomBoundary).GetRotated(-angle), c, false);
+				lines[1] = new Line3D(new Vector2D(bl.x, General.Map.Config.TopBoundary).GetRotated(-angle), new Vector2D(bl.x, General.Map.Config.BottomBoundary).GetRotated(-angle), c, false);
+				lines[2] = new Line3D(new Vector2D(General.Map.Config.LeftBoundary, tr.y).GetRotated(-angle), new Vector2D(General.Map.Config.RightBoundary, tr.y).GetRotated(-angle), c, false);
+				lines[3] = new Line3D(new Vector2D(General.Map.Config.LeftBoundary, bl.y).GetRotated(-angle), new Vector2D(General.Map.Config.RightBoundary, bl.y).GetRotated(-angle), c, false);
 
 				// Create current line extent. Make sure v1 is to the left of v2
 				Line2D current = (end.x < start.x ? new Line2D(end, start) : new Line2D(start, end));
@@ -276,7 +284,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						extentend = Line2D.GetIntersectionPoint(bottom, current, false);
 				}
 
-				lines[4] = new Line3D(extentstart, extentend, c, false);
+				lines[4] = new Line3D(extentstart.GetRotated(-angle), extentend.GetRotated(-angle), c, false);
 
 				// Render them
 				renderer.RenderArrows(lines);
@@ -284,33 +292,33 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				// Update horiz/vert length labels
 				if(guidelabels != null)
 				{
-					guidelabels[0].Move(tr, new Vector2D(tr.x, bl.y));
-					guidelabels[1].Move(new Vector2D(bl.x, tr.y), tr);
-					guidelabels[2].Move(new Vector2D(tr.x, bl.y), bl);
-					guidelabels[3].Move(bl, new Vector2D(bl.x, tr.y));
+					guidelabels[0].Move(tr.GetRotated(-angle), new Vector2D(tr.x, bl.y).GetRotated(-angle));
+					guidelabels[1].Move(new Vector2D(bl.x, tr.y).GetRotated(-angle), tr.GetRotated(-angle));
+					guidelabels[2].Move(new Vector2D(tr.x, bl.y).GetRotated(-angle), bl.GetRotated(-angle));
+					guidelabels[3].Move(bl.GetRotated(-angle), new Vector2D(bl.x, tr.y).GetRotated(-angle));
 				}
 			}
 			// Render horizontal line + 2 vertical guidelines
 			else if(end.x != start.x)
 			{
-				Line3D l = new Line3D(new Vector2D(General.Map.Config.LeftBoundary, end.y), new Vector2D(General.Map.Config.RightBoundary, end.y), c, false);
-				Line3D gs = new Line3D(new Vector2D(start.x, General.Map.Config.TopBoundary), new Vector2D(start.x, General.Map.Config.BottomBoundary), c, false);
-				Line3D ge = new Line3D(new Vector2D(end.x, General.Map.Config.TopBoundary), new Vector2D(end.x, General.Map.Config.BottomBoundary), c, false);
+				Line3D l = new Line3D(new Vector2D(General.Map.Config.LeftBoundary, end.y).GetRotated(-angle), new Vector2D(General.Map.Config.RightBoundary, end.y).GetRotated(-angle), c, false);
+				Line3D gs = new Line3D(new Vector2D(start.x, General.Map.Config.TopBoundary).GetRotated(-angle), new Vector2D(start.x, General.Map.Config.BottomBoundary).GetRotated(-angle), c, false);
+				Line3D ge = new Line3D(new Vector2D(end.x, General.Map.Config.TopBoundary).GetRotated(-angle), new Vector2D(end.x, General.Map.Config.BottomBoundary).GetRotated(-angle), c, false);
 				renderer.RenderArrows(new List<Line3D> { l, gs, ge });
 			}
 			// Render vertical line + 2 horizontal guidelines
 			else if(end.y != start.y)
 			{
-				Line3D l = new Line3D(new Vector2D(end.x, General.Map.Config.TopBoundary), new Vector2D(end.x, General.Map.Config.BottomBoundary), c, false);
-				Line3D gs = new Line3D(new Vector2D(General.Map.Config.LeftBoundary, start.y), new Vector2D(General.Map.Config.RightBoundary, start.y), c, false);
-				Line3D ge = new Line3D(new Vector2D(General.Map.Config.LeftBoundary, end.y), new Vector2D(General.Map.Config.RightBoundary, end.y), c, false);
+				Line3D l = new Line3D(new Vector2D(end.x, General.Map.Config.TopBoundary).GetRotated(-angle), new Vector2D(end.x, General.Map.Config.BottomBoundary).GetRotated(-angle), c, false);
+				Line3D gs = new Line3D(new Vector2D(General.Map.Config.LeftBoundary, start.y).GetRotated(-angle), new Vector2D(General.Map.Config.RightBoundary, start.y).GetRotated(-angle), c, false);
+				Line3D ge = new Line3D(new Vector2D(General.Map.Config.LeftBoundary, end.y).GetRotated(-angle), new Vector2D(General.Map.Config.RightBoundary, end.y).GetRotated(-angle), c, false);
 				renderer.RenderArrows(new List<Line3D> {l, gs, ge});
 			}
 			// Start and end match. Render a cross
 			else
 			{
-				Line3D gs = new Line3D(new Vector2D(General.Map.Config.LeftBoundary, start.y), new Vector2D(General.Map.Config.RightBoundary, start.y), c, false);
-				Line3D ge = new Line3D(new Vector2D(start.x, General.Map.Config.TopBoundary), new Vector2D(start.x, General.Map.Config.BottomBoundary), c, false);
+				Line3D gs = new Line3D(new Vector2D(General.Map.Config.LeftBoundary, start.y).GetRotated(-angle), new Vector2D(General.Map.Config.RightBoundary, start.y).GetRotated(-angle), c, false);
+				Line3D ge = new Line3D(new Vector2D(start.x, General.Map.Config.TopBoundary).GetRotated(-angle), new Vector2D(start.x, General.Map.Config.BottomBoundary).GetRotated(-angle), c, false);
 				renderer.RenderArrows(new List<Line3D> { gs, ge });
 			}
 		}

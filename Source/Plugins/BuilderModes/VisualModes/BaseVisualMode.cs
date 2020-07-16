@@ -751,6 +751,64 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					break;
 			}
 		}
+
+		private List<VisualSidedefSlope> GetSlopeHandlePair()
+		{
+			List<VisualSidedefSlope> handles = GetSelectedSlopeHandles();
+
+			// No handles selected, try to slope between highlighted handle and it smart pivot
+			if (handles.Count == 0 && HighlightedTarget is VisualSidedefSlope)
+			{
+				VisualSidedefSlope handle = VisualSidedefSlope.GetSmartPivotHandle((VisualSidedefSlope)HighlightedTarget, this);
+				if (handle == null)
+				{
+					General.Interface.DisplayStatus(StatusType.Warning, "Couldn't find a smart pivot handle.");
+					return handles;
+				}
+
+				handles.Add((VisualSidedefSlope)HighlightedTarget);
+				handles.Add(handle);
+			}
+			// One handle selected, try to slope between it and the highlighted handle or the selected one's smart pivot
+			else if (handles.Count == 1)
+			{
+				if (HighlightedTarget == handles[0] || !(HighlightedTarget is VisualSidedefSlope))
+				{
+					VisualSidedefSlope handle;
+
+					if (HighlightedTarget is VisualSidedefSlope)
+						handle = VisualSidedefSlope.GetSmartPivotHandle((VisualSidedefSlope)HighlightedTarget, this);
+					else
+						handle = VisualSidedefSlope.GetSmartPivotHandle(handles[0], this);
+
+					if (handle == null)
+					{
+						General.Interface.DisplayStatus(StatusType.Warning, "Couldn't find a smart pivot handle.");
+						return handles;
+					}
+
+					handles.Add(handle);
+				}
+				else
+				{
+					handles.Add((VisualSidedefSlope)HighlightedTarget);
+				}
+			}
+			// Return if more than two handles are selected
+			else if (handles.Count > 2)
+			{
+				General.Interface.DisplayStatus(StatusType.Warning, "Too many slope handles selected.");
+				return handles;
+			}
+			// Everything else
+			else if (handles.Count != 2)
+			{
+				General.Interface.DisplayStatus(StatusType.Warning, "No slope handles selected or highlighted.");
+				return handles;
+			}
+
+			return handles;
+		}
 		
 		#endregion
 
@@ -1775,6 +1833,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		{
 			UpdateChangedObjects();
 			ShowTargetInfo();
+		}
+
+		private void Interface_OnUpdateChangedObjects(object sender, EventArgs e)
+		{
+			UpdateChangedObjects();
 		}
 
 		//mxd
@@ -4164,56 +4227,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				return;
 			}
 
-			List<VisualSidedefSlope> handles = GetSelectedSlopeHandles();
+			List<VisualSidedefSlope> handles = GetSlopeHandlePair();
 
-			// No handles selected, try to slope between highlighted handle and it smart pivot
-			if (handles.Count == 0 && HighlightedTarget is VisualSidedefSlope)
+			if (handles.Count != 2)
 			{
-				VisualSidedefSlope handle = VisualSidedefSlope.GetSmartPivotHandle((VisualSidedefSlope)HighlightedTarget, this);
-				if (handle == null)
-				{
-					General.Interface.DisplayStatus(StatusType.Warning, "Couldn't find a smart pivot handle.");
-					return;
-				}
-
-				handles.Add((VisualSidedefSlope)HighlightedTarget);
-				handles.Add(handle);
-			}
-			// One handle selected, try to slope between it and the highlighted handle or the selected one's smart pivot
-			else if (handles.Count == 1)
-			{
-				if (HighlightedTarget == handles[0] || !(HighlightedTarget is VisualSidedefSlope))
-				{
-					VisualSidedefSlope handle;
-
-					if(HighlightedTarget is VisualSidedefSlope)
-						handle = VisualSidedefSlope.GetSmartPivotHandle((VisualSidedefSlope)HighlightedTarget, this);
-					else
-						handle = VisualSidedefSlope.GetSmartPivotHandle(handles[0], this);
-
-					if (handle == null)
-					{
-						General.Interface.DisplayStatus(StatusType.Warning, "Couldn't find a smart pivot handle.");
-						return;
-					}
-
-					handles.Add(handle);
-				}
-				else
-				{
-					handles.Add((VisualSidedefSlope)HighlightedTarget);
-				}
-			}
-			// Return if more than two handles are selected
-			else if(handles.Count > 2)
-			{
-				General.Interface.DisplayStatus(StatusType.Warning, "Too many slope handles selected.");
-				return;
-			}
-			// Everything else
-			else if(handles.Count != 2)
-			{
-				General.Interface.DisplayStatus(StatusType.Warning, "No slope handles selected or highlighted.");
+				General.Interface.DisplayStatus(StatusType.Warning, "You need to select exactly two slope handles.");
 				return;
 			}
 
@@ -4235,6 +4253,69 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			UpdateChangedObjects();
 
 			General.Interface.DisplayStatus(StatusType.Action, "Sloped between slope handles.");
+		}
+
+		/// <summary>
+		/// Applies plane equation slopes to selected sectors, based on the selected slope handles
+		/// </summary>
+		[BeginAction("archbetweenhandles")]
+		public void ArchBetweenHandles()
+		{
+			List<IVisualEventReceiver> selectedsectors = GetSelectedObjects(true, false, false, false, false);
+
+			if (selectedsectors.Count < 2)
+			{
+				General.Interface.DisplayStatus(StatusType.Warning, "You need to select at least two floors and ceilings to slope arch between slope handles.");
+				return;
+			}
+
+			List<VisualSidedefSlope> handles = GetSlopeHandlePair();
+
+			if (handles.Count != 2)
+			{
+				General.Interface.DisplayStatus(StatusType.Warning, "You need to select exactly two slope handles.");
+				return;
+			}
+
+			General.Map.UndoRedo.CreateUndo("Arch between slope handles");
+
+			Vector3D p1 = handles[0].GetCenterPoint();
+			Vector3D p2 = handles[1].GetCenterPoint();
+			double linelength = Line2D.GetLength(p2.x - p1.x, p2.y - p1.y);
+			double zdiff = Math.Abs(p1.z - p2.z);
+			double theta;
+			double offsetangle;
+
+			// Compute theta and the offset angle. Special handling if the slope handles are at the same height
+			if (zdiff == 0.0)
+			{
+				theta = Math.PI;
+				offsetangle = 0.0;
+			}
+			else
+			{
+				theta = Math.Atan(zdiff / linelength) * 2;
+				offsetangle = Math.PI / 2.0;
+
+				if (p2.z < p1.z)
+					offsetangle -= theta;
+			}
+
+			SlopeArcher sa = new SlopeArcher(this, selectedsectors, handles[0], handles[1], theta, offsetangle, 1.0);
+
+			SlopeArchForm saf = new SlopeArchForm(sa);
+			saf.UpdateChangedObjects += Interface_OnUpdateChangedObjects;
+			DialogResult result = saf.ShowDialog();
+			saf.UpdateChangedObjects -= Interface_OnUpdateChangedObjects;
+
+			if (result == DialogResult.Cancel)
+				General.Map.UndoRedo.WithdrawUndo();
+			else
+			{
+				UpdateChangedObjects();
+
+				General.Interface.DisplayStatus(StatusType.Action, "Arched between slope handles.");
+			}
 		}
 
 		#endregion
@@ -4363,6 +4444,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		// (set the marked property to true for the sidedefs outside the selection)
 		private void AutoAlignTexturesUDMF(BaseVisualGeometrySidedef start, ImageData texture, bool alignx, bool aligny, bool resetsidemarks, bool checkselectedsidedefparts) 
 		{
+			HashSet<long> alignedsides = new HashSet<long>(100);
 			// Mark all sidedefs false (they will be marked true when the texture is aligned)
 			if(resetsidemarks) General.Map.Map.ClearMarkedSidedefs(false);
 			if(!texture.IsImageLoaded) return;
@@ -4480,21 +4562,38 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				// Get the align job to do
 				SidedefAlignJob j = todo.Pop();
 
-				// Make sure to not align already aligned textures. This prevents unexpected
-				// results when aligning textures on circular shapes
-				if (j.sidedef.Marked)
+				// Make sure that each combination of sidedef and control side is only aligned once. 
+				// This prevents unexpected results when aligning textures on circular shapes
+				long checksum = (long)j.sidedef.Index << 32 | (long)j.controlSide.Index;
+				if (alignedsides.Contains(checksum))
 					continue;
+				else
+					alignedsides.Add(checksum);
 
 				//mxd. Get visual parts
 				if (VisualSectorExists(j.sidedef.Sector))
 				{
 					VisualSidedefParts parts = ((BaseVisualSector)GetVisualSector(j.sidedef.Sector)).GetSidedefParts(j.sidedef);
-					VisualSidedefParts controlparts = (j.sidedef != j.controlSide ? ((BaseVisualSector)GetVisualSector(j.controlSide.Sector)).GetSidedefParts(j.controlSide) : parts);
+					//VisualSidedefParts controlparts = (j.sidedef != j.controlSide ? ((BaseVisualSector)GetVisualSector(j.controlSide.Sector)).GetSidedefParts(j.controlSide) : parts);
 
 					matchtop = (!j.sidedef.Marked && (!singleselection || texturehashes.Contains(j.sidedef.LongHighTexture)) && (parts.upper != null && parts.upper.Triangles > 0));
 					matchbottom = (!j.sidedef.Marked && (!singleselection || texturehashes.Contains(j.sidedef.LongLowTexture)) && (parts.lower != null && parts.lower.Triangles > 0));
 					matchmid = ((!singleselection || texturehashes.Contains(j.controlSide.LongMiddleTexture))
-						&& ((controlparts.middledouble != null && controlparts.middledouble.Triangles > 0) || (controlparts.middlesingle != null && controlparts.middlesingle.Triangles > 0))); //mxd
+						&& ((parts.middledouble != null && parts.middledouble.Triangles > 0) || (parts.middlesingle != null && parts.middlesingle.Triangles > 0))); //mxd
+
+					// "Normal" sidedef parts didn't match? Check 3D floors
+					if(matchmid == false && parts.middle3d != null && parts.middle3d.Count > 0)
+					{
+						foreach(VisualMiddle3D vm3d in parts.middle3d)
+						{
+							if(vm3d.Triangles > 0 && texturehashes.Contains(vm3d.Texture.LongName))
+							{
+								matchmid = true;
+								break;
+							}
+						}
+					}
+
 
 					//mxd. If there's a selection, check if matched part is actually selected
 					if(checkselectedsidedefparts && !singleselection)

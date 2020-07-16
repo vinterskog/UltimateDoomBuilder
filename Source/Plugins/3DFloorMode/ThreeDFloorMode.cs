@@ -40,6 +40,7 @@ using CodeImp.DoomBuilder.Types;
 using CodeImp.DoomBuilder.BuilderModes;
 using CodeImp.DoomBuilder.BuilderModes.Interface;
 using CodeImp.DoomBuilder.Controls;
+using CodeImp.DoomBuilder.Config;
 // using CodeImp.DoomBuilder.GZBuilder.Geometry;
 
 #endregion
@@ -60,10 +61,12 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 	{
 		#region ================== Constants
 
+		private const string duplicateundodescription = "Duplicate 3D floor control sectors before pasting";
+
 		#endregion
 
 		#region ================== Variables
-		
+
 		// Highlighted item
 		protected Sector highlighted;
 		protected ThreeDFloor highlighted3dfloor;
@@ -86,6 +89,7 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 
 		ControlSectorArea.Highlight csahighlight = ControlSectorArea.Highlight.None;
 		bool dragging = false;
+		bool withdrawduplicateundo;
 
 		bool paintselectpressed;
 
@@ -107,6 +111,19 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 		{
 			threedfloors = BuilderPlug.GetThreeDFloors(General.Map.Map.Sectors.ToList());
 			highlightasso = new Association(renderer);
+
+			withdrawduplicateundo = false;
+
+			// If we're coming from EditSelectionMode, and that modes was cancelled check if the last undo was to create
+			// duplicated 3D floors. If that's the case we want to withdraw that undo, too. Don't do it here, though, as the other
+			// mode is still active, do it in OnEngage instead
+			if (General.Editing.Mode is EditSelectionMode &&
+				((EditSelectionMode)General.Editing.Mode).Cancelled &&
+				General.Map.UndoRedo.NextUndo != null &&
+				General.Map.UndoRedo.NextUndo.Description == duplicateundodescription)
+			{
+				withdrawduplicateundo = true;
+			}
 		}
 
 		// Disposer
@@ -669,6 +686,10 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 			UpdateLabels();
 			updateOverlaySurfaces();
 			UpdateOverlay();
+
+			// Withdraw the undo that was created when 
+			if (withdrawduplicateundo)
+				General.Map.UndoRedo.WithdrawUndo();
 		}
 
 		void ViewSelectionNumbers_Click(object sender, EventArgs e)
@@ -1177,7 +1198,29 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 				SelectSector(highlighted, true, true);
 			}
 
-			return base.OnCopyBegin();
+			General.Map.Map.MarkAllSelectedGeometry(true, false, true, true, false);
+
+			return General.Map.Map.GetMarkedSectors(true).Count > 0;
+		}
+
+		public override bool OnPasteBegin(PasteOptions options)
+		{
+			return true;
+		}
+
+		// This is called when something was pasted.
+		public override void OnPasteEnd(PasteOptions options)
+		{
+			General.Map.Map.ClearAllSelected();
+			General.Map.Map.SelectMarkedGeometry(true, true);
+			General.Map.Renderer2D.UpdateExtraFloorFlag(); //mxd
+
+			// Switch to EditSelectionMode
+			EditSelectionMode editmode = new EditSelectionMode();
+			editmode.Pasting = true;
+			editmode.UpdateSlopes = true;
+			editmode.PasteOptions = options;
+			General.Editing.ChangeMode(editmode);
 		}
 
 		// When undo is used
@@ -1459,6 +1502,110 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 			General.Interface.RedrawDisplay();
 
 			General.Interface.DisplayStatus(StatusType.Info, String.Format("3D floor control sector selected. {0} sector(s) selected.", General.Map.Map.GetSelectedSectors(true).Count));
+		}
+
+		[BeginAction("duplicate3dfloorgeometry")]
+		public void Duplicate3DFloorGeometry()
+		{
+			List<Sector> selectedsectors;
+			List<ThreeDFloor> duplicatethreedfloors;
+			List<DrawnVertex> drawnvertices;
+			Dictionary<int, int> tagreplacements = new Dictionary<int, int>();
+			List<int> tagblacklist = new List<int>();
+
+			// No selection made? But we have a highlight!
+			if ((General.Map.Map.GetSelectedSectors(true).Count == 0) && (highlighted != null))
+			{
+				// Make the highlight the selection
+				SelectSector(highlighted, true, true);
+			}
+
+			selectedsectors = General.Map.Map.GetSelectedSectors(true).ToList();
+
+			// Get the 3D floors we need to duplicate
+			duplicatethreedfloors = BuilderPlug.GetThreeDFloors(selectedsectors);
+
+			// Create a list of all tags used by the control sectors. This is necessary so that
+			// tags that will be assigned to not yet existing geometry will not be used
+			foreach (ThreeDFloor tdf in threedfloors)
+				foreach (int tag in tdf.Tags)
+					if (!tagblacklist.Contains(tag))
+						tagblacklist.Add(tag);
+
+			if (duplicatethreedfloors.Count == 0)
+			{
+				General.Interface.DisplayStatus(StatusType.Warning, "Selected geometry doesn't contain 3D floors");
+				return;
+			}
+
+			try
+			{
+				drawnvertices = BuilderPlug.Me.ControlSectorArea.GetNewControlSectorVertices(duplicatethreedfloors.Count);
+			}
+			catch (NoSpaceInCSAException e)
+			{
+				General.Interface.DisplayStatus(StatusType.Warning, string.Format("Could not create 3D floor control sector geometry: {0}", e.Message));
+				return;
+			}
+
+			General.Map.UndoRedo.CreateUndo(duplicateundodescription);
+			
+			// Create a new control sector for each 3D floor that needs to be duplicated. Force it to generate
+			// a new tag, and store the old (current) and new tag
+			foreach (ThreeDFloor tdf in duplicatethreedfloors)
+			{
+				int newtag;
+				int oldtag = tdf.UDMFTag;
+
+				if(!tdf.CreateGeometry(new List<int>(), drawnvertices, true, out newtag))
+				{
+					// No need to show a warning here, that was already done by CreateGeometry
+					General.Map.UndoRedo.WithdrawUndo();
+					return;
+				}
+
+				tagreplacements[oldtag] = newtag;
+			}
+
+			// Replace the old tags of the selected sectors with the new tags
+			foreach (Sector s in selectedsectors)
+			{
+				foreach (int oldtag in tagreplacements.Keys)
+				{
+					if (s.Tags.Contains(oldtag))
+					{
+						s.Tags.Remove(oldtag);
+						s.Tags.Add(tagreplacements[oldtag]);
+					}
+				}
+			}
+
+			// Store the selected sectors (with the new tags) in the clipboard
+			if(!CopyPasteManager.DoCopySelection("3D floor test copy!"))
+			{
+				General.Interface.DisplayStatus(StatusType.Warning, "Something failed trying to copy the selection");
+				General.Map.UndoRedo.WithdrawUndo();
+				return;
+			}
+
+			// Now set the tags of the selected sectors back to the old tags
+			foreach(Sector s in selectedsectors)
+			{
+				foreach(int oldtag in tagreplacements.Keys)
+				{
+					if(s.Tags.Contains(tagreplacements[oldtag]))
+					{
+						s.Tags.Remove(tagreplacements[oldtag]);
+						s.Tags.Add(oldtag);
+					}
+				}
+			}
+
+			// For this operation we have to make sure the tags and actions are not changed, no matter
+			// what the user preference is, otherwise it will not work
+			PasteOptions po = new PasteOptions() { ChangeTags = 0, RemoveActions = false };
+
+			CopyPasteManager.DoPasteSelection(po);
 		}
 
 		#endregion

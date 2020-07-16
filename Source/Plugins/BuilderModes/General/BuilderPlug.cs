@@ -651,9 +651,49 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			WavefrontSettingsForm form = new WavefrontSettingsForm(General.Map.Map.SelectedSectorsCount == 0 ? -1 : sectors.Count);
 			if(form.ShowDialog() == DialogResult.OK) 
 			{
-				WavefrontExportSettings data = new WavefrontExportSettings(Path.GetFileNameWithoutExtension(form.FilePath), Path.GetDirectoryName(form.FilePath), form.ObjScale, form.UseGZDoomScale, form.ExportTextures);
+				WavefrontExportSettings data = new WavefrontExportSettings(form);
 				WavefrontExporter e = new WavefrontExporter();
 				e.Export(sectors, data);
+			}
+		}
+
+		[BeginAction("exporttoimage")]
+		private void ExportToImage()
+		{
+			// Convert geometry selection to sectors
+			General.Map.Map.ConvertSelection(SelectionType.Sectors);
+
+			// Get sectors
+			ICollection<Sector> sectors = General.Map.Map.SelectedSectorsCount == 0 ? General.Map.Map.Sectors : General.Map.Map.GetSelectedSectors(true);
+			if (sectors.Count == 0)
+			{
+				General.Interface.DisplayStatus(StatusType.Warning, "Image export failed. Map has no sectors!");
+				return;
+			}
+
+			ImageExportSettingsForm form = new ImageExportSettingsForm();
+			if (form.ShowDialog() == DialogResult.OK)
+			{
+				ImageExportSettings settings = new ImageExportSettings(Path.GetDirectoryName(form.FilePath), Path.GetFileNameWithoutExtension(form.FilePath), Path.GetExtension(form.FilePath), form.Floor, form.Fullbright, form.Brightmap, form.Tiles, form.GetPixelFormat(), form.GetImageFormat());
+				ImageExporter exporter = new ImageExporter(sectors, settings);
+
+				string text = "The following images will be created:\n\n" + string.Join("\n", exporter.GetImageNames());
+
+				DialogResult result = MessageBox.Show(text, "Export to image", MessageBoxButtons.OKCancel);
+
+				if (result == DialogResult.OK)
+				{
+					try
+					{
+						exporter.Export();
+
+						MessageBox.Show("Export successful.", "Export to image", MessageBoxButtons.OK, MessageBoxIcon.Information);
+					}
+					catch (ArgumentException e) // Happens if there's not enough consecutive memory to create the file
+					{
+						MessageBox.Show("Exporting failed. There's likely not enough consecutive free memory to create the image. Try a lower color depth or file format", "Export failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					}
+				}
 			}
 		}
 

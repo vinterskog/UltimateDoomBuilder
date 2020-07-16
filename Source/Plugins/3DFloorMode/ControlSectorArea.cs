@@ -30,6 +30,19 @@ using CodeImp.DoomBuilder.Map;
 
 namespace CodeImp.DoomBuilder.ThreeDFloorMode
 {
+	[Serializable]
+	public class NoSpaceInCSAException : Exception
+	{
+		public NoSpaceInCSAException()
+		{ }
+
+		public NoSpaceInCSAException(string message) : base(message)
+		{ }
+
+		public NoSpaceInCSAException(string message, Exception innerException) : base(message, innerException)
+		{ }
+	}
+
 	public class ControlSectorArea
 	{
 
@@ -318,11 +331,17 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 				}
 			}
 
-			throw new Exception("Not enough space for control sector relocation");
+			throw new NoSpaceInCSAException("Not enough space for control sector relocation");
 		}
 
 		public List<DrawnVertex> GetNewControlSectorVertices()
 		{
+			return GetNewControlSectorVertices(1);
+		}
+
+		public List<DrawnVertex> GetNewControlSectorVertices(int numsectors)
+		{
+			List<DrawnVertex> dv = new List<DrawnVertex>();
 			BlockMap<BlockEntry> blockmap = CreateBlockmap();
 
 			int margin = (int)((gridsize - sectorsize) / 2);
@@ -340,7 +359,6 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 					// The way our blockmap is built and queried we will always get exactly one block
 					if (blocks[0].Sectors.Count == 0)
 					{
-						List<DrawnVertex> dv = new List<DrawnVertex>();
 						Point p = new Point(x + margin, y - margin);
 
 						dv.Add(SectorVertex(p.X, p.Y));
@@ -349,12 +367,15 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 						dv.Add(SectorVertex(p.X, p.Y - BuilderPlug.Me.ControlSectorArea.SectorSize));
 						dv.Add(SectorVertex(p.X, p.Y));
 
-						return dv;
+						numsectors--;
+
+						if (numsectors == 0)
+							return dv;
 					}
 				}
 			}
 
-			throw new Exception("No space left for control sectors");
+			throw new NoSpaceInCSAException("No space left for control sectors");
 		}
 
 		public bool Inside(float x, float y)
