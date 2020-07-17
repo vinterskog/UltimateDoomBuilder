@@ -217,7 +217,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			//mxd. If snap to cardinal directions is enabled, modify the offset
 			if(snapcardinal)
 			{
-				float angle = Angle2D.DegToRad((General.ClampAngle((int)Angle2D.RadToDeg(offset.GetAngle()) + 44)) / 90 * 90);
+				double angle = Angle2D.DegToRad((General.ClampAngle((int)Angle2D.RadToDeg(offset.GetAngle()) + 44)) / 90 * 90);
 				offset = new Vector2D(0, -offset.GetLength()).GetRotated(angle);
 				snapgridincrement = true; // We don't want to move the geometry away from the cardinal directions
 			}
@@ -273,7 +273,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 							if(coords.Count > 0) 
 							{
 								// Find nearest grid intersection
-								float found_distance = float.MaxValue;
+								double found_distance = double.MaxValue;
 								Vector2D found_coord = new Vector2D();
 
 								foreach(Vector2D v in coords) 
@@ -427,84 +427,102 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				General.Map.Map.SnapAllToAccuracy();
 
 				//mxd. Update floor/ceiling texture offsets and slopes?
-				if(General.Map.UDMF) 
+				if (General.Map.UDMF)
 				{
+					Dictionary<Sector, List<Sector>> threedfloorcontrolsectors = new Dictionary<Sector, List<Sector>>();
 					Vector2D offset = dragitem.Position - dragitemposition;
 
 					// Sectors may've been created/removed when applying dragging...
 					HashSet<Sector> draggedsectors = new HashSet<Sector>(General.Map.Map.GetMarkedSectors(true));
-					foreach(Sector ss in selectedsectors) if(!ss.IsDisposed) draggedsectors.Add(ss);
-					
-					// Update floor/ceiling texture offsets?
-					if(BuilderPlug.Me.LockSectorTextureOffsetsWhileDragging)
-					{
+					foreach (Sector ss in selectedsectors) if (!ss.IsDisposed) draggedsectors.Add(ss);
 
-						foreach(Sector s in draggedsectors) 
+					// Sectors that have to be updated. They contain the dragged sectors, but also 3D floor control sectors
+					HashSet<Sector> updatesectors = new HashSet<Sector>(draggedsectors);
+
+					// Check if the dragged sectors are referenced as 3D floors, and add the control sectors to the list of
+					// sectors that need updating
+					foreach (Linedef ld in General.Map.Map.Linedefs)
+					{
+						if (ld.Action != 160) // Action 160 defines a 3D floor
+							continue;
+
+						foreach (Sector s in draggedsectors)
+						{
+							if (ld.Args[0] == 0 || !s.Tags.Contains(ld.Args[0])) // First argument of the action is the sector tag. 0 is not a valid value
+								continue;
+
+							updatesectors.Add(ld.Front.Sector);
+						}
+					}
+
+					// Update floor/ceiling texture offsets?
+					foreach (Sector s in updatesectors)
+					{
+						bool updateoffsets = (draggedsectors.Contains(s) && BuilderPlug.Me.LockSectorTextureOffsetsWhileDragging) || (!draggedsectors.Contains(s) && BuilderPlug.Me.Lock3DFloorSectorTextureOffsetsWhileDragging);
+
+						// Update texture offsets
+						if (updateoffsets)
 						{
 							s.Fields.BeforeFieldsChange();
 
 							// Update ceiling offset
-							if(s.LongCeilTexture != MapSet.EmptyLongName) 
+							if (s.LongCeilTexture != MapSet.EmptyLongName)
 							{
 								ImageData texture = General.Map.Data.GetFlatImage(s.CeilTexture);
 
-								if(texture != null) 
+								if (texture != null)
 								{
-									float scalex = s.Fields.GetValue("xscaleceiling", 1.0f);
-									float scaley = s.Fields.GetValue("yscaleceiling", 1.0f);
+									double scalex = s.Fields.GetValue("xscaleceiling", 1.0);
+									double scaley = s.Fields.GetValue("yscaleceiling", 1.0);
 
-									if(scalex != 0 && scaley != 0) 
+									if (scalex != 0 && scaley != 0)
 									{
-										Vector2D ceiloffset = new Vector2D(-offset.x, offset.y).GetRotated(-Angle2D.DegToRad((int)s.Fields.GetValue("rotationceiling", 0f)));
-										ceiloffset.x += s.Fields.GetValue("xpanningceiling", 0f);
-										ceiloffset.y += s.Fields.GetValue("ypanningceiling", 0f);
+										Vector2D ceiloffset = new Vector2D(-offset.x, offset.y).GetRotated(-Angle2D.DegToRad((int)s.Fields.GetValue("rotationceiling", 0.0)));
+										ceiloffset.x += s.Fields.GetValue("xpanningceiling", 0.0);
+										ceiloffset.y += s.Fields.GetValue("ypanningceiling", 0.0);
 
 										int texturewidth = (int)Math.Round(texture.Width / scalex);
 										int textureheight = (int)Math.Round(texture.Height / scaley);
 
-										if(!s.Fields.ContainsKey("xpanningceiling")) s.Fields.Add("xpanningceiling", new UniValue(UniversalType.Float, (float)Math.Round(ceiloffset.x % texturewidth)));
-										else s.Fields["xpanningceiling"].Value = (float)Math.Round(ceiloffset.x % texturewidth);
+										if (!s.Fields.ContainsKey("xpanningceiling")) s.Fields.Add("xpanningceiling", new UniValue(UniversalType.Float, Math.Round(ceiloffset.x % texturewidth)));
+										else s.Fields["xpanningceiling"].Value = Math.Round(ceiloffset.x % texturewidth);
 
-										if(!s.Fields.ContainsKey("ypanningceiling")) s.Fields.Add("ypanningceiling", new UniValue(UniversalType.Float, (float)Math.Round(ceiloffset.y % textureheight)));
-										else s.Fields["ypanningceiling"].Value = (float)Math.Round(ceiloffset.y % textureheight);
+										if (!s.Fields.ContainsKey("ypanningceiling")) s.Fields.Add("ypanningceiling", new UniValue(UniversalType.Float, Math.Round(ceiloffset.y % textureheight)));
+										else s.Fields["ypanningceiling"].Value = Math.Round(ceiloffset.y % textureheight);
 									}
 								}
 							}
 
 							// Update floor offset
-							if(s.LongFloorTexture != MapSet.EmptyLongName) 
+							if (s.LongFloorTexture != MapSet.EmptyLongName)
 							{
 								ImageData texture = General.Map.Data.GetFlatImage(s.FloorTexture);
-								if(texture != null) 
+								if (texture != null)
 								{
-									float scalex = s.Fields.GetValue("xscalefloor", 1.0f);
-									float scaley = s.Fields.GetValue("yscalefloor", 1.0f);
+									double scalex = s.Fields.GetValue("xscalefloor", 1.0);
+									double scaley = s.Fields.GetValue("yscalefloor", 1.0);
 
-									if(scalex != 0 && scaley != 0) 
+									if (scalex != 0 && scaley != 0)
 									{
-										Vector2D flooroffset = new Vector2D(-offset.x, offset.y).GetRotated(-Angle2D.DegToRad((int)s.Fields.GetValue("rotationfloor", 0f)));
-										flooroffset.x += s.Fields.GetValue("xpanningfloor", 0f);
-										flooroffset.y += s.Fields.GetValue("ypanningfloor", 0f);
+										Vector2D flooroffset = new Vector2D(-offset.x, offset.y).GetRotated(-Angle2D.DegToRad((int)s.Fields.GetValue("rotationfloor", 0.0)));
+										flooroffset.x += s.Fields.GetValue("xpanningfloor", 0.0);
+										flooroffset.y += s.Fields.GetValue("ypanningfloor", 0.0);
 
 										int texturewidth = (int)Math.Round(texture.Width / scalex);
 										int textureheight = (int)Math.Round(texture.Height / scaley);
 
-										if(!s.Fields.ContainsKey("xpanningfloor")) s.Fields.Add("xpanningfloor", new UniValue(UniversalType.Float, (float)Math.Round(flooroffset.x % texturewidth)));
-										else s.Fields["xpanningfloor"].Value = (float)Math.Round(flooroffset.x % texturewidth);
+										if (!s.Fields.ContainsKey("xpanningfloor")) s.Fields.Add("xpanningfloor", new UniValue(UniversalType.Float, Math.Round(flooroffset.x % texturewidth)));
+										else s.Fields["xpanningfloor"].Value = Math.Round(flooroffset.x % texturewidth);
 
-										if(!s.Fields.ContainsKey("ypanningfloor")) s.Fields.Add("ypanningfloor", new UniValue(UniversalType.Float, (float)Math.Round(flooroffset.y % textureheight)));
-										else s.Fields["ypanningfloor"].Value = (float)Math.Round(flooroffset.y % textureheight);
+										if (!s.Fields.ContainsKey("ypanningfloor")) s.Fields.Add("ypanningfloor", new UniValue(UniversalType.Float, Math.Round(flooroffset.y % textureheight)));
+										else s.Fields["ypanningfloor"].Value = Math.Round(flooroffset.y % textureheight);
 									}
 								}
 							}
 						}
-					}
 
-					// Update slopes
-					foreach(Sector s in draggedsectors) 
-					{
 						// Update floor slope?
-						if(s.FloorSlope.GetLengthSq() > 0 && !float.IsNaN(s.FloorSlopeOffset / s.FloorSlope.z)) 
+						if (s.FloorSlope.GetLengthSq() > 0 && !double.IsNaN(s.FloorSlopeOffset / s.FloorSlope.z))
 						{
 							Plane floor = new Plane(s.FloorSlope, s.FloorSlopeOffset);
 							Vector2D center = new Vector2D(s.BBox.X + s.BBox.Width / 2, s.BBox.Y + s.BBox.Height / 2);
@@ -512,7 +530,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						}
 
 						// Update ceiling slope?
-						if(s.CeilSlope.GetLengthSq() > 0 && !float.IsNaN(s.CeilSlopeOffset / s.CeilSlope.z)) 
+						if (s.CeilSlope.GetLengthSq() > 0 && !double.IsNaN(s.CeilSlopeOffset / s.CeilSlope.z))
 						{
 							Plane ceiling = new Plane(s.CeilSlope, s.CeilSlopeOffset);
 							Vector2D center = new Vector2D(s.BBox.X + s.BBox.Width / 2, s.BBox.Y + s.BBox.Height / 2);

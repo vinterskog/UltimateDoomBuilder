@@ -1892,6 +1892,10 @@ namespace CodeImp.DoomBuilder
 		[BeginAction("openscripteditor")]
 		internal void ShowScriptEditor() 
 		{
+			// Only show the script editor if there a script lumps defined
+			if (!General.Map.Config.HasScriptLumps())
+				return;
+
 			Cursor.Current = Cursors.WaitCursor;
 
 			// Load the window?
@@ -2181,6 +2185,7 @@ namespace CodeImp.DoomBuilder
 			// Update settings
 			renderer3d.CreateProjection();
 			renderer3d.UpdateVertexHandle(); //mxd
+			renderer3d.UpdateVisualSlopeHandle();
 
 			// Things filters
 			General.MainWindow.UpdateThingsFilters();
@@ -2653,6 +2658,11 @@ namespace CodeImp.DoomBuilder
 			}
 
 			return snappedCount;
+		}
+
+		public void GridVisibilityChanged()
+		{
+			renderer2d.GridVisibilityChanged();
 		}
 
 		#endregion

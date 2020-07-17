@@ -1722,6 +1722,12 @@ namespace CodeImp.DoomBuilder
 		}
 
 		// This clamps a value
+		public static double Clamp(double value, double min, double max)
+		{
+			return Math.Min(Math.Max(min, value), max);
+		}
+
+		// This clamps a value
 		public static int Clamp(int value, int min, int max)
 		{
 			return Math.Min(Math.Max(min, value), max);
@@ -1749,6 +1755,14 @@ namespace CodeImp.DoomBuilder
 			return angle;
 		}
 
+		// This clamps angle between 0 and 359
+		public static double ClampAngle(double angle)
+		{
+			angle %= 360;
+			if (angle < 0) angle += 360;
+			return angle;
+		}
+
 		//mxd
 		public static int Random(int min, int max) 
 		{
@@ -1760,7 +1774,12 @@ namespace CodeImp.DoomBuilder
 		{
 			return (float)Math.Round(min + (max - min) * random.NextDouble(), 2);
 		}
-		
+
+		public static double Random(double min, double max)
+		{
+			return Math.Round(min + (max - min) * random.NextDouble(), 2);
+		}
+
 		// This returns an element from a collection by index
 		public static T GetByIndex<T>(ICollection<T> collection, int index)
 		{

@@ -141,21 +141,32 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			snaptonearest = General.Interface.CtrlState ^ General.Interface.AutoMerge;
 
 			DrawnVertex curp = GetCurrentPosition();
+			Vector2D curvertexpos = curp.pos;
 			float vsize = (renderer.VertexSize + 1.0f) / renderer.Scale;
+
+			curp.pos = curp.pos.GetRotated(-General.Map.Grid.GridRotate);
 
 			// Render drawing lines
 			if(renderer.StartOverlay(true)) 
 			{
 				PixelColor color = snaptonearest ? stitchcolor : losecolor;
-				
-				if(points.Count == 1) 
+
+				if (points.Count == 1) 
 				{
 					UpdateReferencePoints(points[0], curp);
+
 					Vector2D[] shape = GetShape(start, end);
+
+					Vector2D startrotated = start.GetRotated(General.Map.Grid.GridRotate);
+					Vector2D endrotated = end.GetRotated(General.Map.Grid.GridRotate);
+
+					// Rotate the shape to fit the grid rotation
+					for (int i = 0; i < shape.Length; i++)
+						shape[i] = shape[i].GetRotated(General.Map.Grid.GridRotate);
 
 					// Render guidelines
 					if(showguidelines)
-						RenderGuidelines(start, end, General.Colors.Guideline.WithAlpha(80));
+						RenderGuidelines(startrotated, endrotated, General.Colors.Guideline.WithAlpha(80), -General.Map.Grid.GridRotate);
 
 					//render shape
 					for(int i = 1; i < shape.Length; i++)
@@ -163,20 +174,21 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 					//vertices
 					for(int i = 0; i < shape.Length; i++)
-						renderer.RenderRectangleFilled(new RectangleF(shape[i].x - vsize, shape[i].y - vsize, vsize * 2.0f, vsize * 2.0f), color, true);
+						renderer.RenderRectangleFilled(new RectangleF((float)(shape[i].x - vsize), (float)(shape[i].y - vsize), vsize * 2.0f, vsize * 2.0f), color, true);
 
 					//and labels
 					if(shape.Length == 2)
 					{
 						// Render label for line
-						labels[0].Move(start, end);
+						labels[0].Move(startrotated, endrotated);
 						renderer.RenderText(labels[0].TextLabel);
 					}
 					else if(shape.Length > 3)
 					{
 						// Render labels for rectangle
-						Vector2D[] labelCoords = { start, new Vector2D(end.x, start.y), end, new Vector2D(start.x, end.y), start };
-						for(int i = 1; i < 5; i++) 
+						Vector2D[] labelCoords = { startrotated, new Vector2D(end.x, start.y).GetRotated(General.Map.Grid.GridRotate), endrotated, new Vector2D(start.x, end.y).GetRotated(General.Map.Grid.GridRotate), startrotated };
+
+						for (int i = 1; i < 5; i++) 
 						{
 							labels[i - 1].Move(labelCoords[i], labelCoords[i - 1]);
 							renderer.RenderText(labels[i - 1].TextLabel);
@@ -188,26 +200,26 @@ namespace CodeImp.DoomBuilder.BuilderModes
 							//render hint
 							if(width > 64 * vsize && height > 16 * vsize)
 							{
-								hintlabel.Move(start, end);
+								hintlabel.Move(startrotated, endrotated);
 								hintlabel.Text = GetHintText();
 								renderer.RenderText(hintlabel.TextLabel);
 							}
 
 							//and shape corners
 							for(int i = 0; i < 4; i++)
-								renderer.RenderRectangleFilled(new RectangleF(labelCoords[i].x - vsize, labelCoords[i].y - vsize, vsize * 2.0f, vsize * 2.0f), General.Colors.InfoLine, true);
+								renderer.RenderRectangleFilled(new RectangleF((float)(labelCoords[i].x - vsize), (float)(labelCoords[i].y - vsize), vsize * 2.0f, vsize * 2.0f), General.Colors.InfoLine, true);
 						}
 					}
 					else
 					{
 						// Render vertex at points[0]
-						renderer.RenderRectangleFilled(new RectangleF(start.x - vsize, start.y - vsize, vsize * 2.0f, vsize * 2.0f), General.Colors.InfoLine, true);
+						renderer.RenderRectangleFilled(new RectangleF((float)(start.x - vsize), (float)(start.y - vsize), vsize * 2.0f, vsize * 2.0f), General.Colors.InfoLine, true);
 					}
 				} 
 				else 
 				{
 					// Render vertex at cursor
-					renderer.RenderRectangleFilled(new RectangleF(curp.pos.x - vsize, curp.pos.y - vsize, vsize * 2.0f, vsize * 2.0f), color, true);
+					renderer.RenderRectangleFilled(new RectangleF((float)(curvertexpos.x - vsize), (float)(curvertexpos.y - vsize), vsize * 2.0f, vsize * 2.0f), color, true);
 				}
 
 				// Done
@@ -275,15 +287,15 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		{
 			Vector2D[] points;
 			Vector2D center = (bevelwidth > 0 ? new Vector2D(startPoint.x + bevel_width, startPoint.y + bevel_height) : startPoint);
-			float curAngle = Angle2D.PI;
+			double curAngle = Angle2D.PI;
 
 			int steps = subdivisions + 2;
 			points = new Vector2D[steps];
-			float stepAngle = Angle2D.PIHALF / (subdivisions + 1);
+			double stepAngle = Angle2D.PIHALF / (subdivisions + 1);
 
 			for(int i = 0; i < steps; i++) 
 			{
-				points[i] = new Vector2D(center.x + (float)Math.Sin(curAngle) * bevel_width, center.y + (float)Math.Cos(curAngle) * bevel_height);
+				points[i] = new Vector2D(center.x + Math.Sin(curAngle) * bevel_width, center.y + Math.Cos(curAngle) * bevel_height);
 				curAngle += stepAngle;
 			}
 
@@ -306,7 +318,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			if(!p1.pos.IsFinite() || !p2.pos.IsFinite()) return;
 
 			// Make sure start always stays at left and up from the end
-			if(p1.pos.x < p2.pos.x) 
+			if (p1.pos.x < p2.pos.x) 
 			{
 				start.x = p1.pos.x;
 				end.x = p2.pos.x;
@@ -329,8 +341,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			}
 
 			// Update size
-			width = (int)(end.x - start.x);
-			height = (int)(end.y - start.y);
+			width = (int)Math.Round(end.x - start.x);
+			height = (int)Math.Round(end.y - start.y);
 		}
 
 		// This draws a point at a specific location
@@ -341,12 +353,12 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				return false;
 
 			DrawnVertex newpoint = new DrawnVertex();
-			newpoint.pos = pos;
+			newpoint.pos = pos.GetRotated(-General.Map.Grid.GridRotate);
 			newpoint.stitch = true; //stitch
 			newpoint.stitchline = stitchline;
 			points.Add(newpoint);
 
-			if(points.Count == 1) //add point and labels
+			if (points.Count == 1) //add point and labels
 			{ 
 				labels.AddRange(new[] { new LineLengthLabel(false, true), new LineLengthLabel(false, true), new LineLengthLabel(false, true), new LineLengthLabel(false, true) });
 				hintlabel = new HintLabel(General.Colors.InfoLine);
@@ -363,6 +375,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				UpdateReferencePoints(points[0], newpoint);
 				points = new List<DrawnVertex>(); //clear points
 				Vector2D[] shape = GetShape(start, end);
+
+				// Rotate the shape to fit the grid rotation
+				for (int i = 0; i < shape.Length; i++)
+					shape[i] = shape[i].GetRotated(General.Map.Grid.GridRotate);
 
 				// We don't want base.DrawPointAt to call Update() here, because it will mess labels[] 
 				// and trigger shape.Count number of display redraws...

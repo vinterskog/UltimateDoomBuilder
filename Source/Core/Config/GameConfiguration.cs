@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using CodeImp.DoomBuilder.IO;
 using CodeImp.DoomBuilder.Map;
 using CodeImp.DoomBuilder.Editing;
@@ -1039,6 +1040,7 @@ namespace CodeImp.DoomBuilder.Config
 		public string ReadSetting(string setting, string defaultsetting) { return cfg.ReadSetting(setting, defaultsetting); }
 		public int ReadSetting(string setting, int defaultsetting) { return cfg.ReadSetting(setting, defaultsetting); }
 		public float ReadSetting(string setting, float defaultsetting) { return cfg.ReadSetting(setting, defaultsetting); }
+		public double ReadSetting(string setting, double defaultsetting) { return cfg.ReadSetting(setting, defaultsetting); }
 		public short ReadSetting(string setting, short defaultsetting) { return cfg.ReadSetting(setting, defaultsetting); }
 		public long ReadSetting(string setting, long defaultsetting) { return cfg.ReadSetting(setting, defaultsetting); }
 		public bool ReadSetting(string setting, bool defaultsetting) { return cfg.ReadSetting(setting, defaultsetting); }
@@ -1223,6 +1225,15 @@ namespace CodeImp.DoomBuilder.Config
 
 			// Unknown sector effect...
 			return new SectorEffectInfo(effect, "Unknown", false, false);
+		}
+
+		/// <summary>
+		/// Checks if there a script lumps defined in the configuration
+		/// </summary>
+		/// <returns>true if there are script lumps defined, false if not</returns>
+		public bool HasScriptLumps()
+		{
+			return maplumps.Values.Count(o => o.ScriptBuild || o.Script != null) > 0;
 		}
 		
 		#endregion

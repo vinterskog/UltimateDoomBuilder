@@ -40,6 +40,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			this.defaultbrightness = new CodeImp.DoomBuilder.Controls.ButtonsNumericTextbox();
 			this.label11 = new System.Windows.Forms.Label();
 			this.groupBox3 = new System.Windows.Forms.GroupBox();
+			this.additivepaintselect = new System.Windows.Forms.CheckBox();
 			this.switchviewmodes = new System.Windows.Forms.CheckBox();
 			this.autodrawonedit = new System.Windows.Forms.CheckBox();
 			this.syncSelection = new System.Windows.Forms.CheckBox();
@@ -68,17 +69,22 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			this.label4 = new System.Windows.Forms.Label();
 			this.label7 = new System.Windows.Forms.Label();
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
+			this.scaletexturesonslopes = new System.Windows.Forms.ComboBox();
+			this.label18 = new System.Windows.Forms.Label();
 			this.splitbehavior = new System.Windows.Forms.ComboBox();
 			this.label10 = new System.Windows.Forms.Label();
 			this.label1 = new System.Windows.Forms.Label();
 			this.heightbysidedef = new System.Windows.Forms.ComboBox();
-			this.additivepaintselect = new System.Windows.Forms.CheckBox();
+			this.groupBox5 = new System.Windows.Forms.GroupBox();
+			this.eventlinelabelvisibility = new System.Windows.Forms.ComboBox();
+			this.eventlinelabelstyle = new System.Windows.Forms.ComboBox();
 			this.tabs.SuspendLayout();
 			this.taboptions.SuspendLayout();
 			this.groupBox4.SuspendLayout();
 			this.groupBox3.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			this.groupBox1.SuspendLayout();
+			this.groupBox5.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// tabs
@@ -97,6 +103,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// 
 			// taboptions
 			// 
+			this.taboptions.Controls.Add(this.groupBox5);
 			this.taboptions.Controls.Add(this.groupBox4);
 			this.taboptions.Controls.Add(this.groupBox3);
 			this.taboptions.Controls.Add(this.groupBox2);
@@ -120,9 +127,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			this.groupBox4.Controls.Add(this.label12);
 			this.groupBox4.Controls.Add(this.defaultbrightness);
 			this.groupBox4.Controls.Add(this.label11);
-			this.groupBox4.Location = new System.Drawing.Point(6, 300);
+			this.groupBox4.Location = new System.Drawing.Point(6, 320);
 			this.groupBox4.Name = "groupBox4";
-			this.groupBox4.Size = new System.Drawing.Size(272, 136);
+			this.groupBox4.Size = new System.Drawing.Size(272, 119);
 			this.groupBox4.TabIndex = 2;
 			this.groupBox4.TabStop = false;
 			this.groupBox4.Text = " Default sector settings";
@@ -130,7 +137,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// label15
 			// 
 			this.label15.AutoSize = true;
-			this.label15.Location = new System.Drawing.Point(218, 37);
+			this.label15.Location = new System.Drawing.Point(218, 27);
 			this.label15.Name = "label15";
 			this.label15.Size = new System.Drawing.Size(27, 13);
 			this.label15.TabIndex = 26;
@@ -139,7 +146,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// label14
 			// 
 			this.label14.AutoSize = true;
-			this.label14.Location = new System.Drawing.Point(218, 67);
+			this.label14.Location = new System.Drawing.Point(218, 57);
 			this.label14.Name = "label14";
 			this.label14.Size = new System.Drawing.Size(27, 13);
 			this.label14.TabIndex = 20;
@@ -157,7 +164,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			this.defaultfloorheight.ButtonStepSmall = 0.1F;
 			this.defaultfloorheight.ButtonStepsUseModifierKeys = false;
 			this.defaultfloorheight.ButtonStepsWrapAround = false;
-			this.defaultfloorheight.Location = new System.Drawing.Point(153, 32);
+			this.defaultfloorheight.Location = new System.Drawing.Point(153, 22);
 			this.defaultfloorheight.Name = "defaultfloorheight";
 			this.defaultfloorheight.Size = new System.Drawing.Size(59, 24);
 			this.defaultfloorheight.StepValues = null;
@@ -165,7 +172,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// 
 			// label13
 			// 
-			this.label13.Location = new System.Drawing.Point(38, 37);
+			this.label13.Location = new System.Drawing.Point(38, 27);
 			this.label13.Name = "label13";
 			this.label13.Size = new System.Drawing.Size(110, 14);
 			this.label13.TabIndex = 24;
@@ -184,7 +191,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			this.defaultceilheight.ButtonStepSmall = 0.1F;
 			this.defaultceilheight.ButtonStepsUseModifierKeys = false;
 			this.defaultceilheight.ButtonStepsWrapAround = false;
-			this.defaultceilheight.Location = new System.Drawing.Point(153, 62);
+			this.defaultceilheight.Location = new System.Drawing.Point(153, 52);
 			this.defaultceilheight.Name = "defaultceilheight";
 			this.defaultceilheight.Size = new System.Drawing.Size(59, 24);
 			this.defaultceilheight.StepValues = null;
@@ -192,7 +199,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// 
 			// label12
 			// 
-			this.label12.Location = new System.Drawing.Point(38, 67);
+			this.label12.Location = new System.Drawing.Point(38, 57);
 			this.label12.Name = "label12";
 			this.label12.Size = new System.Drawing.Size(110, 14);
 			this.label12.TabIndex = 22;
@@ -211,7 +218,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			this.defaultbrightness.ButtonStepSmall = 0.1F;
 			this.defaultbrightness.ButtonStepsUseModifierKeys = false;
 			this.defaultbrightness.ButtonStepsWrapAround = false;
-			this.defaultbrightness.Location = new System.Drawing.Point(153, 92);
+			this.defaultbrightness.Location = new System.Drawing.Point(153, 82);
 			this.defaultbrightness.Name = "defaultbrightness";
 			this.defaultbrightness.Size = new System.Drawing.Size(59, 24);
 			this.defaultbrightness.StepValues = null;
@@ -219,7 +226,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// 
 			// label11
 			// 
-			this.label11.Location = new System.Drawing.Point(38, 97);
+			this.label11.Location = new System.Drawing.Point(38, 87);
 			this.label11.Name = "label11";
 			this.label11.Size = new System.Drawing.Size(110, 14);
 			this.label11.TabIndex = 20;
@@ -240,12 +247,22 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			this.groupBox3.Controls.Add(this.editnewthing);
 			this.groupBox3.Controls.Add(this.editnewsector);
 			this.groupBox3.Controls.Add(this.additiveselect);
-			this.groupBox3.Location = new System.Drawing.Point(284, 104);
+			this.groupBox3.Location = new System.Drawing.Point(284, 139);
 			this.groupBox3.Name = "groupBox3";
-			this.groupBox3.Size = new System.Drawing.Size(379, 332);
+			this.groupBox3.Size = new System.Drawing.Size(379, 360);
 			this.groupBox3.TabIndex = 3;
 			this.groupBox3.TabStop = false;
 			this.groupBox3.Text = " Options ";
+			// 
+			// additivepaintselect
+			// 
+			this.additivepaintselect.AutoSize = true;
+			this.additivepaintselect.Location = new System.Drawing.Point(13, 135);
+			this.additivepaintselect.Name = "additivepaintselect";
+			this.additivepaintselect.Size = new System.Drawing.Size(233, 17);
+			this.additivepaintselect.TabIndex = 11;
+			this.additivepaintselect.Text = "Additive paint selecting without holding Shift";
+			this.additivepaintselect.UseVisualStyleBackColor = true;
 			// 
 			// switchviewmodes
 			// 
@@ -375,9 +392,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			this.groupBox2.Controls.Add(this.label6);
 			this.groupBox2.Controls.Add(this.label4);
 			this.groupBox2.Controls.Add(this.label7);
-			this.groupBox2.Location = new System.Drawing.Point(6, 104);
+			this.groupBox2.Location = new System.Drawing.Point(6, 139);
 			this.groupBox2.Name = "groupBox2";
-			this.groupBox2.Size = new System.Drawing.Size(272, 190);
+			this.groupBox2.Size = new System.Drawing.Size(272, 175);
 			this.groupBox2.TabIndex = 1;
 			this.groupBox2.TabStop = false;
 			this.groupBox2.Text = " Ranges ";
@@ -569,16 +586,41 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// 
 			// groupBox1
 			// 
+			this.groupBox1.Controls.Add(this.scaletexturesonslopes);
+			this.groupBox1.Controls.Add(this.label18);
 			this.groupBox1.Controls.Add(this.splitbehavior);
 			this.groupBox1.Controls.Add(this.label10);
 			this.groupBox1.Controls.Add(this.label1);
 			this.groupBox1.Controls.Add(this.heightbysidedef);
 			this.groupBox1.Location = new System.Drawing.Point(6, 6);
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(657, 92);
+			this.groupBox1.Size = new System.Drawing.Size(657, 127);
 			this.groupBox1.TabIndex = 0;
 			this.groupBox1.TabStop = false;
 			this.groupBox1.Text = " Behavior ";
+			// 
+			// scaletexturesonslopes
+			// 
+			this.scaletexturesonslopes.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.scaletexturesonslopes.FormattingEnabled = true;
+			this.scaletexturesonslopes.Items.AddRange(new object[] {
+            "Use a scale of 1 as base",
+            "Use current scale as base",
+            "Don\'t scale"});
+			this.scaletexturesonslopes.Location = new System.Drawing.Point(342, 91);
+			this.scaletexturesonslopes.Name = "scaletexturesonslopes";
+			this.scaletexturesonslopes.Size = new System.Drawing.Size(309, 21);
+			this.scaletexturesonslopes.TabIndex = 3;
+			// 
+			// label18
+			// 
+			this.label18.AutoSize = true;
+			this.label18.Location = new System.Drawing.Point(133, 94);
+			this.label18.Name = "label18";
+			this.label18.Size = new System.Drawing.Size(190, 13);
+			this.label18.TabIndex = 2;
+			this.label18.Text = "When auto-aligning textures on slopes:";
+			this.label18.TextAlign = System.Drawing.ContentAlignment.TopRight;
 			// 
 			// splitbehavior
 			// 
@@ -607,7 +649,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// label1
 			// 
 			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(9, 22);
+			this.label1.Location = new System.Drawing.Point(15, 22);
 			this.label1.Name = "label1";
 			this.label1.Size = new System.Drawing.Size(308, 13);
 			this.label1.TabIndex = 0;
@@ -628,15 +670,43 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			this.heightbysidedef.Size = new System.Drawing.Size(309, 21);
 			this.heightbysidedef.TabIndex = 0;
 			// 
-			// additivepaintselect
+			// groupBox5
 			// 
-			this.additivepaintselect.AutoSize = true;
-			this.additivepaintselect.Location = new System.Drawing.Point(13, 135);
-			this.additivepaintselect.Name = "additivepaintselect";
-			this.additivepaintselect.Size = new System.Drawing.Size(233, 17);
-			this.additivepaintselect.TabIndex = 11;
-			this.additivepaintselect.Text = "Additive paint selecting without holding Shift";
-			this.additivepaintselect.UseVisualStyleBackColor = true;
+			this.groupBox5.Controls.Add(this.eventlinelabelstyle);
+			this.groupBox5.Controls.Add(this.eventlinelabelvisibility);
+			this.groupBox5.Location = new System.Drawing.Point(6, 445);
+			this.groupBox5.Name = "groupBox5";
+			this.groupBox5.Size = new System.Drawing.Size(272, 54);
+			this.groupBox5.TabIndex = 4;
+			this.groupBox5.TabStop = false;
+			this.groupBox5.Text = "Event line labels";
+			// 
+			// eventlinelabelvisibility
+			// 
+			this.eventlinelabelvisibility.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.eventlinelabelvisibility.FormattingEnabled = true;
+			this.eventlinelabelvisibility.Items.AddRange(new object[] {
+            "Never show",
+            "Forward only",
+            "Reverse only",
+            "Forward + Reverse"});
+			this.eventlinelabelvisibility.Location = new System.Drawing.Point(6, 19);
+			this.eventlinelabelvisibility.Name = "eventlinelabelvisibility";
+			this.eventlinelabelvisibility.Size = new System.Drawing.Size(121, 21);
+			this.eventlinelabelvisibility.TabIndex = 0;
+			// 
+			// eventlinelabelstyle
+			// 
+			this.eventlinelabelstyle.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.eventlinelabelstyle.FormattingEnabled = true;
+			this.eventlinelabelstyle.Items.AddRange(new object[] {
+            "Action only",
+            "Action + short arguments",
+            "Action + full arguments"});
+			this.eventlinelabelstyle.Location = new System.Drawing.Point(133, 19);
+			this.eventlinelabelstyle.Name = "eventlinelabelstyle";
+			this.eventlinelabelstyle.Size = new System.Drawing.Size(133, 21);
+			this.eventlinelabelstyle.TabIndex = 1;
 			// 
 			// PreferencesForm
 			// 
@@ -659,6 +729,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			this.groupBox2.PerformLayout();
 			this.groupBox1.ResumeLayout(false);
 			this.groupBox1.PerformLayout();
+			this.groupBox5.ResumeLayout(false);
 			this.ResumeLayout(false);
 
 		}
@@ -710,5 +781,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private System.Windows.Forms.Label label16;
 		private System.Windows.Forms.Label label17;
 		private System.Windows.Forms.CheckBox additivepaintselect;
+		private System.Windows.Forms.ComboBox scaletexturesonslopes;
+		private System.Windows.Forms.Label label18;
+		private System.Windows.Forms.GroupBox groupBox5;
+		private System.Windows.Forms.ComboBox eventlinelabelvisibility;
+		private System.Windows.Forms.ComboBox eventlinelabelstyle;
 	}
 }

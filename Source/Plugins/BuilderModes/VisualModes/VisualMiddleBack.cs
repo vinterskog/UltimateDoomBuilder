@@ -37,13 +37,13 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			bool lightabsolute;
 			GetLightValue(out lightvalue, out lightabsolute);
 
-			Vector2D tscale = new Vector2D(sourceside.Fields.GetValue("scalex_mid", 1.0f),
-										   sourceside.Fields.GetValue("scaley_mid", 1.0f));
+			Vector2D tscale = new Vector2D(sourceside.Fields.GetValue("scalex_mid", 1.0),
+										   sourceside.Fields.GetValue("scaley_mid", 1.0));
             Vector2D tscaleAbs = new Vector2D(Math.Abs(tscale.x), Math.Abs(tscale.y));
-            Vector2D toffset1 = new Vector2D(Sidedef.Fields.GetValue("offsetx_mid", 0.0f),
-											 Sidedef.Fields.GetValue("offsety_mid", 0.0f));
-			Vector2D toffset2 = new Vector2D(sourceside.Fields.GetValue("offsetx_mid", 0.0f),
-											 sourceside.Fields.GetValue("offsety_mid", 0.0f));
+            Vector2D toffset1 = new Vector2D(Sidedef.Fields.GetValue("offsetx_mid", 0.0),
+											 Sidedef.Fields.GetValue("offsety_mid", 0.0));
+			Vector2D toffset2 = new Vector2D(sourceside.Fields.GetValue("offsetx_mid", 0.0),
+											 sourceside.Fields.GetValue("offsety_mid", 0.0));
 			
 			// Left and right vertices for this sidedef
 			if(Sidedef.IsFront)
@@ -98,10 +98,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				base.Texture = General.Map.Data.MissingTexture3D;
 				setuponloadedtexture = 0;
 			}
-			
-			// Get texture scaled size
-			Vector2D tsz = new Vector2D(base.Texture.ScaledWidth, base.Texture.ScaledHeight);
-			tsz = tsz / tscale;
+
+			// Get texture scaled size. Round up, because that's apparently what GZDoom does
+			Vector2D tsz = new Vector2D(Math.Ceiling(base.Texture.ScaledWidth / tscale.x), Math.Ceiling(base.Texture.ScaledHeight / tscale.y));
 			
 			// Get texture offsets
 			Vector2D tof = new Vector2D(Sidedef.OffsetX, Sidedef.OffsetY) + new Vector2D(sourceside.OffsetX, sourceside.OffsetY);
@@ -112,8 +111,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 			// For Vavoom type 3D floors the ceiling is lower than floor and they are reversed.
 			// We choose here.
-			float sourcetopheight = extrafloor.VavoomType ? sourceside.Sector.FloorHeight : sourceside.Sector.CeilHeight;
-			float sourcebottomheight = extrafloor.VavoomType ? sourceside.Sector.CeilHeight : sourceside.Sector.FloorHeight;
+			double sourcetopheight = extrafloor.VavoomType ? sourceside.Sector.FloorHeight : sourceside.Sector.CeilHeight;
+			double sourcebottomheight = extrafloor.VavoomType ? sourceside.Sector.CeilHeight : sourceside.Sector.FloorHeight;
 			
 			// Determine texture coordinates plane as they would be in normal circumstances.
 			// We can then use this plane to find any texture coordinate we need.
@@ -122,9 +121,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// NOTE: I use a small bias for the floor height, because if the difference in
 			// height is 0 then the TexturePlane doesn't work!
 			TexturePlane tp = new TexturePlane();
-			float floorbias = (sourcetopheight == sourcebottomheight) ? 1.0f : 0.0f;
+			double floorbias = (sourcetopheight == sourcebottomheight) ? 1.0 : 0.0;
 
-			tp.trb.x = tp.tlt.x + (float)Math.Round(Sidedef.Line.Length); //mxd. (G)ZDoom snaps texture coordinates to integral linedef length
+			tp.trb.x = tp.tlt.x + Math.Round(Sidedef.Line.Length); //mxd. (G)ZDoom snaps texture coordinates to integral linedef length
 			tp.trb.y = tp.tlt.y + (sourcetopheight - sourcebottomheight) + floorbias;
 			
 			// Apply texture offset
@@ -142,22 +141,22 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// Make the right-top coordinates
 			tp.trt = new Vector2D(tp.trb.x, tp.tlt.y);
 			tp.vrt = new Vector3D(tp.vrb.x, tp.vrb.y, tp.vlt.z);
-			
+
 			// Get ceiling and floor heights
-			float flo = Sector.Floor.Level.plane.GetZ(vl);
-			float fro = Sector.Floor.Level.plane.GetZ(vr);
-			float clo = Sector.Ceiling.Level.plane.GetZ(vl);
-			float cro = Sector.Ceiling.Level.plane.GetZ(vr);
+			double flo = Sector.Floor.Level.plane.GetZ(vl);
+			double fro = Sector.Floor.Level.plane.GetZ(vr);
+			double clo = Sector.Ceiling.Level.plane.GetZ(vl);
+			double cro = Sector.Ceiling.Level.plane.GetZ(vr);
 
-			float fle = sd.Floor.plane.GetZ(vl);
-			float fre = sd.Floor.plane.GetZ(vr);
-			float cle = sd.Ceiling.plane.GetZ(vl);
-			float cre = sd.Ceiling.plane.GetZ(vr);
+			double fle = sd.Floor.plane.GetZ(vl);
+			double fre = sd.Floor.plane.GetZ(vr);
+			double cle = sd.Ceiling.plane.GetZ(vl);
+			double cre = sd.Ceiling.plane.GetZ(vr);
 
-			float fl = flo > fle ? flo : fle;
-			float fr = fro > fre ? fro : fre;
-			float cl = clo < cle ? clo : cle;
-			float cr = cro < cre ? cro : cre;
+			double fl = flo > fle ? flo : fle;
+			double fr = fro > fre ? fro : fre;
+			double cl = clo < cle ? clo : cle;
+			double cr = cro < cre ? cro : cre;
 			
 			// Anything to see?
 			if(((cl - fl) > 0.01f) || ((cr - fr) > 0.01f))

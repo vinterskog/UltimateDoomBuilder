@@ -52,8 +52,8 @@ namespace CodeImp.DoomBuilder.Map
 			set
 			{
 				// Value may only be a primitive type
-				if((!(value is int) && !(value is float) && !(value is string) && !(value is bool)) || (value == null))
-					throw new ArgumentException("Universal field values can only be of type int, float, string or bool.");
+				if((!(value is int) && !(value is double) && !(value is string) && !(value is bool)) || (value == null))
+					throw new ArgumentException("Universal field values can only be of type int, double, string or bool.");
 				
 				this.value = value;
 			}
@@ -68,6 +68,10 @@ namespace CodeImp.DoomBuilder.Map
 		// Constructor
 		public UniValue(int type, object value)
 		{
+			// Value may only be a primitive type. Throwing exceptions in the constructor! Civil war!
+			if ((!(value is int) && !(value is double) && !(value is string) && !(value is bool)) || (value == null))
+				throw new ArgumentException("Universal field values can only be of type int, double, string or bool.");
+
 			this.type = type;
 			this.value = value;
 			
@@ -78,6 +82,10 @@ namespace CodeImp.DoomBuilder.Map
 		// Constructor
 		public UniValue(UniversalType type, object value)
 		{
+			// Value may only be a primitive type. Throwing exceptions in the constructor! Civil war!
+			if ((!(value is int) && !(value is double) && !(value is string) && !(value is bool)) || (value == null))
+				throw new ArgumentException("Universal field values can only be of type int, double, string or bool.");
+
 			this.type = (int)type;
 			this.value = value;
 
@@ -116,11 +124,11 @@ namespace CodeImp.DoomBuilder.Map
 				case UniversalType.AngleDegreesFloat:
 				case UniversalType.Float:
 				{
-					float v = 0.0f;
+					double v = 0.0f;
 					//mxd. Seems to work faster this way
 					//try { v = (float)value; } catch(NullReferenceException e) { }
-					if(value != null) v = (float)value;
-					s.rwFloat(ref v);
+					if(value != null) v = (double)value;
+					s.rwDouble(ref v);
 					value = v;
 					break;
 				}

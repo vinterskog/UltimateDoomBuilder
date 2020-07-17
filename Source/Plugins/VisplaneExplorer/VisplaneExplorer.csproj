@@ -95,6 +95,8 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>false</Optimize>
     <DefineConstants>TRACE</DefineConstants>
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug + Profiler|x64'">
     <PlatformTarget>x64</PlatformTarget>
@@ -159,7 +161,6 @@
     <EmbeddedResource Include="Resources\Gauge.png" />
     <Content Include="Resources\Gauge_large.ico" />
     <None Include="Resources\Heatmap_pal.png" />
-    <EmbeddedResource Include="Resources\vpo.dll" />
     <None Include="Resources\Solidsegs_pal.png" />
     <None Include="Resources\Openings_pal.png" />
     <None Include="Resources\Visplanes_pal.png" />

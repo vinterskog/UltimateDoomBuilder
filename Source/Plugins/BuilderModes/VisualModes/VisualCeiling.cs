@@ -76,13 +76,13 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			this.innerside = innerside; //mxd
 			
 			base.Setup(level, extrafloor);
-			
+
 			// Fetch ZDoom fields
-			float rotate = Angle2D.DegToRad(s.Fields.GetValue("rotationceiling", 0.0f));
-			Vector2D offset = new Vector2D(s.Fields.GetValue("xpanningceiling", 0.0f),
-										   s.Fields.GetValue("ypanningceiling", 0.0f));
-			Vector2D scale = new Vector2D(s.Fields.GetValue("xscaleceiling", 1.0f),
-										  s.Fields.GetValue("yscaleceiling", 1.0f));
+			double rotate = Angle2D.DegToRad(s.Fields.GetValue("rotationceiling", 0.0));
+			Vector2D offset = new Vector2D(s.Fields.GetValue("xpanningceiling", 0.0),
+										   s.Fields.GetValue("ypanningceiling", 0.0));
+			Vector2D scale = new Vector2D(s.Fields.GetValue("xscaleceiling", 1.0),
+										  s.Fields.GetValue("yscaleceiling", 1.0));
 			
 			//Load ceiling texture
 			if(s.LongCeilTexture != MapSet.EmptyLongName) 
@@ -165,17 +165,17 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				verts[i].c = color; //mxd
 				
 				// Vertex coordinates
-				verts[i].x = triverts[i].x;
-				verts[i].y = triverts[i].y;
-				verts[i].z = level.plane.GetZ(triverts[i]);
+				verts[i].x = (float)triverts[i].x;
+				verts[i].y = (float)triverts[i].y;
+				verts[i].z = (float)level.plane.GetZ(triverts[i]);
 
 				// Texture coordinates
 				Vector2D pos = triverts[i];
 				pos = pos.GetRotated(rotate);
 				pos.y = -pos.y;
 				pos = (pos + offset) * scale * texscale;
-				verts[i].u = pos.x;
-				verts[i].v = pos.y;
+				verts[i].u = (float)pos.x;
+				verts[i].v = (float)pos.y;
 			}
 			
 			// The sector triangulation created clockwise triangles that
@@ -253,7 +253,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		}
 
 		//mxd
-		public override void OnChangeTextureRotation(float angle)
+		public override void OnChangeTextureRotation(double angle)
 		{
 			// Only do this when not done yet in this call
 			// Because we may be able to select the same 3D floor multiple times through multiple sectors
@@ -268,8 +268,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		// Return texture coordinates
 		protected override Point GetTextureOffset()
 		{
-			return new Point { X = (int)Sector.Sector.Fields.GetValue("xpanningceiling", 0.0f), 
-							   Y = (int)Sector.Sector.Fields.GetValue("ypanningceiling", 0.0f) };
+			return new Point { X = (int)Sector.Sector.Fields.GetValue("xpanningceiling", 0.0), 
+							   Y = (int)Sector.Sector.Fields.GetValue("ypanningceiling", 0.0) };
 		}
 
 		//mxd
@@ -291,8 +291,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			//mxd
 			Sector s = GetControlSector();
 			s.Fields.BeforeFieldsChange();
-			float nx = (s.Fields.GetValue("xpanningceiling", 0.0f) + offsetx) % (Texture.ScaledWidth / s.Fields.GetValue("xscaleceiling", 1.0f));
-			float ny = (s.Fields.GetValue("ypanningceiling", 0.0f) + offsety) % (Texture.ScaledHeight / s.Fields.GetValue("yscaleceiling", 1.0f));
+			double nx = (s.Fields.GetValue("xpanningceiling", 0.0) + offsetx) % (Texture.ScaledWidth / s.Fields.GetValue("xscaleceiling", 1.0));
+			double ny = (s.Fields.GetValue("ypanningceiling", 0.0) + offsety) % (Texture.ScaledHeight / s.Fields.GetValue("yscaleceiling", 1.0));
 			s.Fields["xpanningceiling"] = new UniValue(UniversalType.Float, nx);
 			s.Fields["ypanningceiling"] = new UniValue(UniversalType.Float, ny);
 			s.UpdateNeeded = true;
@@ -305,25 +305,25 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		{
 			if(Texture == null || !Texture.IsImageLoaded) return;
 			Sector s = GetControlSector();
-			float scaleX = s.Fields.GetValue("xscaleceiling", 1.0f);
-			float scaleY = s.Fields.GetValue("yscaleceiling", 1.0f);
+			double scaleX = s.Fields.GetValue("xscaleceiling", 1.0);
+			double scaleY = s.Fields.GetValue("yscaleceiling", 1.0);
 
 			s.Fields.BeforeFieldsChange();
 
 			if(incrementX != 0) 
 			{
-				float pix = (int)Math.Round(Texture.Width * scaleX) - incrementX;
-				float newscaleX = (float)Math.Round(pix / Texture.Width, 3);
+				double pix = (int)Math.Round(Texture.Width * scaleX) - incrementX;
+				double newscaleX = Math.Round(pix / Texture.Width, 3);
 				scaleX = (newscaleX == 0 ? scaleX * -1 : newscaleX);
-				UniFields.SetFloat(s.Fields, "xscaleceiling", scaleX, 1.0f);
+				UniFields.SetFloat(s.Fields, "xscaleceiling", scaleX, 1.0);
 			}
 
 			if(incrementY != 0) 
 			{
-				float pix = (int)Math.Round(Texture.Height * scaleY) - incrementY;
-				float newscaleY = (float)Math.Round(pix / Texture.Height, 3);
+				double pix = (int)Math.Round(Texture.Height * scaleY) - incrementY;
+				double newscaleY = Math.Round(pix / Texture.Height, 3);
 				scaleY = (newscaleY == 0 ? scaleY * -1 : newscaleY);
-				UniFields.SetFloat(s.Fields, "yscaleceiling", scaleY, 1.0f);
+				UniFields.SetFloat(s.Fields, "yscaleceiling", scaleY, 1.0);
 			}
 
 			mode.SetActionResult("Ceiling scale changed to " + scaleX.ToString("F03", CultureInfo.InvariantCulture) + ", " + scaleY.ToString("F03", CultureInfo.InvariantCulture) + " (" + (int)Math.Round(Texture.Width / scaleX) + " x " + (int)Math.Round(Texture.Height / scaleY) + ").");
@@ -377,34 +377,30 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		// This changes the height
 		protected override void ChangeHeight(int amount)
 		{
-			mode.CreateUndo("Change ceiling height", UndoGroup.CeilingHeightChange, level.sector.FixedIndex);
-			level.sector.CeilHeight += amount;
-
-			if(General.Map.UDMF)
+			if (level.sector.CeilSlope.GetLengthSq() > 0)
 			{
-				//mxd. Modify vertex offsets?
-				if(level.sector.Sidedefs.Count == 3)
-				{
-					ChangeVertexHeight(amount);
-				}
+				mode.CreateUndo("Change ceiling slope height", UndoGroup.CeilingHeightChange, level.sector.FixedIndex);
 
-				//mxd. Modify slope offset?
-				if(level.sector.CeilSlope.GetLengthSq() > 0) 
-				{
-					Vector3D center = new Vector3D(level.sector.BBox.X + level.sector.BBox.Width / 2,
-												   level.sector.BBox.Y + level.sector.BBox.Height / 2,
-												   level.sector.CeilHeight);
-					
-					Plane p = new Plane(center,
-										level.sector.CeilSlope.GetAngleXY() - Angle2D.PIHALF,
-										level.sector.CeilSlope.GetAngleZ(),
-										false);
+				level.sector.CeilSlopeOffset -= level.sector.CeilSlope.z * amount;
 
-					level.sector.CeilSlopeOffset = p.Offset;
-				}
+				mode.SetActionResult("Changed ceiling slope height by " + amount + ".");
 			}
+			else
+			{
+				mode.CreateUndo("Change ceiling height", UndoGroup.CeilingHeightChange, level.sector.FixedIndex);
+				level.sector.CeilHeight += amount;
 
-			mode.SetActionResult("Changed ceiling height to " + level.sector.CeilHeight + ".");
+				if (General.Map.UDMF)
+				{
+					//mxd. Modify vertex offsets?
+					if (level.sector.Sidedefs.Count == 3)
+					{
+						ChangeVertexHeight(amount);
+					}
+				}
+
+				mode.SetActionResult("Changed ceiling height to " + level.sector.CeilHeight + ".");
+			}
 		}
 
 		//mxd
@@ -415,7 +411,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// Do this only if all 3 verts have offsets
 			foreach(Sidedef side in level.sector.Sidedefs) 
 			{
-				if(float.IsNaN(side.Line.Start.ZCeiling) || float.IsNaN(side.Line.End.ZCeiling)) return;
+				if(double.IsNaN(side.Line.Start.ZCeiling) || double.IsNaN(side.Line.End.ZCeiling)) return;
 				verts.Add(side.Line.Start);
 				verts.Add(side.Line.End);
 			}
@@ -505,13 +501,13 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		}
 		
 		// This performs an accurate test for object picking
-		public override bool PickAccurate(Vector3D from, Vector3D to, Vector3D dir, ref float u_ray)
+		public override bool PickAccurate(Vector3D from, Vector3D to, Vector3D dir, ref double u_ray)
 		{
 			u_ray = pickrayu;
 			
 			// Check on which side of the nearest sidedef we are
 			Sidedef sd = MapSet.NearestSidedef(Sector.Sector.Sidedefs, pickintersect);
-			float side = sd.Line.SideOfLine(pickintersect);
+			double side = sd.Line.SideOfLine(pickintersect);
 
 			//mxd. Alpha based picking. Used only on extrafloors with transparent or masked textures
 			if((side <= 0.0f && sd.IsFront) || (side > 0.0f && !sd.IsFront))
@@ -523,10 +519,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
                 int imageWidth = Texture.GetAlphaTestWidth();
                 int imageHeight = Texture.GetAlphaTestHeight();
 
-                // Fetch ZDoom fields
-                float rotate = Angle2D.DegToRad(level.sector.Fields.GetValue("rotationceiling", 0.0f));
-                Vector2D offset = new Vector2D(level.sector.Fields.GetValue("xpanningceiling", 0.0f), level.sector.Fields.GetValue("ypanningceiling", 0.0f));
-                Vector2D scale = new Vector2D(level.sector.Fields.GetValue("xscaleceiling", 1.0f), level.sector.Fields.GetValue("yscaleceiling", 1.0f));
+				// Fetch ZDoom fields
+				double rotate = Angle2D.DegToRad(level.sector.Fields.GetValue("rotationceiling", 0.0));
+                Vector2D offset = new Vector2D(level.sector.Fields.GetValue("xpanningceiling", 0.0), level.sector.Fields.GetValue("ypanningceiling", 0.0));
+                Vector2D scale = new Vector2D(level.sector.Fields.GetValue("xscaleceiling", 1.0), level.sector.Fields.GetValue("yscaleceiling", 1.0));
                 Vector2D texscale = new Vector2D(1.0f / Texture.ScaledWidth, 1.0f / Texture.ScaledHeight);
 
                 // Texture coordinates
@@ -650,42 +646,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		{
 			if(!General.Map.UDMF) return;
 
-			//is is a surface with line slope?
-			float slopeAngle = level.plane.Normal.GetAngleZ() - Angle2D.PIHALF;
-
-			if(slopeAngle == 0) //it's a horizontal plane
-			{
-				AlignTextureToClosestLine(alignx, aligny);
-			} 
-			else //it can be a surface with line slope
-			{ 
-				Linedef slopeSource = null;
-				bool isFront = false;
-
-				foreach(Sidedef side in Sector.Sector.Sidedefs) 
-				{
-					if(side.Line.Action == 181) 
-					{
-						if(side.Line.Args[1] == 1 && side.Line.Front != null && side.Line.Front == side) 
-						{
-							slopeSource = side.Line;
-							isFront = true;
-							break;
-						}
-
-						if(side.Line.Args[1] == 2 && side.Line.Back != null && side.Line.Back == side) 
-						{
-							slopeSource = side.Line;
-							break;
-						}
-					}
-				}
-
-				if(slopeSource != null && slopeSource.Front != null && slopeSource.Front.Sector != null && slopeSource.Back != null && slopeSource.Back.Sector != null)
-					AlignTextureToSlopeLine(slopeSource, slopeAngle, isFront, alignx, aligny);
-				else
-					AlignTextureToClosestLine(alignx, aligny);
-			}
+			AlignTextureToClosestLine(alignx, aligny);
 		}
 		
 		#endregion

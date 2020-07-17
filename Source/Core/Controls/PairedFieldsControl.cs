@@ -69,13 +69,13 @@ namespace CodeImp.DoomBuilder.Controls
 
 			if(AllowDecimal) 
 			{
-				newValue1 = ((float)Math.Round(UniFields.GetFloat(fields, field1, defaultValue), 2)).ToString();
-				newValue2 = ((float)Math.Round(UniFields.GetFloat(fields, field2, defaultValue), 2)).ToString();
+				newValue1 = Math.Round(UniFields.GetFloat(fields, field1, defaultValue), 2).ToString();
+				newValue2 = Math.Round(UniFields.GetFloat(fields, field2, defaultValue), 2).ToString();
 			} 
 			else 
 			{
-				newValue1 = ((float)Math.Round(UniFields.GetFloat(fields, field1, defaultValue))).ToString();
-				newValue2 = ((float)Math.Round(UniFields.GetFloat(fields, field2, defaultValue))).ToString();
+				newValue1 = Math.Round(UniFields.GetFloat(fields, field1, defaultValue)).ToString();
+				newValue2 = Math.Round(UniFields.GetFloat(fields, field2, defaultValue)).ToString();
 			}
 
 			if(first) 
@@ -93,7 +93,7 @@ namespace CodeImp.DoomBuilder.Controls
 			blockUpdate = false;
 		}
 
-		public void ApplyTo(UniFields fields, int min, int max, float oldValue1, float oldValue2) 
+		public void ApplyTo(UniFields fields, int min, int max, double oldValue1, double oldValue2) 
 		{
 			if(!string.IsNullOrEmpty(value1.Text))
 				UniFields.SetFloat(fields, field1, General.Clamp(value1.GetResultFloat(oldValue1), min, max), defaultValue);

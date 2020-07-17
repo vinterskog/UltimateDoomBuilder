@@ -43,9 +43,9 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 		private string topflat;
 		private string bottomflat;
 		private Vector3D floorslope;
-		private float floorslopeoffset;
+		private double floorslopeoffset;
 		private Vector3D ceilingslope;
-		private float ceilingslopeoffset;
+		private double ceilingslopeoffset;
 		private int type;
 		private int flags;
 		private int alpha;
@@ -53,7 +53,6 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 		private int topheight;
 		private int bottomheight;
 		private bool isnew;
-		private bool rebuild;
 		private int udmftag;
 		private List<int> tags;
 
@@ -73,13 +72,12 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 		public int TopHeight { get { return topheight; } set { topheight = value; } }
 		public int BottomHeight { get { return bottomheight; } set { bottomheight = value; } }
 		public bool IsNew { get { return isnew; } set { isnew = value; } }
-		public bool Rebuild { get { return rebuild; } set { rebuild = value; } }
 		public int UDMFTag { get { return udmftag; } set { udmftag = value; } }
 		public List<int> Tags { get { return tags; } set { tags = value; } }
 		public Vector3D FloorSlope {  get { return floorslope; } set { floorslope = value; } }
-		public float FloorSlopeOffset { get { return floorslopeoffset; } set { floorslopeoffset = value; } }
+		public double FloorSlopeOffset { get { return floorslopeoffset; } set { floorslopeoffset = value; } }
 		public Vector3D CeilingSlope { get { return ceilingslope; } set { ceilingslope = value; } }
-		public float CeilingSlopeOffset { get { return ceilingslopeoffset; } set { ceilingslopeoffset = value; } }
+		public double CeilingSlopeOffset { get { return ceilingslopeoffset; } set { ceilingslopeoffset = value; } }
 
 		public ThreeDFloor()
 		{
@@ -217,15 +215,35 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 			}
 		}
 
-		public bool CreateGeometry(List<int> tagblacklist)
+		public bool CreateGeometry(List<int> tagblacklist, List<DrawnVertex> alldrawnvertices)
 		{
-			List<DrawnVertex> drawnvertices = new List<DrawnVertex>();
+			int newtag;
+
+			return CreateGeometry(tagblacklist, alldrawnvertices, false, out newtag);
+		}
+
+		public bool CreateGeometry(List<int> tagblacklist, List<DrawnVertex> alldrawnvertices, bool forcenewtag, out int newtag)
+		{
 			List<Vertex> vertices = new List<Vertex>();
 			Vector3D slopetopthingpos = new Vector3D(0, 0, 0);
 			Vector3D slopebottomthingpos = new Vector3D(0, 0, 0);
 			Line2D slopeline = new Line2D(0, 0, 0, 0);
 
-			drawnvertices = BuilderPlug.Me.ControlSectorArea.GetNewControlSectorVertices();
+			newtag = -1;
+
+			// We need 5 vertices to draw the control sector
+			if(alldrawnvertices.Count < 5)
+			{
+				General.Interface.DisplayStatus(StatusType.Warning, "Could not draw new sector: not enough vertices");
+				return false;
+			}
+
+			// Get the first 5 vertices in the list and also remove them from the list, so that creating further
+			// control sectors won't use them
+			List<DrawnVertex> drawnvertices = alldrawnvertices.GetRange(0, 5);
+			alldrawnvertices.RemoveRange(0, 5);
+
+			// drawnvertices = BuilderPlug.Me.ControlSectorArea.GetNewControlSectorVertices();
 
 			if (Tools.DrawLines(drawnvertices) == false)
 			{
@@ -257,26 +275,14 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 			// With multiple tag support in UDMF only one tag is needed, so bind it right away
 			if (General.Map.UDMF == true)
 			{
-				if(isnew)
-					udmftag = BuilderPlug.Me.ControlSectorArea.GetNewSectorTag(tagblacklist);
+				if (isnew || forcenewtag)
+				{
+					newtag = udmftag = BuilderPlug.Me.ControlSectorArea.GetNewSectorTag(tagblacklist);
+					tagblacklist.Add(udmftag);
+				}					
 
 				BindTag(udmftag);
 			}
-
-			// Snap to map format accuracy
-			General.Map.Map.SnapAllToAccuracy();
-
-			General.Map.Map.BeginAddRemove();
-			//MapSet.JoinVertices(vertices, vertices, false, MapSet.STITCH_DISTANCE);
-			General.Map.Map.EndAddRemove();
-
-			// Update textures
-			General.Map.Data.UpdateUsedTextures();
-
-			// Update caches
-			General.Map.Map.Update();
-			General.Interface.RedrawDisplay();
-			General.Map.IsChanged = true;
 
 			return true;
 		}
@@ -360,11 +366,6 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 			}
 
 			General.Map.Map.EndAddRemove();
-
-			// Update cache values
-			General.Map.IsChanged = true;
-			General.Map.Map.Update();
-
 		}
 
 		public void DeleteControlSector()

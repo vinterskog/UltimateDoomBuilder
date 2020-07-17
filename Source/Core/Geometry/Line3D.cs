@@ -60,11 +60,18 @@ namespace CodeImp.DoomBuilder.Geometry
 		public Vector3D GetDelta() { return End - Start; }
 
 		// This calculates the angle
-		public float GetAngle() 
+		public double GetAngle() 
 		{
 			// Calculate and return the angle
 			Vector2D d = GetDelta();
-			return -(float)Math.Atan2(-d.y, d.x) + Angle2D.PIHALF;
+			return -Math.Atan2(-d.y, d.x) + Angle2D.PIHALF;
+		}
+
+		public double GetAngleZ()
+		{
+			Vector3D d = GetDelta();
+
+			return Math.Atan2(Math.Sqrt(d.x*d.x + d.y*d.y), d.z);
 		}
 	}
 }

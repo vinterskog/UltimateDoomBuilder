@@ -886,10 +886,10 @@ namespace CodeImp.DoomBuilder.Windows
 			if(snaptogrid) coords = General.Map.Grid.SnappedToGrid(coords);
 			
 			// X position
-			xposlabel.Text = (float.IsNaN(coords.x) ? "--" : coords.x.ToString("####0"));
+			xposlabel.Text = (double.IsNaN(coords.x) ? "--" : coords.x.ToString("####0"));
 
 			// Y position
-			yposlabel.Text = (float.IsNaN(coords.y) ? "--" : coords.y.ToString("####0"));
+			yposlabel.Text = (double.IsNaN(coords.y) ? "--" : coords.y.ToString("####0"));
 		}
 
 		// This changes zoom display
@@ -927,7 +927,7 @@ namespace CodeImp.DoomBuilder.Windows
 		}
 
 		// This changes grid display
-		internal void UpdateGrid(float gridsize)
+		internal void UpdateGrid(double gridsize)
 		{
 			// Update grid label
 			gridlabel.Text = (gridsize == 0 ? "--" : gridsize + " mp");
@@ -2060,7 +2060,7 @@ namespace CodeImp.DoomBuilder.Windows
 			buttonnewmap.Visible = General.Settings.ToolbarFile;
 			buttonopenmap.Visible = General.Settings.ToolbarFile;
 			buttonsavemap.Visible = General.Settings.ToolbarFile;
-			buttonscripteditor.Visible = General.Settings.ToolbarScript && maploaded;
+			buttonscripteditor.Visible = General.Settings.ToolbarScript && maploaded && General.Map.Config.HasScriptLumps(); // Only show script editor if there a script lumps defined
 			buttonundo.Visible = General.Settings.ToolbarUndo && maploaded;
 			buttonredo.Visible = General.Settings.ToolbarUndo && maploaded;
 			buttoncut.Visible = General.Settings.ToolbarCopy && maploaded;
@@ -4237,8 +4237,8 @@ namespace CodeImp.DoomBuilder.Windows
 					break;
 
 				case General.WM_MOUSEHWHEEL:
-					int delta = m.WParam.ToInt32() >> 16;
-					OnMouseHWheel(delta);
+                    int delta = unchecked((short)(m.WParam.ToInt64() >> 16));
+                    OnMouseHWheel(delta);
 					m.Result = new IntPtr(delta);
 					break;
 					

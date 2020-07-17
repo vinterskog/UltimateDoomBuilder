@@ -78,6 +78,8 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 		#region ================== Variables
 
 		private bool additiveselect;
+		private bool additivepaintselect;
+		private float highlightrange;
 		private bool autoclearselection;
 		private MenusForm menusform;
 		private bool usehighlight;
@@ -101,6 +103,8 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 		#region ================== Properties
 
 		public bool AdditiveSelect { get { return additiveselect; } }
+		public bool AdditivePaintSelect { get { return additivepaintselect; } }
+		public float HighlightRange { get { return highlightrange; } }
 		public bool AutoClearSelection { get { return autoclearselection; } }
 		public MenusForm MenusForm { get { return menusform; } }
 		public bool UseHighlight
@@ -460,11 +464,14 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 		private void LoadSettings()
 		{
 			additiveselect = General.Settings.ReadPluginSetting("BuilderModes", "additiveselect", false);
+			additivepaintselect = General.Settings.ReadPluginSetting("BuilderModes", "additivepaintselect", false);
+			highlightrange = General.Settings.ReadPluginSetting("BuilderModes", "highlightrange", 20);
 			autoclearselection = General.Settings.ReadPluginSetting("BuilderModes", "autoclearselection", false);
 			highlightsloperange = (float)General.Settings.ReadPluginSetting("BuilderModes", "highlightthingsrange", 10);
 			stitchrange = (float)General.Settings.ReadPluginSetting("BuilderModes", "stitchrange", 20);
 			slopevertexlabeldisplayoption = (LabelDisplayOption)General.Settings.ReadPluginSetting("slopevertexlabeldisplayoption", (int)LabelDisplayOption.Always);
 			sectorlabeldisplayoption = (LabelDisplayOption)General.Settings.ReadPluginSetting("sectorlabeldisplayoption", (int)LabelDisplayOption.Always);
+			
 		}
 
 		public void StoreSlopeVertexGroupsInSector()
@@ -641,7 +648,7 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 
 					foreach (Sidedef sd in s.Sidedefs)
 					{
-						float u = 0.0f;
+						double u = 0.0f;
 						Plane ldplane = new Plane(sd.Line.Start.Position, sd.Line.End.Position, new Vector3D(sd.Line.Start.Position.x, sd.Line.Start.Position.y, 128), true);
 
 						foreach(Line3D l in splinelines)
@@ -717,7 +724,7 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 
 					if (svg.Vertices.Count == 2)
 					{
-						float z = sp[0].z;
+						double z = sp[0].z;
 						Line2D line = new Line2D(sp[0], sp[1]);
 						Vector3D perpendicular = line.GetPerpendicular();
 
@@ -782,6 +789,7 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 			var sectorsToThreeDFloors = new Dictionary<Sector, List<ThreeDFloor>>();
 			var sectorGroups = new List<List<Sector>>();
 			List<int> tagblacklist = new List<int>();
+			int numnewcontrolsectors = 0;
 
 			if(selectedSectors == null)
 				selectedSectors = new List<Sector>(General.Map.Map.GetSelectedSectors(true));
@@ -811,22 +819,30 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 
 			General.Map.UndoRedo.CreateUndo("Modify 3D floors");
 
-			// Create a list of all tags used by the control sectors. This is necessary so that
-			// tags that will be assigned to not yet existing geometry will not be used
 			foreach (ThreeDFloor tdf in threedfloors)
+			{
+				// Create a list of all tags used by the control sectors. This is necessary so that
+				// tags that will be assigned to not yet existing geometry will not be used
 				foreach (int tag in tdf.Tags)
 					if (!tagblacklist.Contains(tag))
 						tagblacklist.Add(tag);
 
+				// Collect the number of control sectors that have to be created
+				if (tdf.IsNew)
+					numnewcontrolsectors++;
+			}
+
 			try
 			{
+				List<DrawnVertex> drawnvertices = new List<DrawnVertex>();
+
+				if (numnewcontrolsectors > 0)
+					drawnvertices = Me.ControlSectorArea.GetNewControlSectorVertices(numnewcontrolsectors);
+
 				foreach (ThreeDFloor tdf in threedfloors)
 				{
-					if (tdf.Rebuild)
-						tdf.DeleteControlSector();
-
-					if (tdf.IsNew || tdf.Rebuild)
-						tdf.CreateGeometry(tagblacklist);
+					if (tdf.IsNew)
+						tdf.CreateGeometry(tagblacklist, drawnvertices);
 
 					tdf.UpdateGeometry();
 				}
@@ -922,6 +938,7 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 						try
 						{
 							newtag = BuilderPlug.Me.ControlSectorArea.GetNewSectorTag(tagblacklist);
+							tagblacklist.Add(newtag);
 						}
 						catch (Exception e)
 						{
@@ -951,6 +968,17 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 			// Remove unused tags from the 3D floors
 			foreach (ThreeDFloor tdf in threedfloors)
 				tdf.Cleanup();
+
+			// Snap to map format accuracy
+			General.Map.Map.SnapAllToAccuracy();
+
+			// Update textures
+			General.Map.Data.UpdateUsedTextures();
+
+			// Update caches
+			General.Map.Map.Update();
+			General.Interface.RedrawDisplay();
+			General.Map.IsChanged = true;
 		}
 
 		public SlopeVertexGroup AddSlopeVertexGroup(List<SlopeVertex> vertices, out int id)

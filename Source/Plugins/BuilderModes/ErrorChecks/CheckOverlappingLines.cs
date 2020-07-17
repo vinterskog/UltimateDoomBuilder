@@ -71,7 +71,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 							// Not the same line and not already checked
 							if(!object.ReferenceEquals(l, d) && !doneblocklines.ContainsKey(d))
 							{
-								float lu, du;
+								double lu, du;
 								
 								//mxd. This can also happen. I suppose. Some people manage to do this. I dunno how, but they do...
 								if((l.Start.Position == d.Start.Position && l.End.Position == d.End.Position)
@@ -86,11 +86,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 									// the lines may be touching at the ends when sharing the same vertex.
 									if(General.Map.FormatInterface.VertexDecimals > 0) //mxd
 									{
-										lu = (float)Math.Round(lu, General.Map.FormatInterface.VertexDecimals);
-										du = (float)Math.Round(du, General.Map.FormatInterface.VertexDecimals);
+										lu = Math.Round(lu, General.Map.FormatInterface.VertexDecimals);
+										du = Math.Round(du, General.Map.FormatInterface.VertexDecimals);
 									}
 									
-									if((lu > 0.0f) && (lu < 1.0f) && (du > 0.0f) && (du < 1.0f))
+									if((lu > 0.0) && (lu < 1.0) && (du > 0.0) && (du < 1.0))
 									{
 										// Check if not the same sector on all sides
 										Sector samesector = null;

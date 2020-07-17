@@ -68,6 +68,7 @@ namespace CodeImp.DoomBuilder.Rendering
             DeclareUniform(UniformName.fogcolor, "fogcolor", UniformType.Vec4f);
             DeclareUniform(UniformName.sectorfogcolor, "sectorfogcolor", UniformType.Vec4f);
             DeclareUniform(UniformName.lightsEnabled, "lightsEnabled", UniformType.Float);
+			DeclareUniform(UniformName.slopeHandleLength, "slopeHandleLength", UniformType.Float);
 
             // 2d fsaa
             CompileShader(ShaderName.display2d_fsaa, "display2d.shader", "display2d_fsaa");
@@ -99,6 +100,9 @@ namespace CodeImp.DoomBuilder.Rendering
             CompileShader(ShaderName.world3d_main_highlight_fog, "world3d.shader", "world3d_main_highlight_fog");
             CompileShader(ShaderName.world3d_main_fog_vertexcolor, "world3d.shader", "world3d_main_fog_vertexcolor");
             CompileShader(ShaderName.world3d_main_highlight_fog_vertexcolor, "world3d.shader", "world3d_main_highlight_fog_vertexcolor");
+
+			// Slope handle
+			CompileShader(ShaderName.world3d_slope_handle, "world3d.shader", "world3d_slope_handle");
 
             SetupSettings();
         }
@@ -684,7 +688,7 @@ namespace CodeImp.DoomBuilder.Rendering
 		// This makes a Vector3 from Vector3D
 		public static Vector3f V3(Vector3D v3d)
 		{
-			return new Vector3f(v3d.x, v3d.y, v3d.z);
+			return new Vector3f((float)v3d.x, (float)v3d.y, (float)v3d.z);
 		}
 
 		// This makes a Vector3D from Vector3
@@ -696,7 +700,7 @@ namespace CodeImp.DoomBuilder.Rendering
 		// This makes a Vector2 from Vector2D
 		public static Vector2f V2(Vector2D v2d)
 		{
-			return new Vector2f(v2d.x, v2d.y);
+			return new Vector2f((float)v2d.x, (float)v2d.y);
 		}
 
 		// This makes a Vector2D from Vector2
@@ -730,7 +734,8 @@ namespace CodeImp.DoomBuilder.Rendering
         world3d_p13,
         world3d_main_highlight_fog_vertexcolor,
         world3d_vertex_color,
-        world3d_constant_color
+        world3d_constant_color,
+		world3d_slope_handle
     }
 
     public enum UniformType : int
@@ -772,7 +777,8 @@ namespace CodeImp.DoomBuilder.Rendering
         fogsettings,
         fogcolor,
         sectorfogcolor,
-        lightsEnabled
+        lightsEnabled,
+		slopeHandleLength
     }
 
     public enum VertexFormat : int { Flat, World }

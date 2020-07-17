@@ -14,10 +14,10 @@ namespace CodeImp.DoomBuilder.VisualModes
 	{
 		#region ================== Constants
 
-		private const float ANGLE_FROM_MOUSE = 0.0001f;
-		public const float MAX_ANGLEZ_LOW = 91f / Angle2D.PIDEG;
-		public const float MAX_ANGLEZ_HIGH = (360f - 91f) / Angle2D.PIDEG;
-		public const float THING_Z_OFFSET = 41.0f;
+		private const double ANGLE_FROM_MOUSE = 0.0001;
+		public const double MAX_ANGLEZ_LOW = 91.0 / Angle2D.PIDEG;
+		public const double MAX_ANGLEZ_HIGH = (360.0 - 91.0) / Angle2D.PIDEG;
+		public const double THING_Z_OFFSET = 41.0;
 		
 		#endregion
 
@@ -27,9 +27,9 @@ namespace CodeImp.DoomBuilder.VisualModes
 		private Vector3D position;
 		private Vector3D target;
 		private Vector3D movemultiplier;
-		private float anglexy, anglez;
+		private double anglexy, anglez;
 		private Sector sector;
-		private float gravity = 1.0f; //mxd
+		private double gravity = 1.0; //mxd
 		
 		#endregion
 
@@ -37,11 +37,11 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 		public Vector3D Position { get { return position; } set { position = value; } }
 		public Vector3D Target { get { return target; } }
-		public float AngleXY { get { return anglexy; } set { anglexy = value; } }
-		public float AngleZ { get { return anglez; } set { anglez = value; } }
+		public double AngleXY { get { return anglexy; } set { anglexy = value; } }
+		public double AngleZ { get { return anglez; } set { anglez = value; } }
 		public Sector Sector { get { return sector; } internal set { sector = value; UpdateGravity(); } } //mxd
 		public Vector3D MoveMultiplier { get { return movemultiplier; } set { movemultiplier = value; } }
-		public float Gravity { get { return gravity; } } //mxd
+		public double Gravity { get { return gravity; } } //mxd
 		
 		#endregion
 
@@ -51,8 +51,8 @@ namespace CodeImp.DoomBuilder.VisualModes
 		public VisualCamera()
 		{
 			// Initialize
-			movemultiplier = new Vector3D(1.0f, 1.0f, 1.0f);
-			anglexy = 0.0f;
+			movemultiplier = new Vector3D(1.0, 1.0, 1.0);
+			anglexy = 0.0;
 			anglez = Angle2D.PI;
 			sector = null;
 			
@@ -85,8 +85,14 @@ namespace CodeImp.DoomBuilder.VisualModes
 		// Key input
 		internal void ProcessMovement(Vector3D deltavec)
 		{
-			// Calculate camera direction vectors
-			Vector3D camvec = Vector3D.FromAngleXYZ(anglexy, anglez);
+			// Calculate camera direction vectors. Multiply by a biggish number, so the decimal digits
+			// become less important. This is necessary because the vector will be converted to float
+			// when being passed to the renderer, and loss of decimal precision will cause the camera
+			// to become jittery when it's far away from the map origin. Muliplying by 10 seems to be
+			// enough for non-jittery forward/backward movement, but that's still jittery when looking
+			// straight up/down and then moving around, which doesn't happen at something bigger, like
+			// the 100 we're using here
+			Vector3D camvec = Vector3D.FromAngleXYZ(anglexy, anglez) * 100.0;
 
 			// Position the camera
 			position += deltavec;
@@ -116,16 +122,16 @@ namespace CodeImp.DoomBuilder.VisualModes
 			if(modething != null)
 			{
 				modething.DetermineSector();
-				float z = modething.Position.z;
+				double z = modething.Position.z;
 				if(modething.Sector != null) z += modething.Sector.FloorHeight;
 				
 				// Position camera here
 				Vector3D wantedposition = new Vector3D(modething.Position.x, modething.Position.y, z + THING_Z_OFFSET);
 				Vector3D delta = position - wantedposition;
 				if(delta.GetLength() > 1.0f) position = wantedposition;
-				
+
 				// Change angle
-				float wantedanglexy = modething.Angle + Angle2D.PI;
+				double wantedanglexy = modething.Angle + Angle2D.PI;
 				if(anglexy != wantedanglexy)
 				{
 					anglexy = wantedanglexy;
@@ -173,7 +179,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 		private void UpdateGravity() 
 		{
 			if(!General.Map.UDMF || sector == null) return;
-			gravity = sector.Fields.GetValue("gravity", 1.0f);
+			gravity = sector.Fields.GetValue("gravity", 1.0);
 		}
 		
 		#endregion

@@ -29,13 +29,6 @@ namespace CodeImp.DoomBuilder.Plugins.VisplaneExplorer
 			  AllowCopyPaste = false)]
 	public class VisplaneExplorerMode : ClassicMode
 	{
-		#region ================== APIs
-
-		[DllImport("kernel32.dll")]
-		static extern void RtlZeroMemory(IntPtr dst, int length);
-
-		#endregion
-
 		#region ================== Variables
 
 		// The image is the ImageData resource for Doom Builder to work with
@@ -119,8 +112,13 @@ namespace CodeImp.DoomBuilder.Plugins.VisplaneExplorer
 			Palette pal = (BuilderPlug.InterfaceForm.ShowHeatmap ? BuilderPlug.Palettes[(int)ViewStats.Heatmap] : BuilderPlug.Palettes[viewstats]);
 
 			BitmapData bd = canvas.LockBits(new Rectangle(0, 0, canvas.Size.Width, canvas.Size.Height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
-			RtlZeroMemory(bd.Scan0, bd.Width * bd.Height * 4);
-			int* p = (int*)bd.Scan0.ToPointer();
+			uint* p = (uint*)bd.Scan0.ToPointer();
+
+			int count = bd.Width * bd.Height;
+			for (int i = 0; i < count; i++)
+			{
+				p[i] = 0;
+			}
 
 			foreach(KeyValuePair<Point, Tile> t in tiles)
 			{
@@ -168,13 +166,13 @@ namespace CodeImp.DoomBuilder.Plugins.VisplaneExplorer
 
 						// Get the data and apply the color
 						byte value = t.Value.GetPointByte((int)ux, Tile.TILE_SIZE - 1 - (int)uy, viewstats);
-						p[screeny * bd.Width + screenx] = pal.Colors[value];
+						p[screeny * bd.Width + screenx] = (uint)pal.Colors[value];
 					}
 				}
 			}
 			
 			canvas.UnlockBits(bd);
-			image.UpdateTexture();
+			image.UpdateTexture(canvas);
 		}
 
 		// This queues points for all current tiles
@@ -314,10 +312,10 @@ namespace CodeImp.DoomBuilder.Plugins.VisplaneExplorer
 					// If the tile is obviously outside the map, don't create it
 					Vector2D pc = new Vector2D(x + (Tile.TILE_SIZE >> 1), y + (Tile.TILE_SIZE >> 1));
 					Linedef ld = MapSet.NearestLinedef(blockmap.GetBlockAt(pc).Lines, pc);
-					float distancesq = ld.DistanceToSq(pc, true);
+					double distancesq = ld.DistanceToSq(pc, true);
 					if(distancesq > (Tile.TILE_SIZE * Tile.TILE_SIZE))
 					{
-						float side = ld.SideOfLine(pc);
+						double side = ld.SideOfLine(pc);
 						if((side > 0.0f) && (ld.Back == null))
 							continue;
 					}
@@ -445,7 +443,7 @@ namespace CodeImp.DoomBuilder.Plugins.VisplaneExplorer
 				int viewstats = (int)BuilderPlug.InterfaceForm.ViewStats;
 				
 				// Get the tile data for the current position
-				Point tp = TileForPoint(mousemappos.x, mousemappos.y);
+				Point tp = TileForPoint((float)mousemappos.x, (float)mousemappos.y);
 				Tile t;
 				if(tiles.TryGetValue(tp, out t))
 				{

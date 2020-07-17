@@ -45,6 +45,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private int horizontalslices;
 		private int verticalslices;
 		private bool triangulate;
+		private bool relativeinterpolation;
 		private GridLockMode gridlockmode;
 		private InterpolationTools.Mode horizontalinterpolation;
 		private InterpolationTools.Mode verticalinterpolation;
@@ -202,34 +203,36 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			snaptogrid = (snaptocardinaldirection || gridlockmode != GridLockMode.NONE || (General.Interface.ShiftState ^ General.Interface.SnapToGrid));
 			snaptonearest = (gridlockmode == GridLockMode.NONE && (General.Interface.CtrlState ^ General.Interface.AutoMerge));
 
-			DrawnVertex curp;
-			if(points.Count == 1)
-			{
-				// Handle the case when start point is not on current grid.
-				Vector2D gridoffset = General.Map.Grid.SnappedToGrid(points[0].pos) - points[0].pos;
-				curp = GetCurrentPosition(mousemappos + gridoffset, snaptonearest, snaptogrid, snaptocardinaldirection, usefourcardinaldirections, renderer, points);
-				curp.pos -= gridoffset;
-			}
-			else
-			{
-				curp = GetCurrentPosition();
-			}
-			
+			DrawnVertex curp = GetCurrentPosition();
+
+			Vector2D curvertexpos = curp.pos;
 			float vsize = (renderer.VertexSize + 1.0f) / renderer.Scale;
+
+			curp.pos = curp.pos.GetRotated(-General.Map.Grid.GridRotate);
 
 			// Render drawing lines
 			if(renderer.StartOverlay(true)) 
 			{
 				PixelColor color = snaptonearest ? stitchcolor : losecolor;
 
-				if(points.Count == 1) 
+				if (points.Count == 1) 
 				{
 					UpdateReferencePoints(points[0], curp);
 					List<Vector2D[]> shapes = GetShapes(start, end);
 
+					Vector2D startrotated = start.GetRotated(General.Map.Grid.GridRotate);
+					Vector2D endrotated = end.GetRotated(General.Map.Grid.GridRotate);
+
+					// Rotate the shape to fit the grid rotation
+					foreach (Vector2D[] shape in shapes)
+					{
+						for(int i=0; i < shape.Length; i++)
+							shape[i] = shape[i].GetRotated(General.Map.Grid.GridRotate);
+					}
+
 					// Render guidelines
 					if(showguidelines)
-						RenderGuidelines(start, end, General.Colors.Guideline.WithAlpha(80));
+						RenderGuidelines(startrotated, endrotated, General.Colors.Guideline.WithAlpha(80), -General.Map.Grid.GridRotate);
 
 					//render shape
 					foreach(Vector2D[] shape in shapes) 
@@ -242,21 +245,22 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					foreach(Vector2D[] shape in shapes) 
 					{
 						for(int i = 0; i < shape.Length; i++)
-							renderer.RenderRectangleFilled(new RectangleF(shape[i].x - vsize, shape[i].y - vsize, vsize * 2.0f, vsize * 2.0f), color, true);
+							renderer.RenderRectangleFilled(new RectangleF((float)(shape[i].x - vsize), (float)(shape[i].y - vsize), vsize * 2.0f, vsize * 2.0f), color, true);
 					}
 
 					//and labels
 					if(width == 0 || height == 0)
 					{
 						// Render label for line
-						labels[0].Move(start, end);
+						labels[0].Move(startrotated, endrotated);
 						renderer.RenderText(labels[0].TextLabel);
 					}
 					else
 					{
 						// Render labels for grid
-						Vector2D[] labelCoords = { start, new Vector2D(end.x, start.y), end, new Vector2D(start.x, end.y), start };
-						for(int i = 1; i < 5; i++)
+						Vector2D[] labelCoords = { startrotated, new Vector2D(end.x, start.y).GetRotated(General.Map.Grid.GridRotate), endrotated, new Vector2D(start.x, end.y).GetRotated(General.Map.Grid.GridRotate), startrotated };
+
+						for (int i = 1; i < 5; i++)
 						{
 							labels[i - 1].Move(labelCoords[i], labelCoords[i - 1]);
 							renderer.RenderText(labels[i - 1].TextLabel);
@@ -267,10 +271,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					if(horizontalslices > 1 || verticalslices > 1) 
 					{
 						string text = "H: " + (slicesH - 1) + "; V: " + (slicesV - 1);
-						if(width > text.Length * vsize && height > 16 * vsize)
+						if(Math.Abs(width) > text.Length * vsize && Math.Abs(height) > 16 * vsize)
 						{
 							hintlabel.Text = text;
-							hintlabel.Move(start, end);
+							hintlabel.Move(startrotated, endrotated);
 							renderer.RenderText(hintlabel.TextLabel);
 						}
 					}
@@ -278,7 +282,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				else 
 				{
 					// Render vertex at cursor
-					renderer.RenderRectangleFilled(new RectangleF(curp.pos.x - vsize, curp.pos.y - vsize, vsize * 2.0f, vsize * 2.0f), color, true);
+					renderer.RenderRectangleFilled(new RectangleF((float)(curvertexpos.x - vsize), (float)(curvertexpos.y - vsize), vsize * 2.0f, vsize * 2.0f), color, true);
 				}
 
 				// Done
@@ -296,7 +300,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				pos.y > General.Map.Config.TopBoundary || pos.y < General.Map.Config.BottomBoundary)
 				return false;
 
-			DrawnVertex newpoint = new DrawnVertex { pos = pos, stitch = true, stitchline = stitchline };
+			DrawnVertex newpoint = new DrawnVertex();
+			newpoint.pos = pos.GetRotated(-General.Map.Grid.GridRotate);
+			newpoint.stitch = true; //stitch
+			newpoint.stitchline = stitchline;
 			points.Add(newpoint);
 
 			if(points.Count == 1) 
@@ -313,11 +320,6 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			} 
 			else 
 			{
-				// Handle the case when start point is not on current grid.
-				Vector2D gridoffset = General.Map.Grid.SnappedToGrid(points[0].pos) - points[0].pos;
-				newpoint = GetCurrentPosition(mousemappos + gridoffset, snaptonearest, snaptogrid, snaptocardinaldirection, usefourcardinaldirections, renderer, new List<DrawnVertex> { points[0] });
-				newpoint.pos -= gridoffset;
-				
 				// Create vertices for final shape.
 				UpdateReferencePoints(points[0], newpoint);
 				List<Vector2D[]> shapes = GetShapes(start, end);
@@ -325,9 +327,13 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				foreach(Vector2D[] shape in shapes) 
 				{
 					DrawnVertex[] verts = new DrawnVertex[shape.Length];
-					for(int i = 0; i < shape.Length; i++) 
+					for(int i = 0; i < shape.Length; i++)
 					{
-						newpoint = new DrawnVertex { pos = shape[i], stitch = true, stitchline = stitchline };
+						newpoint = new DrawnVertex {
+							pos = shape[i].GetRotated(General.Map.Grid.GridRotate), // Take grid rotation into account
+							stitch = true,
+							stitchline = stitchline
+						};
 						verts[i] = newpoint;
 					}
 
@@ -359,12 +365,12 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 				case GridLockMode.VERTICAL:
 					slicesH = horizontalslices;
-					slicesV = height / General.Map.Grid.GridSize;
+					slicesV = Math.Abs(height / General.Map.Grid.GridSize);
 					break;
 
 				case GridLockMode.BOTH:
-					slicesH = width / General.Map.Grid.GridSize;
-					slicesV = height / General.Map.Grid.GridSize;
+					slicesH = Math.Abs(width / General.Map.Grid.GridSize);
+					slicesV = Math.Abs(height / General.Map.Grid.GridSize);
 					break;
 			}
 
@@ -415,11 +421,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			{
 				for(int h = 0; h < slicesV; h++)
 				{
-					float left = (InterpolationTools.Interpolate(s.x, e.x, (float)w / slicesH, horizontalinterpolation));
-					float top = (InterpolationTools.Interpolate(s.y, e.y, (float)h / slicesV, verticalinterpolation));
-					float right = (InterpolationTools.Interpolate(s.x, e.x, (w + 1.0f) / slicesH, horizontalinterpolation));
-					float bottom = (InterpolationTools.Interpolate(s.y, e.y, (h + 1.0f) / slicesV, verticalinterpolation));
-					blocks[w, h] = RectangleF.FromLTRB(left, top, right, bottom);
+					double left = (InterpolationTools.Interpolate(s.x, e.x, (double)w / slicesH, horizontalinterpolation));
+					double top = (InterpolationTools.Interpolate(s.y, e.y, (double)h / slicesV, verticalinterpolation));
+					double right = (InterpolationTools.Interpolate(s.x, e.x, (w + 1.0f) / slicesH, horizontalinterpolation));
+					double bottom = (InterpolationTools.Interpolate(s.y, e.y, (h + 1.0f) / slicesV, verticalinterpolation));
+					blocks[w, h] = RectangleF.FromLTRB((float)left, (float)top, (float)right, (float)bottom);
 				}
 			}
 
@@ -471,28 +477,41 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private void UpdateReferencePoints(DrawnVertex p1, DrawnVertex p2) 
 		{
 			if(!p1.pos.IsFinite() || !p2.pos.IsFinite()) return;
-			
-			if(p1.pos.x < p2.pos.x) 
+
+			// If relative interpolation is enabled the interpolation will use the point where the drawing
+			// started as the origin, not always the top left corner
+			if (relativeinterpolation)
 			{
 				start.x = p1.pos.x;
+				start.y = p1.pos.y;
 				end.x = p2.pos.x;
-			} 
-			else 
+				end.y = p2.pos.y;
+			}
+			else
 			{
-				start.x = p2.pos.x;
-				end.x = p1.pos.x;
+				if (p1.pos.x < p2.pos.x)
+				{
+					start.x = p1.pos.x;
+					end.x = p2.pos.x;
+				}
+				else
+				{
+					start.x = p2.pos.x;
+					end.x = p1.pos.x;
+				}
+
+				if (p1.pos.y < p2.pos.y)
+				{
+					start.y = p1.pos.y;
+					end.y = p2.pos.y;
+				}
+				else
+				{
+					start.y = p2.pos.y;
+					end.y = p1.pos.y;
+				}
 			}
 
-			if(p1.pos.y < p2.pos.y) 
-			{
-				start.y = p1.pos.y;
-				end.y = p2.pos.y;
-			} 
-			else 
-			{
-				start.y = p2.pos.y;
-				end.y = p1.pos.y;
-			}
 
 			width = (int)(end.x - start.x);
 			height = (int)(end.y - start.y);
@@ -507,8 +526,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// Load stored settings
 			triangulate = General.Settings.ReadPluginSetting("drawgridmode.triangulate", false);
 			gridlockmode = (GridLockMode)General.Settings.ReadPluginSetting("drawgridmode.gridlockmode", 0);
-			horizontalslices = Math.Max(General.Settings.ReadPluginSetting("drawgridmode.horizontalslices", 3), 3);
-			verticalslices = Math.Max(General.Settings.ReadPluginSetting("drawgridmode.verticalslices", 3), 3);
+			horizontalslices = Math.Max(General.Settings.ReadPluginSetting("drawgridmode.horizontalslices", 3), 1);
+			verticalslices = Math.Max(General.Settings.ReadPluginSetting("drawgridmode.verticalslices", 3), 1);
+			relativeinterpolation = General.Settings.ReadPluginSetting("drawgridmode.relativeinterpolation", true);
 			horizontalinterpolation = (InterpolationTools.Mode)General.Settings.ReadPluginSetting("drawgridmode.horizontalinterpolation", 0);
 			verticalinterpolation = (InterpolationTools.Mode)General.Settings.ReadPluginSetting("drawgridmode.verticalinterpolation", 0);
 			
@@ -527,10 +547,12 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			panel.OnGridLockModeChanged += OptionsPanelOnGridLockChanged;
 			panel.OnContinuousDrawingChanged += OnContinuousDrawingChanged;
 			panel.OnShowGuidelinesChanged += OnShowGuidelinesChanged;
+			panel.OnRelativeInterpolationChanged += OnRelativeInterpolationChanged;
 
 			// Needs to be set after adding the OnContinuousDrawingChanged event...
 			panel.ContinuousDrawing = General.Settings.ReadPluginSetting("drawgridmode.continuousdrawing", false);
 			panel.ShowGuidelines = General.Settings.ReadPluginSetting("drawgridmode.showguidelines", false);
+			panel.RelativeInterpolation = relativeinterpolation;
 		}
 
 		protected override void AddInterface()
@@ -548,6 +570,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			General.Settings.WritePluginSetting("drawgridmode.gridlockmode", (int)gridlockmode);
 			General.Settings.WritePluginSetting("drawgridmode.horizontalslices", horizontalslices);
 			General.Settings.WritePluginSetting("drawgridmode.verticalslices", verticalslices);
+			General.Settings.WritePluginSetting("drawgridmode.relativeinterpolation", relativeinterpolation);
 			General.Settings.WritePluginSetting("drawgridmode.horizontalinterpolation", (int)horizontalinterpolation);
 			General.Settings.WritePluginSetting("drawgridmode.verticalinterpolation", (int)verticalinterpolation);
 			General.Settings.WritePluginSetting("drawgridmode.continuousdrawing", panel.ContinuousDrawing);
@@ -557,6 +580,12 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			General.Interface.RemoveDocker(docker);
 			panel.Dispose();
 			panel = null;
+		}
+
+		protected void OnRelativeInterpolationChanged(object value, EventArgs e)
+		{
+			relativeinterpolation = (bool)value;
+			Update();
 		}
 
 		#endregion
