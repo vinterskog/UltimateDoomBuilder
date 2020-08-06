@@ -2141,6 +2141,11 @@ namespace CodeImp.DoomBuilder
                 return false;
             }
         }
+
+		public static List<Assembly> GetPluginAssemblies()
+		{
+			return plugins.GetPluginAssemblies();
+		}
 		
 #endregion
 
