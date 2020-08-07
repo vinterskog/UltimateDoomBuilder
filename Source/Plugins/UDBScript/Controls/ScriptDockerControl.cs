@@ -13,9 +13,19 @@ namespace CodeImp.DoomBuilder.UDBScript
 {
 	public partial class ScriptDockerControl : UserControl
 	{
+		private ImageList images;
+
+		public ImageList Images { get { return images; } }
+
 		public ScriptDockerControl(string foldername)
 		{
 			InitializeComponent();
+
+			images = new ImageList();
+			images.Images.Add("Folder", Properties.Resources.Folder);
+			images.Images.Add("Script", Properties.Resources.Script);
+
+			filetree.ImageList = images;
 
 			FillTree(foldername);
 		}
@@ -35,7 +45,11 @@ namespace CodeImp.DoomBuilder.UDBScript
 
 			foreach (string directory in Directory.GetDirectories(path))
 			{
-				newnodes.Add(new TreeNode(Path.GetFileName(directory), AddFiles(directory)));
+				TreeNode tn = new TreeNode(Path.GetFileName(directory), AddFiles(directory));
+				tn.SelectedImageKey = tn.ImageKey = "Folder";
+				
+
+				newnodes.Add(tn);
 			}
 
 			foreach (string filename in Directory.GetFiles(path))
@@ -44,6 +58,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 				{
 					TreeNode tn = new TreeNode(Path.GetFileNameWithoutExtension(filename));
 					tn.Tag = filename;
+					tn.SelectedImageKey = tn.ImageKey = "Script";
 
 					newnodes.Add(tn);
 				}

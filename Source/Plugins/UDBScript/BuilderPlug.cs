@@ -93,6 +93,8 @@ namespace CodeImp.DoomBuilder.UDBScript
 		[BeginAction("udbscriptexecute")]
 		public void ScriptExecute()
 		{
+			bool abort = false;
+
 			if (string.IsNullOrEmpty(currentscriptfile))
 				return;
 
@@ -105,13 +107,29 @@ namespace CodeImp.DoomBuilder.UDBScript
 			assemblies.Add(General.ThisAssembly);
 
 			// Create the script engine
-			Engine engine = new Engine(cfg => cfg.AllowClr(assemblies.ToArray()));
+			Engine engine = new Engine(cfg => {
+				cfg.AllowClr(assemblies.ToArray());
+				cfg.Constraint(new RuntimeConstraint());
+			});
 			engine.SetValue("log", new Action<object>(Console.WriteLine));
 			engine.SetValue("ShowMessage", new Action<string>(ShowMessage));
 			engine.SetValue("DrawLines", new Func<object[], bool>(DrawLines));
 
 			// Run the script file
-			engine.Execute(script);
+			try
+			{
+				General.Map.UndoRedo.CreateUndo("Run script " + Path.GetFileNameWithoutExtension(currentscriptfile));
+				engine.Execute(script);
+			}
+			catch(UserScriptAbortException e)
+			{
+				abort = true;
+			}
+
+			if(abort)
+			{
+				General.Map.UndoRedo.WithdrawUndo();
+			}
 
 			// Do some updates
 			General.Map.Map.Update();
