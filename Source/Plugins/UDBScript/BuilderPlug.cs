@@ -99,8 +99,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 				return;
 
 			// Read the current script file
-			StreamReader reader = new StreamReader(currentscriptfile);
-			string script = reader.ReadToEnd();
+			string script = File.ReadAllText(currentscriptfile);
 
 			// Get the script assemblies (and the one from Builder) to make them available to the script
 			List<Assembly> assemblies = General.GetPluginAssemblies();
@@ -123,6 +122,16 @@ namespace CodeImp.DoomBuilder.UDBScript
 			}
 			catch(UserScriptAbortException e)
 			{
+				abort = true;
+			}
+			catch(Esprima.ParserException e)
+			{
+				MessageBox.Show("There is an error while parsing the script:\n\n" + e.Message, "Script error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				abort = true;
+			}
+			catch(Jint.Runtime.JavaScriptException e)
+			{
+				MessageBox.Show("There is an error in the script in line " + e.LineNumber + ":\n\n" + e.Message, "Script error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				abort = true;
 			}
 
