@@ -88,6 +88,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="RuntimeConstraint.cs" />
+    <Compile Include="ScriptRunner.cs" />
     <Compile Include="UserScriptAbortException.cs" />
     <Compile Include="Windows\QueryParametersForm.cs">
       <SubType>Form</SubType>
