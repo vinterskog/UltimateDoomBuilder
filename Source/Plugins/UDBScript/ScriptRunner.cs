@@ -91,6 +91,19 @@ namespace CodeImp.DoomBuilder.UDBScript
 			Tools.DrawLines(input);
 		}
 
+		private string GetLibraryCode()
+		{
+			string code = "";
+
+			string path = Path.Combine(General.AppPath, "UDBScript", "Libraries");
+			string[] files = Directory.GetFiles(path, "*", SearchOption.AllDirectories);
+
+			foreach(string file in files)
+				code += File.ReadAllText(file);
+
+			return code;
+		}
+
 		public void Run()
 		{
 			bool abort = false;
@@ -112,6 +125,8 @@ namespace CodeImp.DoomBuilder.UDBScript
 			engine.SetValue("DrawLines", new Func<object[], bool>(DrawLines));
 			engine.SetValue("QueryParameters", new Func<object, Dictionary<string, object>>(QueryParameters));
 			engine.SetValue("Test", new Action<List<DrawnVertex>>(Test));
+
+			engine.Execute(GetLibraryCode());
 
 			// Run the script file
 			try
