@@ -88,6 +88,25 @@ namespace CodeImp.DoomBuilder.UDBScript
 			return Tools.DrawLines(dvl);
 		}
 
+		public static Dictionary<string, object> QueryParameters(object input)
+		{
+			QueryParametersForm qpf = new QueryParametersForm();
+
+			object[] parameters = input as object[];
+
+			for (int i = 0; i < parameters.Length; i++)
+			{
+				object[] setting = parameters[i] as object[];
+
+				qpf.AddParameter(setting[0].ToString(), setting[1].ToString(), setting[2]);
+			}
+
+			if(qpf.ShowDialog() == DialogResult.OK)
+				return qpf.GetParameters();
+
+			throw new UserScriptAbortException("Query parameters dialog was canceled");
+		}
+
 		#region ================== Actions
 
 		[BeginAction("udbscriptexecute")]
@@ -113,6 +132,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 			engine.SetValue("log", new Action<object>(Console.WriteLine));
 			engine.SetValue("ShowMessage", new Action<string>(ShowMessage));
 			engine.SetValue("DrawLines", new Func<object[], bool>(DrawLines));
+			engine.SetValue("QueryParameters", new Func<object, Dictionary<string, object>>(QueryParameters));
 
 			// Run the script file
 			try

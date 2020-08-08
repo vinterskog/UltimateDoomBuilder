@@ -7,11 +7,17 @@ var DrawnVertex = UDB.Geometry.DrawnVertex;
 
 var basepos = Grid.SnappedToGrid(General.Editing.Mode.MouseMapPos);
 
+var params = QueryParameters([
+	[ 'Closet size', 'size', 256 ]
+]);
+
+log('param size: ' + params.size)
+
 // Vertices for voodoo doll closet
 var v1 = basepos;
 var v2 = new Vector2D(basepos.x + 64, basepos.y);
-var v3 = new Vector2D(basepos.x + 64, basepos.y + 256);
-var v4 = new Vector2D(basepos.x, basepos.y + 256);
+var v3 = new Vector2D(basepos.x + 64, basepos.y + params.size);
+var v4 = new Vector2D(basepos.x, basepos.y + params.size);
 
 // Get two new tags, one for the scrolling, one for the blocking sector
 var tags = Map.GetMultipleNewTags(2);

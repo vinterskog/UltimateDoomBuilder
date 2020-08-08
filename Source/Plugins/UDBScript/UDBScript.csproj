@@ -7,7 +7,7 @@
     <ProjectGuid>{3088C327-5FFB-49A0-8D40-58E92D89DF07}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>UDBScript</RootNamespace>
+    <RootNamespace>CodeImp.DoomBuilder.UDBScript</RootNamespace>
     <AssemblyName>UDBScript</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -89,6 +89,12 @@
     </Compile>
     <Compile Include="RuntimeConstraint.cs" />
     <Compile Include="UserScriptAbortException.cs" />
+    <Compile Include="Windows\QueryParametersForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Windows\QueryParametersForm.Designer.cs">
+      <DependentUpon>QueryParametersForm.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Controls\ScriptDockerControl.resx">
@@ -99,6 +105,9 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Actions.cfg" />
+    <EmbeddedResource Include="Windows\QueryParametersForm.resx">
+      <DependentUpon>QueryParametersForm.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\Folder.png" />

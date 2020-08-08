@@ -13,5 +13,9 @@ namespace CodeImp.DoomBuilder.UDBScript
 		public UserScriptAbortException()
 		{
 		}
+
+		public UserScriptAbortException(string message) : base(message)
+		{
+		}
 	}
 }
