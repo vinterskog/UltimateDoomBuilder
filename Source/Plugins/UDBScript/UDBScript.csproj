@@ -88,6 +88,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="RuntimeConstraint.cs" />
+    <Compile Include="ScriptOption.cs" />
     <Compile Include="ScriptRunner.cs" />
     <Compile Include="UserScriptAbortException.cs" />
     <Compile Include="Windows\QueryParametersForm.cs">
@@ -115,6 +116,12 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\Script.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BuilderModes\BuilderModes.csproj">
+      <Project>{B42D5AA0-F9A6-4234-9C4B-A05B11A64851}</Project>
+      <Name>BuilderModes</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

@@ -22,15 +22,19 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing;
 using System.Data;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using CodeImp.DoomBuilder.IO;
 
 namespace CodeImp.DoomBuilder.UDBScript
 {
@@ -98,7 +102,66 @@ namespace CodeImp.DoomBuilder.UDBScript
 			if (e.Node.Tag is string)
 			{
 				BuilderPlug.Me.CurrentScriptFile = (string)e.Node.Tag;
+
+				// Load script settings
+				string configfile = Path.Combine(Path.GetDirectoryName(BuilderPlug.Me.CurrentScriptFile), Path.GetFileNameWithoutExtension(BuilderPlug.Me.CurrentScriptFile)) + ".cfg";
+
+				if(File.Exists(configfile))
+				{
+					Configuration cfg = new Configuration(configfile, true);
+
+					IDictionary options = cfg.ReadSetting("options", new Hashtable());
+
+					parametersview.Rows.Clear();
+
+					foreach (DictionaryEntry de in options)
+					{
+						string description = cfg.ReadSetting(string.Format("options.{0}.description", de.Key), "no description");
+						int type = cfg.ReadSetting(string.Format("options.{0}.type", de.Key), 0);
+						string defaultvaluestr = cfg.ReadSetting(string.Format("options.{0}.default", de.Key), string.Empty);
+
+						ScriptOption so = new ScriptOption((string)de.Key, description, type, defaultvaluestr);
+
+						int index = parametersview.Rows.Add();
+						parametersview.Rows[index].Cells["Description"].Value = description;
+						parametersview.Rows[index].Cells["Value"].Value = defaultvaluestr;
+						parametersview.Rows[index].Tag = so;
+					}
+				}
+				else
+				{
+					parametersview.Rows.Clear();
+					parametersview.Refresh();
+				}
 			}
+		}
+
+		public ExpandoObject GetScriptOptions()
+		{
+			ExpandoObject eo = new ExpandoObject();
+			var options = eo as IDictionary<string, object>;
+
+			foreach (DataGridViewRow row in parametersview.Rows)
+			{
+				if(row.Tag is ScriptOption)
+				{
+					ScriptOption so = (ScriptOption)row.Tag;
+					// options.Add(so.name, so.value);
+					options[so.name] = so.value;
+				}
+			}
+
+			return eo;
+		}
+
+		private void parametersview_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+		{
+			if (e.RowIndex < 0 || parametersview.Rows[e.RowIndex].Tag == null)
+				return;
+
+			ScriptOption so = (ScriptOption)parametersview.Rows[e.RowIndex].Tag;
+			so.value = parametersview.Rows[e.RowIndex].Cells["Value"].Value;
+			parametersview.Rows[e.RowIndex].Tag = so;
 		}
 	}
 }

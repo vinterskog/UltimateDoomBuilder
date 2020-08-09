@@ -24,6 +24,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Dynamic;
 using System.Windows.Forms;
 using System.IO;
 using System.Linq;
@@ -81,6 +82,11 @@ namespace CodeImp.DoomBuilder.UDBScript
 
 			// This must be called to remove bound methods for actions.
 			General.Actions.UnbindMethods(this);
+		}
+
+		public ExpandoObject GetScriptOptions()
+		{
+			return panel.GetScriptOptions();
 		}
 
 		#region ================== Actions

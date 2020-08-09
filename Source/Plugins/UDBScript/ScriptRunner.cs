@@ -48,23 +48,6 @@ namespace CodeImp.DoomBuilder.UDBScript
 			MessageBox.Show(s);
 		}
 
-		public bool DrawLines(object[] vertices)
-		{
-			List<DrawnVertex> dvl = new List<DrawnVertex>();
-
-			for (int i = 0; i < vertices.Length; i++)
-			{
-				DrawnVertex dv = new DrawnVertex();
-				dv.pos = (Vector2D)vertices[i];
-				dv.stitch = true;
-				dv.stitchline = true;
-
-				dvl.Add(dv);
-			}
-
-			return Tools.DrawLines(dvl);
-		}
-
 		public Dictionary<string, object> QueryParameters(object input)
 		{
 			QueryParametersForm qpf = new QueryParametersForm();
@@ -82,13 +65,6 @@ namespace CodeImp.DoomBuilder.UDBScript
 				return qpf.GetParameters();
 
 			throw new UserScriptAbortException("Query parameters dialog was canceled");
-		}
-
-		public void Test(IList<DrawnVertex> input)
-		{
-			int x = 0;
-			Type t = input.GetType();
-			Tools.DrawLines(input);
 		}
 
 		private string GetLibraryCode()
@@ -122,9 +98,8 @@ namespace CodeImp.DoomBuilder.UDBScript
 			});
 			engine.SetValue("log", new Action<object>(Console.WriteLine));
 			engine.SetValue("ShowMessage", new Action<string>(ShowMessage));
-			engine.SetValue("DrawLines", new Func<object[], bool>(DrawLines));
 			engine.SetValue("QueryParameters", new Func<object, Dictionary<string, object>>(QueryParameters));
-			engine.SetValue("Test", new Action<List<DrawnVertex>>(Test));
+			engine.SetValue("ScriptOptions", BuilderPlug.Me.GetScriptOptions());
 
 			engine.Execute(GetLibraryCode());
 
