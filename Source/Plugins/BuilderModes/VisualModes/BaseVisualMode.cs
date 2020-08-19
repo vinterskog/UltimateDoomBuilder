@@ -1781,6 +1781,23 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			RebuildSelectedObjectsList();
 		}
 
+		public override void OnScriptRunEnd()
+		{
+			base.OnScriptRunEnd();
+
+			// Effects may've become invalid
+			if (sectordata != null && sectordata.Count > 0) RebuildElementData();
+
+			// As well as geometry...
+			foreach (VisualSector sector in visiblesectors)
+			{
+				BaseVisualSector vs = (BaseVisualSector)sector;
+				if (vs != null) vs.Rebuild();
+			}
+
+			RebuildSelectedObjectsList();
+		}
+
 		//mxd
 		private void Interface_OnSectorEditFormValuesChanged(object sender, EventArgs e) 
 		{

@@ -103,6 +103,9 @@ namespace CodeImp.DoomBuilder.UDBScript
 
 			engine.Execute(GetLibraryCode());
 
+			// Tell the mode that a script is about to be run
+			General.Editing.Mode.OnScriptRunBegin();
+
 			// Run the script file
 			try
 			{
@@ -133,6 +136,9 @@ namespace CodeImp.DoomBuilder.UDBScript
 			General.Map.Map.Update();
 			General.Map.ThingsFilter.Update();
 			General.Interface.RedrawDisplay();
+
+			// Tell the mode that running the script ended
+			General.Editing.Mode.OnScriptRunEnd();
 		}
 	}
 }

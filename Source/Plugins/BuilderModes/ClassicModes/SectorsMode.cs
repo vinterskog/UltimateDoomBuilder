@@ -1449,6 +1449,19 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			base.OnRedoEnd(); //mxd
 		}
 
+		// After a script is run
+		public override void OnScriptRunEnd()
+		{
+			base.OnScriptRunEnd();
+
+			CreateBlockmap();
+
+			// Clear labels
+			SetupLabels();
+			UpdateEffectLabels();
+			UpdateOverlaySurfaces();
+		}
+
 		//mxd
 		public override void OnViewSelectionNumbersChanged(bool enabled)
 		{
