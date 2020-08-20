@@ -31,6 +31,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 using CodeImp.DoomBuilder.Actions;
 using CodeImp.DoomBuilder.Controls;
 using CodeImp.DoomBuilder.Geometry;
@@ -82,6 +83,21 @@ namespace CodeImp.DoomBuilder.UDBScript
 
 			// This must be called to remove bound methods for actions.
 			General.Actions.UnbindMethods(this);
+		}
+
+		public string GetScriptPathHash()
+		{
+			SHA256 hash = SHA256.Create();
+			byte[] data = hash.ComputeHash(Encoding.UTF8.GetBytes(currentscriptfile));
+
+			StringBuilder sb = new StringBuilder();
+
+			for (int i = 0; i < data.Length; i++)
+			{
+				sb.Append(data[i].ToString("x2"));
+			}
+
+			return sb.ToString();
 		}
 
 		public ExpandoObject GetScriptOptions()

@@ -121,9 +121,17 @@ namespace CodeImp.DoomBuilder.UDBScript
 
 						ScriptOption so = new ScriptOption((string)de.Key, description, type, defaultvaluestr);
 
+						// Try to read a saved script option value from the config
+						string savedvalue = General.Settings.ReadPluginSetting(BuilderPlug.Me.GetScriptPathHash() + "." + so.name, so.defaultvalue.ToString());
+
+						if (string.IsNullOrWhiteSpace(savedvalue))
+							so.value = so.defaultvalue;
+						else
+							so.value = savedvalue;
+
 						int index = parametersview.Rows.Add();
 						parametersview.Rows[index].Tag = so;
-						parametersview.Rows[index].Cells["Value"].Value = defaultvaluestr;
+						parametersview.Rows[index].Cells["Value"].Value = so.value;
 						parametersview.Rows[index].Cells["Description"].Value = description;
 					}
 				}
@@ -173,11 +181,18 @@ namespace CodeImp.DoomBuilder.UDBScript
 			so.value = newvalue;
 			parametersview.Rows[e.RowIndex].Tag = so;
 
-			// Make the text lighter if it's the default value
+			// Make the text lighter if it's the default value, and store the setting in the config file if it's not the default
 			if (so.value.ToString() == so.defaultvalue.ToString())
+			{
 				parametersview.Rows[e.RowIndex].Cells["Value"].Style.ForeColor = SystemColors.GrayText;
+				General.Settings.DeletePluginSetting(BuilderPlug.Me.GetScriptPathHash() + "." + so.name);
+			}
 			else
+			{
 				parametersview.Rows[e.RowIndex].Cells["Value"].Style.ForeColor = SystemColors.WindowText;
+				General.Settings.WritePluginSetting(BuilderPlug.Me.GetScriptPathHash() + "." + so.name, so.value);
+
+			}
 
 		}
 
