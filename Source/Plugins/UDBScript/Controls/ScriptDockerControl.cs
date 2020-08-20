@@ -103,10 +103,9 @@ namespace CodeImp.DoomBuilder.UDBScript
 			{
 				BuilderPlug.Me.CurrentScriptFile = (string)e.Node.Tag;
 
-				// Load script settings
 				string configfile = Path.Combine(Path.GetDirectoryName(BuilderPlug.Me.CurrentScriptFile), Path.GetFileNameWithoutExtension(BuilderPlug.Me.CurrentScriptFile)) + ".cfg";
 
-				if(File.Exists(configfile))
+				if (File.Exists(configfile))
 				{
 					Configuration cfg = new Configuration(configfile, true);
 
@@ -123,9 +122,9 @@ namespace CodeImp.DoomBuilder.UDBScript
 						ScriptOption so = new ScriptOption((string)de.Key, description, type, defaultvaluestr);
 
 						int index = parametersview.Rows.Add();
-						parametersview.Rows[index].Cells["Description"].Value = description;
-						parametersview.Rows[index].Cells["Value"].Value = defaultvaluestr;
 						parametersview.Rows[index].Tag = so;
+						parametersview.Rows[index].Cells["Value"].Value = defaultvaluestr;
+						parametersview.Rows[index].Cells["Description"].Value = description;
 					}
 				}
 				else
@@ -146,7 +145,6 @@ namespace CodeImp.DoomBuilder.UDBScript
 				if(row.Tag is ScriptOption)
 				{
 					ScriptOption so = (ScriptOption)row.Tag;
-					// options.Add(so.name, so.value);
 					options[so.name] = so.value;
 				}
 			}
@@ -156,12 +154,49 @@ namespace CodeImp.DoomBuilder.UDBScript
 
 		private void parametersview_CellValueChanged(object sender, DataGridViewCellEventArgs e)
 		{
-			if (e.RowIndex < 0 || parametersview.Rows[e.RowIndex].Tag == null)
+			if (e.RowIndex < 0 || e.ColumnIndex == 0 || parametersview.Rows[e.RowIndex].Tag == null)
 				return;
 
+			object newvalue = parametersview.Rows[e.RowIndex].Cells["Value"].Value;
+
 			ScriptOption so = (ScriptOption)parametersview.Rows[e.RowIndex].Tag;
-			so.value = parametersview.Rows[e.RowIndex].Cells["Value"].Value;
+
+			// If the new value is empty reset it to the default value. Don't fire this event again, though
+			if (newvalue == null || string.IsNullOrWhiteSpace(newvalue.ToString()))
+			{
+				newvalue = so.defaultvalue;
+				parametersview.CellValueChanged -= parametersview_CellValueChanged;
+				parametersview.Rows[e.RowIndex].Cells["Value"].Value = newvalue.ToString();
+				parametersview.CellValueChanged += parametersview_CellValueChanged;
+			}
+
+			so.value = newvalue;
 			parametersview.Rows[e.RowIndex].Tag = so;
+
+			// Make the text lighter if it's the default value
+			if (so.value.ToString() == so.defaultvalue.ToString())
+				parametersview.Rows[e.RowIndex].Cells["Value"].Style.ForeColor = SystemColors.GrayText;
+			else
+				parametersview.Rows[e.RowIndex].Cells["Value"].Style.ForeColor = SystemColors.WindowText;
+
+		}
+
+		private void btnRunScript_Click(object sender, EventArgs e)
+		{
+			BuilderPlug.Me.ScriptExecute();
+		}
+
+		private void btnResetToDefaults_Click(object sender, EventArgs e)
+		{
+			foreach (DataGridViewRow row in parametersview.Rows)
+			{
+				if (row.Tag is ScriptOption)
+				{
+					ScriptOption so = (ScriptOption)row.Tag;
+
+					row.Cells["Value"].Value = so.defaultvalue.ToString();
+				}
+			}
 		}
 	}
 }

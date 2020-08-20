@@ -28,17 +28,59 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
+			this.btnResetToDefaults = new System.Windows.Forms.Button();
+			this.btnRunScript = new System.Windows.Forms.Button();
+			this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
 			this.filetree = new CodeImp.DoomBuilder.Controls.MultiSelectTreeview();
 			this.parametersview = new System.Windows.Forms.DataGridView();
 			this.Description = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.Value = new System.Windows.Forms.DataGridViewTextBoxColumn();
+			this.tableLayoutPanel1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
 			this.splitContainer1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.parametersview)).BeginInit();
 			this.SuspendLayout();
+			// 
+			// btnResetToDefaults
+			// 
+			this.btnResetToDefaults.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.btnResetToDefaults.Location = new System.Drawing.Point(3, 3);
+			this.btnResetToDefaults.Name = "btnResetToDefaults";
+			this.btnResetToDefaults.Size = new System.Drawing.Size(153, 27);
+			this.btnResetToDefaults.TabIndex = 26;
+			this.btnResetToDefaults.Text = "Reset";
+			this.btnResetToDefaults.UseVisualStyleBackColor = true;
+			this.btnResetToDefaults.Click += new System.EventHandler(this.btnResetToDefaults_Click);
+			// 
+			// btnRunScript
+			// 
+			this.btnRunScript.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.btnRunScript.Location = new System.Drawing.Point(162, 3);
+			this.btnRunScript.Name = "btnRunScript";
+			this.btnRunScript.Size = new System.Drawing.Size(153, 27);
+			this.btnRunScript.TabIndex = 27;
+			this.btnRunScript.Text = "Run";
+			this.btnRunScript.UseVisualStyleBackColor = true;
+			this.btnRunScript.Click += new System.EventHandler(this.btnRunScript_Click);
+			// 
+			// tableLayoutPanel1
+			// 
+			this.tableLayoutPanel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.tableLayoutPanel1.ColumnCount = 2;
+			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+			this.tableLayoutPanel1.Controls.Add(this.btnResetToDefaults, 0, 0);
+			this.tableLayoutPanel1.Controls.Add(this.btnRunScript, 1, 0);
+			this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 465);
+			this.tableLayoutPanel1.Name = "tableLayoutPanel1";
+			this.tableLayoutPanel1.RowCount = 1;
+			this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+			this.tableLayoutPanel1.Size = new System.Drawing.Size(318, 33);
+			this.tableLayoutPanel1.TabIndex = 28;
 			// 
 			// splitContainer1
 			// 
@@ -58,8 +100,8 @@
 			// 
 			this.splitContainer1.Panel2.Controls.Add(this.parametersview);
 			this.splitContainer1.Panel2.RightToLeft = System.Windows.Forms.RightToLeft.No;
-			this.splitContainer1.Size = new System.Drawing.Size(540, 663);
-			this.splitContainer1.SplitterDistance = 508;
+			this.splitContainer1.Size = new System.Drawing.Size(312, 456);
+			this.splitContainer1.SplitterDistance = 348;
 			this.splitContainer1.TabIndex = 25;
 			// 
 			// filetree
@@ -72,7 +114,7 @@
 			this.filetree.SelectionBackColor = System.Drawing.SystemColors.Highlight;
 			this.filetree.SelectionMode = CodeImp.DoomBuilder.Controls.TreeViewSelectionMode.SingleSelect;
 			this.filetree.ShowNodeToolTips = true;
-			this.filetree.Size = new System.Drawing.Size(540, 508);
+			this.filetree.Size = new System.Drawing.Size(312, 348);
 			this.filetree.TabIndex = 24;
 			this.filetree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.filetree_AfterSelect);
 			// 
@@ -91,7 +133,7 @@
 			this.parametersview.MultiSelect = false;
 			this.parametersview.Name = "parametersview";
 			this.parametersview.RowHeadersVisible = false;
-			this.parametersview.Size = new System.Drawing.Size(540, 151);
+			this.parametersview.Size = new System.Drawing.Size(312, 104);
 			this.parametersview.TabIndex = 25;
 			this.parametersview.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.parametersview_CellValueChanged);
 			// 
@@ -114,9 +156,11 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.Controls.Add(this.tableLayoutPanel1);
 			this.Controls.Add(this.splitContainer1);
 			this.Name = "ScriptDockerControl";
-			this.Size = new System.Drawing.Size(546, 669);
+			this.Size = new System.Drawing.Size(318, 501);
+			this.tableLayoutPanel1.ResumeLayout(false);
 			this.splitContainer1.Panel1.ResumeLayout(false);
 			this.splitContainer1.Panel2.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
@@ -133,5 +177,8 @@
 		private System.Windows.Forms.DataGridView parametersview;
 		private System.Windows.Forms.DataGridViewTextBoxColumn Description;
 		private System.Windows.Forms.DataGridViewTextBoxColumn Value;
+		private System.Windows.Forms.Button btnResetToDefaults;
+		private System.Windows.Forms.Button btnRunScript;
+		private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
 	}
 }
