@@ -112,6 +112,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 					IDictionary options = cfg.ReadSetting("options", new Hashtable());
 
 					parametersview.Rows.Clear();
+					scriptOptionsControl1.ParametersView.Rows.Clear();
 
 					foreach (DictionaryEntry de in options)
 					{
@@ -133,12 +134,20 @@ namespace CodeImp.DoomBuilder.UDBScript
 						parametersview.Rows[index].Tag = so;
 						parametersview.Rows[index].Cells["Value"].Value = so.value;
 						parametersview.Rows[index].Cells["Description"].Value = description;
+
+						index = scriptOptionsControl1.ParametersView.Rows.Add(); 
+						scriptOptionsControl1.ParametersView.Rows[index].Tag = so;
+						scriptOptionsControl1.ParametersView.Rows[index].Cells["Value"].Value = so.value;
+						scriptOptionsControl1.ParametersView.Rows[index].Cells["Description"].Value = description;
 					}
 				}
 				else
 				{
 					parametersview.Rows.Clear();
 					parametersview.Refresh();
+
+					scriptOptionsControl1.ParametersView.Rows.Clear();
+					scriptOptionsControl1.ParametersView.Refresh();
 				}
 			}
 		}
@@ -153,7 +162,8 @@ namespace CodeImp.DoomBuilder.UDBScript
 				if(row.Tag is ScriptOption)
 				{
 					ScriptOption so = (ScriptOption)row.Tag;
-					options[so.name] = so.value;
+					//options[so.name] = so.value;
+					options[so.name] = so.typehandler.GetValue();
 				}
 			}
 
@@ -177,6 +187,8 @@ namespace CodeImp.DoomBuilder.UDBScript
 				parametersview.Rows[e.RowIndex].Cells["Value"].Value = newvalue.ToString();
 				parametersview.CellValueChanged += parametersview_CellValueChanged;
 			}
+
+			so.typehandler.SetValue(newvalue);
 
 			so.value = newvalue;
 			parametersview.Rows[e.RowIndex].Tag = so;

@@ -81,6 +81,12 @@
     <Compile Include="Controls\ScriptDockerControl.Designer.cs">
       <DependentUpon>ScriptDockerControl.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controls\ScriptOptionsControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\ScriptOptionsControl.Designer.cs">
+      <DependentUpon>ScriptOptionsControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -101,6 +107,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Controls\ScriptDockerControl.resx">
       <DependentUpon>ScriptDockerControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\ScriptOptionsControl.resx">
+      <DependentUpon>ScriptOptionsControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

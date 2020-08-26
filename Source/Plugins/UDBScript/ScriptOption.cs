@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CodeImp.DoomBuilder.Types;
 
 namespace CodeImp.DoomBuilder.UDBScript
 {
@@ -36,6 +37,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 		public int type;
 		public object defaultvalue;
 		public object value;
+		public TypeHandler typehandler;
 
 		public ScriptOption(string name, string description, int type, object defaultvalue)
 		{
@@ -43,6 +45,8 @@ namespace CodeImp.DoomBuilder.UDBScript
 			this.description = description;
 			this.type = type;
 			this.defaultvalue = this.value = defaultvalue;
+
+			typehandler = General.Types.GetFieldHandler(type, defaultvalue);
 		}
 	}
 }

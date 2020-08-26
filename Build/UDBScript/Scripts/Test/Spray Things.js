@@ -5,9 +5,12 @@ var Map = UDB.General.Map.Map;
 var minradius = parseFloat(ScriptOptions.minradius);
 var maxradius = parseFloat(ScriptOptions.maxradius);
 var amount = parseInt(ScriptOptions.amount);
-var thingtype = parseInt(ScriptOptions.type);
+//var thingtype = parseInt(ScriptOptions.type);
+var thingtype = ScriptOptions.type;
 var square = (ScriptOptions.square == 1)
 var basepos = General.Editing.Mode.MouseMapPos;
+
+log(typeof thingtype);
 
 function Random(min, max)
 {

@@ -57,7 +57,7 @@ namespace CodeImp.DoomBuilder.Config
         ZSCRIPT,
 	}
 	
-	internal class ScriptConfiguration : IComparable<ScriptConfiguration>
+	public class ScriptConfiguration : IComparable<ScriptConfiguration>
 	{
 		#region ================== Constants
 

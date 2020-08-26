@@ -36,6 +36,7 @@
 			this.parametersview = new System.Windows.Forms.DataGridView();
 			this.Description = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.Value = new System.Windows.Forms.DataGridViewTextBoxColumn();
+			this.scriptOptionsControl1 = new CodeImp.DoomBuilder.UDBScript.ScriptOptionsControl();
 			this.tableLayoutPanel1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
@@ -98,10 +99,11 @@
 			// 
 			// splitContainer1.Panel2
 			// 
+			this.splitContainer1.Panel2.Controls.Add(this.scriptOptionsControl1);
 			this.splitContainer1.Panel2.Controls.Add(this.parametersview);
 			this.splitContainer1.Panel2.RightToLeft = System.Windows.Forms.RightToLeft.No;
 			this.splitContainer1.Size = new System.Drawing.Size(312, 456);
-			this.splitContainer1.SplitterDistance = 348;
+			this.splitContainer1.SplitterDistance = 168;
 			this.splitContainer1.TabIndex = 25;
 			// 
 			// filetree
@@ -114,7 +116,7 @@
 			this.filetree.SelectionBackColor = System.Drawing.SystemColors.Highlight;
 			this.filetree.SelectionMode = CodeImp.DoomBuilder.Controls.TreeViewSelectionMode.SingleSelect;
 			this.filetree.ShowNodeToolTips = true;
-			this.filetree.Size = new System.Drawing.Size(312, 348);
+			this.filetree.Size = new System.Drawing.Size(312, 168);
 			this.filetree.TabIndex = 24;
 			this.filetree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.filetree_AfterSelect);
 			// 
@@ -127,7 +129,6 @@
 			this.parametersview.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Description,
             this.Value});
-			this.parametersview.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.parametersview.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
 			this.parametersview.Location = new System.Drawing.Point(0, 0);
 			this.parametersview.MultiSelect = false;
@@ -151,6 +152,13 @@
 			this.Value.FillWeight = 50F;
 			this.Value.HeaderText = "Value";
 			this.Value.Name = "Value";
+			// 
+			// scriptOptionsControl1
+			// 
+			this.scriptOptionsControl1.Location = new System.Drawing.Point(3, 110);
+			this.scriptOptionsControl1.Name = "scriptOptionsControl1";
+			this.scriptOptionsControl1.Size = new System.Drawing.Size(306, 171);
+			this.scriptOptionsControl1.TabIndex = 26;
 			// 
 			// ScriptDockerControl
 			// 
@@ -180,5 +188,6 @@
 		private System.Windows.Forms.Button btnResetToDefaults;
 		private System.Windows.Forms.Button btnRunScript;
 		private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
+		private ScriptOptionsControl scriptOptionsControl1;
 	}
 }

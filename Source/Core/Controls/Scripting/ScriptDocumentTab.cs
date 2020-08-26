@@ -111,7 +111,7 @@ using ScintillaNET;
 
 namespace CodeImp.DoomBuilder.Controls
 {
-	internal abstract class ScriptDocumentTab : TabPage
+	public abstract class ScriptDocumentTab : TabPage
 	{
 		#region ================== Constants
 

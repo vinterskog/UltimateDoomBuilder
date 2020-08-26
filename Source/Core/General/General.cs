@@ -234,7 +234,7 @@ namespace CodeImp.DoomBuilder
 		public static HintsManager Hints { get { return hints; } } //mxd
 		internal static PluginManager Plugins { get { return plugins; } }
 		public static bool DebugBuild { get { return debugbuild; } }
-		internal static TypesManager Types { get { return types; } }
+		public static TypesManager Types { get { return types; } }
 		public static string AutoLoadFile { get { return autoloadfile; } }
 		public static string AutoLoadMap { get { return autoloadmap; } }
 		public static string AutoLoadConfig { get { return autoloadconfig; } }
