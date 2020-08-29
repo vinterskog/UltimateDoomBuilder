@@ -94,6 +94,11 @@ namespace CodeImp.DoomBuilder.UDBScript
 			return newnodes.ToArray();
 		}
 
+		public void EndEdit()
+		{
+			scriptOptionsControl1.EndEdit();
+		}
+
 		private void filetree_AfterSelect(object sender, TreeViewEventArgs e)
 		{
 			if (e.Node.Tag == null)
@@ -111,7 +116,6 @@ namespace CodeImp.DoomBuilder.UDBScript
 
 					IDictionary options = cfg.ReadSetting("options", new Hashtable());
 
-					parametersview.Rows.Clear();
 					scriptOptionsControl1.ParametersView.Rows.Clear();
 
 					foreach (DictionaryEntry de in options)
@@ -130,12 +134,9 @@ namespace CodeImp.DoomBuilder.UDBScript
 						else
 							so.value = savedvalue;
 
-						int index = parametersview.Rows.Add();
-						parametersview.Rows[index].Tag = so;
-						parametersview.Rows[index].Cells["Value"].Value = so.value;
-						parametersview.Rows[index].Cells["Description"].Value = description;
+						so.typehandler.SetValue(so.value);
 
-						index = scriptOptionsControl1.ParametersView.Rows.Add(); 
+						int index = scriptOptionsControl1.ParametersView.Rows.Add(); 
 						scriptOptionsControl1.ParametersView.Rows[index].Tag = so;
 						scriptOptionsControl1.ParametersView.Rows[index].Cells["Value"].Value = so.value;
 						scriptOptionsControl1.ParametersView.Rows[index].Cells["Description"].Value = description;
@@ -143,9 +144,6 @@ namespace CodeImp.DoomBuilder.UDBScript
 				}
 				else
 				{
-					parametersview.Rows.Clear();
-					parametersview.Refresh();
-
 					scriptOptionsControl1.ParametersView.Rows.Clear();
 					scriptOptionsControl1.ParametersView.Refresh();
 				}
@@ -157,7 +155,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 			ExpandoObject eo = new ExpandoObject();
 			var options = eo as IDictionary<string, object>;
 
-			foreach (DataGridViewRow row in parametersview.Rows)
+			foreach (DataGridViewRow row in scriptOptionsControl1.ParametersView.Rows)
 			{
 				if(row.Tag is ScriptOption)
 				{
@@ -172,36 +170,36 @@ namespace CodeImp.DoomBuilder.UDBScript
 
 		private void parametersview_CellValueChanged(object sender, DataGridViewCellEventArgs e)
 		{
-			if (e.RowIndex < 0 || e.ColumnIndex == 0 || parametersview.Rows[e.RowIndex].Tag == null)
+			if (e.RowIndex < 0 || e.ColumnIndex == 0 || scriptOptionsControl1.ParametersView.Rows[e.RowIndex].Tag == null)
 				return;
 
-			object newvalue = parametersview.Rows[e.RowIndex].Cells["Value"].Value;
+			object newvalue = scriptOptionsControl1.ParametersView.Rows[e.RowIndex].Cells["Value"].Value;
 
-			ScriptOption so = (ScriptOption)parametersview.Rows[e.RowIndex].Tag;
+			ScriptOption so = (ScriptOption)scriptOptionsControl1.ParametersView.Rows[e.RowIndex].Tag;
 
 			// If the new value is empty reset it to the default value. Don't fire this event again, though
 			if (newvalue == null || string.IsNullOrWhiteSpace(newvalue.ToString()))
 			{
 				newvalue = so.defaultvalue;
-				parametersview.CellValueChanged -= parametersview_CellValueChanged;
-				parametersview.Rows[e.RowIndex].Cells["Value"].Value = newvalue.ToString();
-				parametersview.CellValueChanged += parametersview_CellValueChanged;
+				scriptOptionsControl1.ParametersView.CellValueChanged -= parametersview_CellValueChanged;
+				scriptOptionsControl1.ParametersView.Rows[e.RowIndex].Cells["Value"].Value = newvalue.ToString();
+				scriptOptionsControl1.ParametersView.CellValueChanged += parametersview_CellValueChanged;
 			}
 
 			so.typehandler.SetValue(newvalue);
 
 			so.value = newvalue;
-			parametersview.Rows[e.RowIndex].Tag = so;
+			scriptOptionsControl1.ParametersView.Rows[e.RowIndex].Tag = so;
 
 			// Make the text lighter if it's the default value, and store the setting in the config file if it's not the default
 			if (so.value.ToString() == so.defaultvalue.ToString())
 			{
-				parametersview.Rows[e.RowIndex].Cells["Value"].Style.ForeColor = SystemColors.GrayText;
+				scriptOptionsControl1.ParametersView.Rows[e.RowIndex].Cells["Value"].Style.ForeColor = SystemColors.GrayText;
 				General.Settings.DeletePluginSetting(BuilderPlug.Me.GetScriptPathHash() + "." + so.name);
 			}
 			else
 			{
-				parametersview.Rows[e.RowIndex].Cells["Value"].Style.ForeColor = SystemColors.WindowText;
+				scriptOptionsControl1.ParametersView.Rows[e.RowIndex].Cells["Value"].Style.ForeColor = SystemColors.WindowText;
 				General.Settings.WritePluginSetting(BuilderPlug.Me.GetScriptPathHash() + "." + so.name, so.value);
 
 			}
@@ -215,7 +213,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 
 		private void btnResetToDefaults_Click(object sender, EventArgs e)
 		{
-			foreach (DataGridViewRow row in parametersview.Rows)
+			foreach (DataGridViewRow row in scriptOptionsControl1.ParametersView.Rows)
 			{
 				if (row.Tag is ScriptOption)
 				{

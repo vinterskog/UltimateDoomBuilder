@@ -105,6 +105,11 @@ namespace CodeImp.DoomBuilder.UDBScript
 			return panel.GetScriptOptions();
 		}
 
+		public void EndOptionEdit()
+		{
+			panel.EndEdit();
+		}
+
 		#region ================== Actions
 
 		[BeginAction("udbscriptexecute")]

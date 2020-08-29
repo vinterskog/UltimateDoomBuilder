@@ -87,6 +87,10 @@ namespace CodeImp.DoomBuilder.UDBScript
 			// Read the current script file
 			string script = File.ReadAllText(scriptfile);
 
+			// Make sure the option value gets saved if an option is currently being edited
+			BuilderPlug.Me.EndOptionEdit();
+			General.Interface.Focus();
+
 			// Get the script assemblies (and the one from Builder) to make them available to the script
 			List<Assembly> assemblies = General.GetPluginAssemblies();
 			assemblies.Add(General.ThisAssembly);
@@ -123,7 +127,11 @@ namespace CodeImp.DoomBuilder.UDBScript
 			}
 			catch (Jint.Runtime.JavaScriptException e)
 			{
-				MessageBox.Show("There is an error in the script in line " + e.LineNumber + ":\n\n" + e.Message, "Script error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				if (e.Error.Type != Jint.Runtime.Types.String)
+					MessageBox.Show("There is an error in the script in line " + e.LineNumber + ":\n\n" + e.Message, "Script error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				else
+					General.Interface.DisplayStatus(Windows.StatusType.Warning, e.Message);
+
 				abort = true;
 			}
 

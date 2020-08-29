@@ -18,6 +18,9 @@ namespace CodeImp.DoomBuilder.UDBScript
 		public ScriptOptionsControl()
 		{
 			InitializeComponent();
+
+			enumscombo.Visible = false;
+			browsebutton.Visible = false;
 		}
 
 		private void parametersview_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
@@ -32,7 +35,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 				enumscombo.Text = "";
 				enumscombo.Items.Clear();
 				enumscombo.Items.AddRange(so.typehandler.GetEnumList().ToArray());
-				//enumscombo.Tag = frow;
+				enumscombo.Tag = parametersview.Rows[e.RowIndex];
 
 				// Lock combo to enums?
 				if (so.typehandler.IsLimitedToEnums)
@@ -55,7 +58,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 					{
 						// Select this item
 						enumscombo.SelectedItem = i;
-						break; //mxd
+						break;
 					}
 				}
 
@@ -65,6 +68,166 @@ namespace CodeImp.DoomBuilder.UDBScript
 				// Show combo
 				enumscombo.Show();
 			}
+		}
+
+		private void parametersview_CellClick(object sender, DataGridViewCellEventArgs e)
+		{
+			ApplyEnums(true);
+
+			if (e.ColumnIndex == 1)
+				parametersview.BeginEdit(true);
+		}
+
+		public void EndEdit()
+		{
+			ApplyEnums(true);
+
+			parametersview.EndEdit();
+
+			parametersview.Focus();
+		}
+
+		// This hides the browse button
+		private void HideBrowseButton()
+		{
+			browsebutton.Visible = false;
+		}
+
+		// This updates the button
+		private void UpdateBrowseButton()
+		{
+			DataGridViewRow frow = null;
+
+			// Any row selected?
+			if (parametersview.SelectedRows.Count > 0)
+			{
+				// Get selected row
+				DataGridViewRow row = parametersview.SelectedRows[0];
+				if (row is DataGridViewRow) frow = row as DataGridViewRow;
+
+				// Not the new row and FieldsEditorRow available?
+				if (frow != null && frow.Tag != null)
+				{
+					ScriptOption so = (ScriptOption)frow.Tag;
+
+					// Browse button available for this type?
+					if (so.typehandler.IsBrowseable && !so.typehandler.IsEnumerable)
+					{
+						Rectangle cellrect = parametersview.GetCellDisplayRectangle(1, row.Index, false);
+
+						// Show button
+						enumscombo.Visible = false;
+						browsebutton.Image = so.typehandler.BrowseImage;
+						browsebutton.Location = new Point(cellrect.Right - browsebutton.Width, cellrect.Top);
+						browsebutton.Height = cellrect.Height;
+						browsebutton.Visible = true;
+					}
+					else
+					{
+						HideBrowseButton();
+					}
+				}
+				else
+				{
+					HideBrowseButton();
+				}
+			}
+			else
+			{
+				HideBrowseButton();
+			}
+		}
+
+		// This applies the contents of the enums combobox and hides (if opened)
+		private void ApplyEnums(bool hide)
+		{
+			// Enums combobox shown?
+			if (enumscombo.Visible && enumscombo.Tag is DataGridViewRow)
+			{
+				// Get the row
+				DataGridViewRow frow = (DataGridViewRow)enumscombo.Tag;
+
+				frow.Cells["Value"].Value = enumscombo.Text;
+
+				ScriptOption so = (ScriptOption)frow.Tag;
+
+				so.typehandler.SetValue(enumscombo.Text);
+
+				frow.Tag = so;
+
+				// Take the selected value and apply it
+				//ApplyValue(frow, enumscombo.Text);
+
+
+
+				// Updated
+				//frow.CellChanged();
+			}
+
+			if (hide)
+			{
+				// Hide combobox
+				enumscombo.Tag = null;
+				enumscombo.Visible = false;
+				enumscombo.Items.Clear();
+			}
+		}
+
+		private void enumscombo_Validating(object sender, CancelEventArgs e)
+		{
+			ApplyEnums(false);
+		}
+
+		// Mouse up event
+		private void parametersview_MouseUp(object sender, MouseEventArgs e)
+		{
+			// Focus to enums combobox when visible
+			if (enumscombo.Visible)
+			{
+				enumscombo.Focus();
+				enumscombo.SelectAll();
+			}
+		}
+
+		private void parametersview_SelectionChanged(object sender, EventArgs e)
+		{
+			browsebutton.Visible = false;
+			ApplyEnums(true);
+
+			// Update button
+			UpdateBrowseButton();
+		}
+
+		private void browsebutton_Click(object sender, EventArgs e)
+		{
+			// Any row selected?
+			if (parametersview.SelectedRows.Count > 0)
+			{
+				// Get selected row
+				DataGridViewRow row = parametersview.SelectedRows[0];
+				if (row is DataGridViewRow)
+				{
+					// Browse
+					DataGridViewRow frow = (DataGridViewRow)row;
+
+					ScriptOption so = (ScriptOption)frow.Tag;
+
+					so.typehandler.Browse(this.ParentForm);
+					row.Cells["Value"].Value = so.typehandler.GetValue();
+
+					if (so.typehandler.DynamicImage) browsebutton.Image = so.typehandler.BrowseImage;
+					parametersview.Focus();
+				}
+			}
+		}
+
+		private void parametersview_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+		{
+			ScriptOption so = (ScriptOption)parametersview.Rows[e.RowIndex].Tag;
+
+			so.typehandler.SetValue(parametersview.Rows[e.RowIndex].Cells["Value"].Value);
+
+			parametersview.Rows[e.RowIndex].Tag = so;
 		}
 	}
 }

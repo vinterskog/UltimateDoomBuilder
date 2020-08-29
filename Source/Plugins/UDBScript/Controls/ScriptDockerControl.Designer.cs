@@ -33,16 +33,12 @@
 			this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
 			this.filetree = new CodeImp.DoomBuilder.Controls.MultiSelectTreeview();
-			this.parametersview = new System.Windows.Forms.DataGridView();
-			this.Description = new System.Windows.Forms.DataGridViewTextBoxColumn();
-			this.Value = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.scriptOptionsControl1 = new CodeImp.DoomBuilder.UDBScript.ScriptOptionsControl();
 			this.tableLayoutPanel1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
 			this.splitContainer1.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.parametersview)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// btnResetToDefaults
@@ -100,10 +96,9 @@
 			// splitContainer1.Panel2
 			// 
 			this.splitContainer1.Panel2.Controls.Add(this.scriptOptionsControl1);
-			this.splitContainer1.Panel2.Controls.Add(this.parametersview);
 			this.splitContainer1.Panel2.RightToLeft = System.Windows.Forms.RightToLeft.No;
 			this.splitContainer1.Size = new System.Drawing.Size(312, 456);
-			this.splitContainer1.SplitterDistance = 168;
+			this.splitContainer1.SplitterDistance = 274;
 			this.splitContainer1.TabIndex = 25;
 			// 
 			// filetree
@@ -116,48 +111,16 @@
 			this.filetree.SelectionBackColor = System.Drawing.SystemColors.Highlight;
 			this.filetree.SelectionMode = CodeImp.DoomBuilder.Controls.TreeViewSelectionMode.SingleSelect;
 			this.filetree.ShowNodeToolTips = true;
-			this.filetree.Size = new System.Drawing.Size(312, 168);
+			this.filetree.Size = new System.Drawing.Size(312, 274);
 			this.filetree.TabIndex = 24;
 			this.filetree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.filetree_AfterSelect);
 			// 
-			// parametersview
-			// 
-			this.parametersview.AllowUserToAddRows = false;
-			this.parametersview.AllowUserToDeleteRows = false;
-			this.parametersview.AllowUserToResizeRows = false;
-			this.parametersview.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-			this.parametersview.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.Description,
-            this.Value});
-			this.parametersview.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
-			this.parametersview.Location = new System.Drawing.Point(0, 0);
-			this.parametersview.MultiSelect = false;
-			this.parametersview.Name = "parametersview";
-			this.parametersview.RowHeadersVisible = false;
-			this.parametersview.Size = new System.Drawing.Size(312, 104);
-			this.parametersview.TabIndex = 25;
-			this.parametersview.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.parametersview_CellValueChanged);
-			// 
-			// Description
-			// 
-			this.Description.FillWeight = 50F;
-			this.Description.HeaderText = "Description";
-			this.Description.Name = "Description";
-			this.Description.ReadOnly = true;
-			this.Description.Width = 200;
-			// 
-			// Value
-			// 
-			this.Value.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-			this.Value.FillWeight = 50F;
-			this.Value.HeaderText = "Value";
-			this.Value.Name = "Value";
-			// 
 			// scriptOptionsControl1
 			// 
-			this.scriptOptionsControl1.Location = new System.Drawing.Point(3, 110);
+			this.scriptOptionsControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.scriptOptionsControl1.Location = new System.Drawing.Point(0, 0);
 			this.scriptOptionsControl1.Name = "scriptOptionsControl1";
-			this.scriptOptionsControl1.Size = new System.Drawing.Size(306, 171);
+			this.scriptOptionsControl1.Size = new System.Drawing.Size(312, 178);
 			this.scriptOptionsControl1.TabIndex = 26;
 			// 
 			// ScriptDockerControl
@@ -173,7 +136,6 @@
 			this.splitContainer1.Panel2.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
 			this.splitContainer1.ResumeLayout(false);
-			((System.ComponentModel.ISupportInitialize)(this.parametersview)).EndInit();
 			this.ResumeLayout(false);
 
 		}
@@ -182,9 +144,6 @@
 
 		private System.Windows.Forms.SplitContainer splitContainer1;
 		private Controls.MultiSelectTreeview filetree;
-		private System.Windows.Forms.DataGridView parametersview;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Description;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Value;
 		private System.Windows.Forms.Button btnResetToDefaults;
 		private System.Windows.Forms.Button btnRunScript;
 		private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
