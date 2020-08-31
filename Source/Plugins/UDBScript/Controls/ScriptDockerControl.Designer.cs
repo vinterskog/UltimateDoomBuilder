@@ -33,7 +33,7 @@
 			this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
 			this.filetree = new CodeImp.DoomBuilder.Controls.MultiSelectTreeview();
-			this.scriptOptionsControl1 = new CodeImp.DoomBuilder.UDBScript.ScriptOptionsControl();
+			this.scriptoptions = new CodeImp.DoomBuilder.UDBScript.ScriptOptionsControl();
 			this.tableLayoutPanel1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
@@ -95,7 +95,7 @@
 			// 
 			// splitContainer1.Panel2
 			// 
-			this.splitContainer1.Panel2.Controls.Add(this.scriptOptionsControl1);
+			this.splitContainer1.Panel2.Controls.Add(this.scriptoptions);
 			this.splitContainer1.Panel2.RightToLeft = System.Windows.Forms.RightToLeft.No;
 			this.splitContainer1.Size = new System.Drawing.Size(312, 456);
 			this.splitContainer1.SplitterDistance = 274;
@@ -117,11 +117,11 @@
 			// 
 			// scriptOptionsControl1
 			// 
-			this.scriptOptionsControl1.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.scriptOptionsControl1.Location = new System.Drawing.Point(0, 0);
-			this.scriptOptionsControl1.Name = "scriptOptionsControl1";
-			this.scriptOptionsControl1.Size = new System.Drawing.Size(312, 178);
-			this.scriptOptionsControl1.TabIndex = 26;
+			this.scriptoptions.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.scriptoptions.Location = new System.Drawing.Point(0, 0);
+			this.scriptoptions.Name = "scriptOptionsControl1";
+			this.scriptoptions.Size = new System.Drawing.Size(312, 178);
+			this.scriptoptions.TabIndex = 26;
 			// 
 			// ScriptDockerControl
 			// 
@@ -147,6 +147,6 @@
 		private System.Windows.Forms.Button btnResetToDefaults;
 		private System.Windows.Forms.Button btnRunScript;
 		private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
-		private ScriptOptionsControl scriptOptionsControl1;
+		private ScriptOptionsControl scriptoptions;
 	}
 }

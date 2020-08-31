@@ -87,6 +87,11 @@ namespace CodeImp.DoomBuilder.UDBScript
 			parametersview.Focus();
 		}
 
+		public void EndAddingOptions()
+		{
+			UpdateBrowseButton();
+		}
+
 		// This hides the browse button
 		private void HideBrowseButton()
 		{
@@ -96,19 +101,16 @@ namespace CodeImp.DoomBuilder.UDBScript
 		// This updates the button
 		private void UpdateBrowseButton()
 		{
-			DataGridViewRow frow = null;
-
 			// Any row selected?
 			if (parametersview.SelectedRows.Count > 0)
 			{
 				// Get selected row
 				DataGridViewRow row = parametersview.SelectedRows[0];
-				if (row is DataGridViewRow) frow = row as DataGridViewRow;
 
 				// Not the new row and FieldsEditorRow available?
-				if (frow != null && frow.Tag != null)
+				if (row != null && row.Tag != null)
 				{
-					ScriptOption so = (ScriptOption)frow.Tag;
+					ScriptOption so = (ScriptOption)row.Tag;
 
 					// Browse button available for this type?
 					if (so.typehandler.IsBrowseable && !so.typehandler.IsEnumerable)
@@ -145,20 +147,18 @@ namespace CodeImp.DoomBuilder.UDBScript
 			if (enumscombo.Visible && enumscombo.Tag is DataGridViewRow)
 			{
 				// Get the row
-				DataGridViewRow frow = (DataGridViewRow)enumscombo.Tag;
+				DataGridViewRow row = (DataGridViewRow)enumscombo.Tag;
 
-				frow.Cells["Value"].Value = enumscombo.Text;
+				row.Cells["Value"].Value = enumscombo.Text;
 
-				ScriptOption so = (ScriptOption)frow.Tag;
+				ScriptOption so = (ScriptOption)row.Tag;
 
 				so.typehandler.SetValue(enumscombo.Text);
 
-				frow.Tag = so;
+				row.Tag = so;
 
 				// Take the selected value and apply it
 				//ApplyValue(frow, enumscombo.Text);
-
-
 
 				// Updated
 				//frow.CellChanged();
@@ -205,19 +205,14 @@ namespace CodeImp.DoomBuilder.UDBScript
 			{
 				// Get selected row
 				DataGridViewRow row = parametersview.SelectedRows[0];
-				if (row is DataGridViewRow)
-				{
-					// Browse
-					DataGridViewRow frow = (DataGridViewRow)row;
 
-					ScriptOption so = (ScriptOption)frow.Tag;
+				ScriptOption so = (ScriptOption)row.Tag;
 
-					so.typehandler.Browse(this.ParentForm);
-					row.Cells["Value"].Value = so.typehandler.GetValue();
+				so.typehandler.Browse(this.ParentForm);
+				row.Cells["Value"].Value = so.typehandler.GetValue();
 
-					if (so.typehandler.DynamicImage) browsebutton.Image = so.typehandler.BrowseImage;
-					parametersview.Focus();
-				}
+				if (so.typehandler.DynamicImage) browsebutton.Image = so.typehandler.BrowseImage;
+				parametersview.Focus();
 			}
 		}
 

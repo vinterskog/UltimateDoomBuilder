@@ -36,12 +36,22 @@ namespace CodeImp.DoomBuilder.UDBScript
 {
 	class ScriptRunner
 	{
+		#region ================== Variables
+
 		private string scriptfile;
+
+		#endregion
+
+		#region ================== Constructor
 
 		public ScriptRunner(string scriptfile)
 		{
 			this.scriptfile = scriptfile;
 		}
+
+		#endregion
+
+		#region ================== Methods
 
 		public void ShowMessage(string s)
 		{
@@ -67,6 +77,10 @@ namespace CodeImp.DoomBuilder.UDBScript
 			throw new UserScriptAbortException("Query parameters dialog was canceled");
 		}
 
+		/// <summary>
+		/// Gets the code of all script library files in a single string
+		/// </summary>
+		/// <returns>Code of all script library files</returns>
 		private string GetLibraryCode()
 		{
 			string code = "";
@@ -80,6 +94,9 @@ namespace CodeImp.DoomBuilder.UDBScript
 			return code;
 		}
 
+		/// <summary>
+		/// Runs the script
+		/// </summary>
 		public void Run()
 		{
 			bool abort = false;
@@ -148,5 +165,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 			// Tell the mode that running the script ended
 			General.Editing.Mode.OnScriptRunEnd();
 		}
+
+		#endregion
 	}
 }

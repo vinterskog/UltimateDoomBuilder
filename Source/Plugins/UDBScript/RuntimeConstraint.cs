@@ -34,20 +34,37 @@ namespace CodeImp.DoomBuilder.UDBScript
 {
 	class RuntimeConstraint : IConstraint
 	{
-		private static long CHECK_SECONDS = 5;
+		#region ================== Constants
+
+		private const long CHECK_SECONDS = 5;
+
+		#endregion
+
+		#region ================== Variables
 
 		private long checktime;
 		private long nextchecktime;
+
+		#endregion
+
+		#region ================== Constructor
 
 		public RuntimeConstraint()
 		{
 			checktime = 0;
 		}
 
+		#endregion
+
+		#region ================== Methods
+
 		public void Reset()
 		{
 		}
 
+		/// <summary>
+		/// Checks how long the script has been running and asks the user if it should abort or keep running
+		/// </summary>
 		public void Check()
 		{
 			if (checktime == 0 || Clock.CurrentTime < checktime)
@@ -68,5 +85,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 				}
 			}
 		}
+
+		#endregion
 	}
 }
