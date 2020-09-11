@@ -160,8 +160,7 @@ namespace CodeImp.DoomBuilder.BuilderModes.IO
 								continue;
 							}
 
-							Bitmap bmp = id.ExportBitmap();
-                            lock (bmp)
+							using (Bitmap bmp = id.ExportBitmap().CreateBitmap())
                             {
                                 bmp.Save(Path.Combine(settings.ObjPath, Path.GetFileNameWithoutExtension(s) + ".PNG"), ImageFormat.Png);
                             }
@@ -187,14 +186,12 @@ namespace CodeImp.DoomBuilder.BuilderModes.IO
 								continue;
 							}
 
-							Bitmap bmp = id.ExportBitmap();
-
 							// Handle duplicate names
 							string flatname = s;
 							if(settings.Textures != null && Array.IndexOf(settings.Textures, s) != -1)
 								flatname += "_FLAT";
 
-                            lock (bmp)
+                            using (Bitmap bmp = id.ExportBitmap().CreateBitmap())
                             {
                                 bmp.Save(Path.Combine(settings.ObjPath, Path.GetFileNameWithoutExtension(flatname) + ".PNG"), ImageFormat.Png);
                             }

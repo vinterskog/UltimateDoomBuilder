@@ -27,7 +27,7 @@ namespace CodeImp.DoomBuilder.Data
 	{
 		#region ================== Variables
 
-		private readonly Bitmap loadbitmap;
+		private readonly PixelData loadbitmap;
 		
 		#endregion
 		
@@ -39,7 +39,7 @@ namespace CodeImp.DoomBuilder.Data
 			// Initialize
 			this.width = 0;
 			this.height = 0;
-			this.loadbitmap = new Bitmap(Properties.Resources.UnknownImage);
+			this.loadbitmap = PixelData.FromBitmap(Properties.Resources.UnknownImage);
 			SetName("");
 			
 			LoadImageNow();
@@ -52,14 +52,13 @@ namespace CodeImp.DoomBuilder.Data
 		// This 'loads' the image
 		protected override LocalLoadResult LocalLoadImage()
 		{
-            return new LocalLoadResult(new Bitmap(loadbitmap));
+            return new LocalLoadResult(loadbitmap.Clone());
         }
 
         // This returns a preview image
-        public override Image GetPreview()
+        public override Bitmap GetPreview()
 		{
-			// To do: do we actually need a copy here?
-			return new Bitmap(loadbitmap);
+			return loadbitmap.CreateBitmap();
 		}
 
 		#endregion

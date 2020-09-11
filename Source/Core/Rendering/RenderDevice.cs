@@ -495,7 +495,7 @@ namespace CodeImp.DoomBuilder.Rendering
             }
         }
 
-        public unsafe void SetPixels(Texture texture, uint* pixeldata)
+        public unsafe void SetPixels(Texture texture, void* pixeldata)
         {
             ThrowIfFailed(RenderDevice_SetPixels(Handle, texture.Handle, new IntPtr(pixeldata)));
         }

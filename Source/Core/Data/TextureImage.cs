@@ -75,20 +75,13 @@ namespace CodeImp.DoomBuilder.Data
 			// Checks
 			if(width == 0 || height == 0) return new LocalLoadResult(null);
 
-			BitmapData bitmapdata = null;
-			PixelColor* pixels = (PixelColor*)0;
-
-            Bitmap bitmap = null;
+            PixelData pixels = new PixelData(width, height);
             List<LogMessage> messages = new List<LogMessage>();
 
 			// Create texture bitmap
 			try
 			{
-				if(bitmap != null) bitmap.Dispose();
-				bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-				bitmapdata = bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
-				pixels = (PixelColor*)bitmapdata.Scan0.ToPointer();
-				General.ZeroMemory(new IntPtr(pixels), width * height * sizeof(PixelColor));
+				pixels = new PixelData(width, height);
 			}
 			catch(Exception e)
 			{
@@ -109,7 +102,7 @@ namespace CodeImp.DoomBuilder.Data
 					if(patchdata != null)
 					{
 						// Get a reader for the data
-						Bitmap patchbmp = ImageDataFormat.TryLoadImage(patchdata, ImageDataFormat.DOOMPICTURE, General.Map.Data.Palette);
+						PixelData patchbmp = ImageDataFormat.TryLoadImage(patchdata, ImageDataFormat.DOOMPICTURE, General.Map.Data.Palette);
 						if(patchbmp == null)
 						{
 							//mxd. Probably that's a flat?..
@@ -128,8 +121,7 @@ namespace CodeImp.DoomBuilder.Data
 						if(patchbmp != null)
 						{
                             // Draw the patch
-							DrawToPixelData(patchbmp, pixels, width, height, p.X, p.Y);
-                            patchbmp.Dispose();
+							DrawToPixelData(patchbmp, pixels.Data, width, height, p.X, p.Y);
 						}
 
                         // Done
@@ -142,31 +134,24 @@ namespace CodeImp.DoomBuilder.Data
 						missingpatches++; //mxd
 					}
 				}
-
-				// Done
-				bitmap.UnlockBits(bitmapdata);
 			}
 				
 			// Dispose bitmap if load failed
-			if((bitmap != null) && (messages.Any(x => x.Type == ErrorType.Error) || missingpatches >= patches.Count)) //mxd. We can still display texture if at least one of the patches was loaded
+			if (messages.Any(x => x.Type == ErrorType.Error) || missingpatches >= patches.Count) //mxd. We can still display texture if at least one of the patches was loaded
 			{
-				bitmap.Dispose();
-				bitmap = null;
+				pixels = null;
 			}
 
-            return new LocalLoadResult(bitmap, messages);
+			return new LocalLoadResult(pixels, messages);
 		}
 
         // This draws the picture to the given pixel color data
-        static unsafe void DrawToPixelData(Bitmap bmp, PixelColor* target, int targetwidth, int targetheight, int x, int y)
+        static void DrawToPixelData(PixelData bmp, PixelColor[] target, int targetwidth, int targetheight, int x, int y)
         {
-            // Get bitmap
-            int width = bmp.Size.Width;
-            int height = bmp.Size.Height;
+            int width = bmp.Width;
+            int height = bmp.Height;
 
-            // Lock bitmap pixels
-            BitmapData bmpdata = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-            PixelColor* pixels = (PixelColor*)bmpdata.Scan0.ToPointer();
+            PixelColor[] pixels = bmp.Data;
 
             // Go for all pixels in the original image
             for (int ox = 0; ox < width; ox++)
@@ -184,9 +169,6 @@ namespace CodeImp.DoomBuilder.Data
                     }
                 }
             }
-
-            // Done
-            bmp.UnlockBits(bmpdata);
         }
 
         #endregion

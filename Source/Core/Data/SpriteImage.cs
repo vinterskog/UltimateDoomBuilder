@@ -71,7 +71,7 @@ namespace CodeImp.DoomBuilder.Data
 		protected override LocalLoadResult LocalLoadImage()
 		{
             // Get the lump data stream
-            Bitmap bitmap = null;
+            PixelData bitmap = null;
             string error = null;
 			string spritelocation = string.Empty; //mxd
 			Stream lumpdata = General.Map.Data.GetSpriteData(Name, ref spritelocation);
@@ -94,18 +94,18 @@ namespace CodeImp.DoomBuilder.Data
 				error = "Missing sprite lump \"" + Name + "\". Forgot to include required resources?";
 			}
 
-            return new LocalLoadResult(bitmap, error, () =>
-            {
-                scale.x = 1.0f;
-                scale.y = 1.0f;
+			return new LocalLoadResult(bitmap, error, () =>
+			{
+				scale.x = 1.0f;
+				scale.y = 1.0f;
 
-                // Make offset corrections if the offset was not given
-                if ((offsetx == int.MinValue) || (offsety == int.MinValue))
-                {
-                    offsetx = (int)((width * scale.x) * 0.5f);
-                    offsety = (int)(height * scale.y);
-                }
-            });
+				// Make offset corrections if the offset was not given
+				if ((offsetx == int.MinValue) || (offsety == int.MinValue))
+				{
+					offsetx = (int)((width * scale.x) * 0.5f);
+					offsety = (int)(height * scale.y);
+				}
+			});
         }
 
         #endregion

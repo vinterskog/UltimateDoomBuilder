@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
+using CodeImp.DoomBuilder.Data;
 
 namespace CodeImp.DoomBuilder.Rendering
 {
@@ -80,15 +81,15 @@ namespace CodeImp.DoomBuilder.Rendering
             device.SetPixels(this, bitmap);
         }
 
-        public Texture(RenderDevice device, System.Drawing.Image image)
+        unsafe public Texture(RenderDevice device, PixelData bitmap)
         {
-            using (var bitmap = new System.Drawing.Bitmap(image))
+            Width = bitmap.Width;
+            Height = bitmap.Height;
+            Format = TextureFormat.Bgra8;
+            Texture_Set2DImage(Handle, Width, Height, Format);
+            fixed (PixelColor* data = bitmap.Data)
             {
-                Width = bitmap.Width;
-                Height = bitmap.Height;
-                Format = TextureFormat.Bgra8;
-                Texture_Set2DImage(Handle, Width, Height, Format);
-                device.SetPixels(this, bitmap);
+                device.SetPixels(this, data);
             }
         }
 

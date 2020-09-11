@@ -119,7 +119,7 @@ namespace CodeImp.DoomBuilder.Data
 		protected override LocalLoadResult LocalLoadImage()
 		{
             // Get the patch data stream
-            Bitmap bitmap = null;
+            PixelData bitmap = null;
             string error = null;
 			string sourcelocation = string.Empty;
 			Stream data = General.Map.Data.GetHiResTextureData(shortname, ref sourcelocation);
@@ -153,22 +153,22 @@ namespace CodeImp.DoomBuilder.Data
 				error = "Image lump \"" + shortname + "\" could not be found, while loading HiRes texture \"" + this.Name + "\". Did you forget to include required resources?";
 			}
 
-            return new LocalLoadResult(bitmap, error, () =>
-            {
-                // Apply source overrides?
-                if (!sourcesize.IsEmpty)
-                {
-                    scale = new Vector2D(ScaledWidth / width, ScaledHeight / height);
-                }
-                else
-                {
-                    if (overridesettingsapplied)
-                        General.ErrorLogger.Add(ErrorType.Warning, "Unable to get source texture dimensions while loading HiRes texture \"" + this.Name + "\".");
+			return new LocalLoadResult(bitmap, error, () =>
+			{
+				// Apply source overrides?
+				if (!sourcesize.IsEmpty)
+				{
+					scale = new Vector2D(ScaledWidth / width, ScaledHeight / height);
+				}
+				else
+				{
+					if (overridesettingsapplied)
+						General.ErrorLogger.Add(ErrorType.Warning, "Unable to get source texture dimensions while loading HiRes texture \"" + this.Name + "\".");
 
-                    // Use our own size...
-                    sourcesize = new Size(width, height);
-                }
-            });
+					// Use our own size...
+					sourcesize = new Size(width, height);
+				}
+			});
         }
 
         #endregion

@@ -19,6 +19,7 @@
 using System.IO;
 using System.Drawing;
 using CodeImp.DoomBuilder.Rendering;
+using CodeImp.DoomBuilder.Data;
 
 #endregion
 
@@ -26,6 +27,6 @@ namespace CodeImp.DoomBuilder.IO
 {
 	internal unsafe interface IImageReader
 	{
-		Bitmap ReadAsBitmap(Stream stream, out int offsetx, out int offsety);
+		PixelData ReadAsBitmap(Stream stream, out int offsetx, out int offsety);
 	}
 }

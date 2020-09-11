@@ -1965,7 +1965,7 @@ namespace CodeImp.DoomBuilder
 		}
 
 		// This shows an image in a panel either zoomed or centered depending on size
-		public static void DisplayZoomedImage(Panel panel, Image image)
+		public static void DisplayZoomedImage(Panel panel, Bitmap image)
 		{
 			// Image not null?
 			if(image != null)

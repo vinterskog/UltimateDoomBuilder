@@ -1005,12 +1005,9 @@ namespace CodeImp.DoomBuilder.Data
 				if(!img.LoadFailed)
 				{
 					// HiResImage will not give us it's actual scale
-					Bitmap texture = img.GetSkyboxBitmap();
-                    lock (texture)
-                    {
-                        scale = new Vector2D((float)img.Width / texture.Width, (float)img.Height / texture.Height);
-                    }
-					return texture;
+					PixelData texture = img.GetSkyboxBitmap();
+                    scale = new Vector2D((float)img.Width / texture.Width, (float)img.Height / texture.Height);
+					return texture.CreateBitmap();
 				}
 			}
 			
@@ -1035,8 +1032,8 @@ namespace CodeImp.DoomBuilder.Data
 				if(mem == null) continue;
 
 				// Is it an image?
-				Bitmap bitmap = ImageDataFormat.TryLoadImage(mem, ImageDataFormat.DOOMPICTURE, General.Map.Data.Palette);
-				if(bitmap != null) return bitmap;
+				PixelData bitmap = ImageDataFormat.TryLoadImage(mem, ImageDataFormat.DOOMPICTURE, General.Map.Data.Palette);
+				if(bitmap != null) return bitmap.CreateBitmap();
 			}
 
 			// No such image found
@@ -3121,12 +3118,7 @@ namespace CodeImp.DoomBuilder.Data
 				
 				// Use the built-in texture
 				ImageData tex = LoadInternalTexture("MissingSky3D.png");
-                Bitmap bmp = tex.GetSkyboxBitmap();
-                Bitmap sky;
-                lock (bmp)
-                {
-                    sky = new Bitmap(bmp);
-                }
+                Bitmap sky = tex.GetSkyboxBitmap().CreateBitmap();
 				sky.RotateFlip(RotateFlipType.RotateNoneFlipX); // We don't want our built-in image mirrored...
 				skybox = MakeClassicSkyBox(sky);
 				tex.Dispose();

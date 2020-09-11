@@ -61,7 +61,7 @@ namespace CodeImp.DoomBuilder.Data
 		protected override LocalLoadResult LocalLoadImage()
 		{
 			// Get the patch data stream
-			Bitmap bitmap = null;
+			PixelData bitmap = null;
             string error = null;
 			string patchlocation = string.Empty; //mxd
 			Stream patchdata = General.Map.Data.GetTextureData(lumpname, hasLongName, ref patchlocation);
@@ -94,7 +94,7 @@ namespace CodeImp.DoomBuilder.Data
 			{
 				error = "Image lump \"" + lumpname + "\" could not be found, while loading texture \"" + this.Name + "\". Did you forget to include required resources?";
 			}
-				
+
 			return new LocalLoadResult(bitmap, error);
 		}
 		

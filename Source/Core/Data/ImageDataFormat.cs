@@ -41,13 +41,13 @@ namespace CodeImp.DoomBuilder.Data
 		private static readonly int[] PCX_SIGNATURE = new[] { 10, 5, 1, 8 }; //mxd
 
         // Try load image data with the appropriate image reader. Returns null if the image could not be loaded
-        public static Bitmap TryLoadImage(Stream data, int guessformat = UNKNOWN, Playpal palette = null)
+        public static PixelData TryLoadImage(Stream data, int guessformat = UNKNOWN, Playpal palette = null)
         {
             int offsetx, offsety;
             return TryLoadImage(data, guessformat, palette, out offsetx, out offsety);
         }
 
-        public static Bitmap TryLoadImage(Stream data, int guessformat, Playpal palette, out int offsetx, out int offsety)
+        public static PixelData TryLoadImage(Stream data, int guessformat, Playpal palette, out int offsetx, out int offsety)
         {
             offsetx = int.MinValue;
             offsety = int.MinValue;
@@ -73,7 +73,7 @@ namespace CodeImp.DoomBuilder.Data
                         data.Seek(0, SeekOrigin.Begin);
                         try
                         {
-                            Bitmap image = loader.ReadAsBitmap(data, out offsetx, out offsety);
+                            PixelData image = loader.ReadAsBitmap(data, out offsetx, out offsety);
                             if (image != null) // The older loaders return null when they should throw an exception
                                 return image;
                         }
@@ -113,7 +113,7 @@ namespace CodeImp.DoomBuilder.Data
                 if (doomloader != null)
                 {
                     data.Seek(0, SeekOrigin.Begin);
-                    Bitmap image = doomloader.ReadAsBitmap(data, out offsetx, out offsety);
+                    PixelData image = doomloader.ReadAsBitmap(data, out offsetx, out offsety);
                     if (image != null)
                         return image;
                 }

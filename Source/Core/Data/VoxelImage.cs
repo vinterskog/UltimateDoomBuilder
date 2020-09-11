@@ -292,13 +292,16 @@ namespace CodeImp.DoomBuilder.Data
 				error = "Missing voxel lump \"" + voxelname + "\". Forgot to include required resources?";
 			}
 
-            return new LocalLoadResult(bitmap, error, () =>
-            {
-                scale.x = 1.0f;
-                scale.y = 1.0f;
-                offsetx = imgoffsetx;
-                offsety = pivotz;
-            });
+			using (bitmap)
+			{
+				return new LocalLoadResult(PixelData.FromBitmap(bitmap), error, () =>
+				{
+					scale.x = 1.0f;
+					scale.y = 1.0f;
+					offsetx = imgoffsetx;
+					offsety = pivotz;
+				});
+			}
 		}
 
 		#endregion

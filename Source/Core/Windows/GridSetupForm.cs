@@ -50,7 +50,7 @@ namespace CodeImp.DoomBuilder.Windows
 				showbackground.Checked = true;
 				backgroundname = General.Map.Grid.BackgroundName;
 				backgroundsource = General.Map.Grid.BackgroundSource;
-				General.DisplayZoomedImage(backgroundimage, General.Map.Grid.Background.GetBackgroundBitmap());
+				General.DisplayZoomedImage(backgroundimage, General.Map.Grid.Background.GetBackgroundBitmap().CreateBitmap());
 			}
 			else
 			{
@@ -93,7 +93,7 @@ namespace CodeImp.DoomBuilder.Windows
 				backgroundname = result;
 				backgroundsource = GridSetup.SOURCE_TEXTURES;
 				ImageData img = General.Map.Data.GetTextureImage(result);
-				General.DisplayZoomedImage(backgroundimage, img.GetBackgroundBitmap());
+				General.DisplayZoomedImage(backgroundimage, img.GetBackgroundBitmap().CreateBitmap());
 			}
 		}
 
@@ -108,7 +108,7 @@ namespace CodeImp.DoomBuilder.Windows
 				backgroundname = result;
 				backgroundsource = GridSetup.SOURCE_FLATS;
 				ImageData img = General.Map.Data.GetFlatImage(result);
-				General.DisplayZoomedImage(backgroundimage, img.GetBackgroundBitmap());
+				General.DisplayZoomedImage(backgroundimage, img.GetBackgroundBitmap().CreateBitmap());
 			}
 		}
 
@@ -122,7 +122,7 @@ namespace CodeImp.DoomBuilder.Windows
 				backgroundname = browsefile.FileName;
 				backgroundsource = GridSetup.SOURCE_FILE;
 				ImageData img = new FileImage(Path.GetFileNameWithoutExtension(backgroundname), backgroundname, false, 1.0f, 1.0f);
-				General.DisplayZoomedImage(backgroundimage, new Bitmap(img.GetBackgroundBitmap()));
+				General.DisplayZoomedImage(backgroundimage, img.GetBackgroundBitmap().CreateBitmap());
 				img.Dispose();
 			}
 		}

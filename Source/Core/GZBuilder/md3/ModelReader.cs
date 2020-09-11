@@ -1637,7 +1637,7 @@ namespace CodeImp.DoomBuilder.GZBuilder.MD3
 			Texture texture = null;
 
             //create texture
-            Bitmap bitmap = ImageDataFormat.TryLoadImage(ms);
+            PixelData bitmap = ImageDataFormat.TryLoadImage(ms);
 			if(bitmap != null)
 			{
                 texture = new Texture(General.Map.Graphics, bitmap);

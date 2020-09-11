@@ -38,15 +38,14 @@ namespace CodeImp.DoomBuilder.Data
 		// This loads the image
 		protected override LocalLoadResult LocalLoadImage()
 		{
-			Bitmap bitmap = new Bitmap(width, height);
-
-			int w = Math.Max(2, Math.Min(width, height) / 24); // line width
-			int o = w / 2; // line center offset
-			int l = w * 3; // line length
-			name = name.ToUpperInvariant();
-
-			using(Graphics g = Graphics.FromImage(bitmap))
+			using (Bitmap bitmap = new Bitmap(width, height))
+			using (Graphics g = Graphics.FromImage(bitmap))
 			{
+				int w = Math.Max(2, Math.Min(width, height) / 24); // line width
+				int o = w / 2; // line center offset
+				int l = w * 3; // line length
+				name = name.ToUpperInvariant();
+
 				// Fill bg
 				g.FillRectangle(Brushes.Black, 0, 0, width, height);
 
@@ -90,9 +89,9 @@ namespace CodeImp.DoomBuilder.Data
 						g.DrawString(name, font, brush, new RectangleF(0, 0, width, height), sf);
 					}
 				}
-			}
 
-			return new LocalLoadResult(bitmap);
+				return new LocalLoadResult(PixelData.FromBitmap(bitmap));
+			}
 		}
 
 		//mxd

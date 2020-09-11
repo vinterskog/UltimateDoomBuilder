@@ -28,7 +28,7 @@ namespace CodeImp.DoomBuilder.Data
 		#region ================== Variables
 
 		// Image source
-		private Bitmap img;
+		private PixelData img;
 
 		#endregion
 
@@ -38,13 +38,13 @@ namespace CodeImp.DoomBuilder.Data
 		public BitmapImage(Bitmap img, string name)
 		{
 			// Initialize
-			this.img = new Bitmap(img);
+			this.img = PixelData.FromBitmap(img);
 			this.AllowUnload = false;
 			SetName(name);
 
 			// Get width and height from image
-			width = img.Size.Width;
-			height = img.Size.Height;
+			width = this.img.Width;
+			height = this.img.Height;
 			scale.x = 1.0f;
 			scale.y = 1.0f;
 
@@ -62,7 +62,7 @@ namespace CodeImp.DoomBuilder.Data
 			// No failure checking here. I anything fails here, it is not the user's fault,
 			// because the resources this loads are in the assembly.
 
-			return new LocalLoadResult(new Bitmap(img));
+			return new LocalLoadResult(img.Clone());
 		}
 
 		#endregion

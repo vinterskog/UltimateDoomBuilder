@@ -144,7 +144,7 @@ namespace CodeImp.DoomBuilder.Data
         protected override LocalLoadResult LocalLoadImage()
         {
             // Load file data
-            Bitmap bitmap = null;
+            PixelData bitmap = null;
             string error = null;
 
             MemoryStream filedata = null;

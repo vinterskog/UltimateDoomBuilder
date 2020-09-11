@@ -32,6 +32,7 @@ namespace CodeImp.DoomBuilder.Data
 		// Image source
 		private readonly Assembly assembly;
 		private readonly string resourcename;
+		PixelData pixels;
 
 		#endregion
 
@@ -47,18 +48,17 @@ namespace CodeImp.DoomBuilder.Data
 			SetName(resourcename);
 
 			// Temporarily load resource from memory
-			Stream bitmapdata = assembly.GetManifestResourceStream(resourcename);
-			Bitmap bmp = (Bitmap)Image.FromStream(bitmapdata);
+			using (Stream bitmapdata = assembly.GetManifestResourceStream(resourcename))
+			using (Bitmap bmp = (Bitmap)Image.FromStream(bitmapdata))
+			{
+				pixels = PixelData.FromBitmap(bmp);
+			}
 
 			// Get width and height from image
-			width = bmp.Size.Width;
-			height = bmp.Size.Height;
+			width = pixels.Width;
+			height = pixels.Height;
 			scale.x = 1.0f;
 			scale.y = 1.0f;
-			
-			// Done
-			bmp.Dispose();
-			bitmapdata.Dispose();
 
             LoadImageNow();
         }
@@ -72,20 +72,13 @@ namespace CodeImp.DoomBuilder.Data
 		{
 			// No failure checking here. If anything fails here, it is not the user's fault,
 			// because the resources this loads are in the assembly.
-				
-			// Get resource from memory
-			Stream bitmapdata = assembly.GetManifestResourceStream(resourcename);
-			var bitmap = (Bitmap)Image.FromStream(bitmapdata);
-			bitmapdata.Dispose();
-
-            return new LocalLoadResult(bitmap);
+            return new LocalLoadResult(pixels.Clone());
         }
 
         //mxd
-        public override Image GetPreview() 
+        public override Bitmap GetPreview() 
 		{
-            Stream bitmapdata = assembly.GetManifestResourceStream(resourcename);
-            return Image.FromStream(bitmapdata);
+            return pixels.CreateBitmap();
 		}
 		
 		#endregion

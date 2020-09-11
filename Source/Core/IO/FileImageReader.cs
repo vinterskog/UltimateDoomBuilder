@@ -30,7 +30,7 @@ namespace CodeImp.DoomBuilder.IO
 {
     class PcxImageReader : IImageReader
     {
-        public Bitmap ReadAsBitmap(Stream stream, out int offsetx, out int offsety)
+        public PixelData ReadAsBitmap(Stream stream, out int offsetx, out int offsety)
         {
             offsetx = int.MinValue;
             offsety = int.MinValue;
@@ -93,8 +93,7 @@ namespace CodeImp.DoomBuilder.IO
                     }
                 }
 
-                byte[] imageData = new byte[width * height * 4];
-                int destpitch = width * 4;
+                PixelColor[] imageData = new PixelColor[width * height];
 
                 if (bitsPerComponent == 4 && numColorPlanes == 1 && paletteInfo < 2) // 16 colors from a palette
                 {
@@ -105,11 +104,11 @@ namespace CodeImp.DoomBuilder.IO
                             int srcshift = ((x & 1) << 2);
                             int srcoffset = (x >> 1) + y * srcpitch;
                             int palentry = (scanlines[srcoffset] >> srcshift) & 15;
-                            int offset = x * 4 + y * destpitch;
-                            imageData[offset + 2] = egaPalette[palentry * 3];
-                            imageData[offset + 1] = egaPalette[palentry * 3 + 1];
-                            imageData[offset + 0] = egaPalette[palentry * 3 + 2];
-                            imageData[offset + 3] = 255;
+                            int offset = x + y * width;
+                            imageData[offset].r = egaPalette[palentry * 3];
+                            imageData[offset].g = egaPalette[palentry * 3 + 1];
+                            imageData[offset].b = egaPalette[palentry * 3 + 2];
+                            imageData[offset].a = 255;
                         }
                     }
                 }
@@ -126,11 +125,11 @@ namespace CodeImp.DoomBuilder.IO
                             int blue = (scanlines[srcoffset + planePitch * 2] >> srcshift) & 15;
                             int alpha = (scanlines[srcoffset + planePitch * 3] >> srcshift) & 15;
 
-                            int offset = x * 4 + y * destpitch;
-                            imageData[offset + 2] = (byte)((red * 255 + 7) / 15);
-                            imageData[offset + 1] = (byte)((green * 255 + 7) / 15);
-                            imageData[offset + 0] = (byte)((blue * 255 + 7) / 15);
-                            imageData[offset + 3] = (byte)((alpha * 255 + 7) / 15);
+                            int offset = x + y * width;
+                            imageData[offset].r = (byte)((red * 255 + 7) / 15);
+                            imageData[offset].g = (byte)((green * 255 + 7) / 15);
+                            imageData[offset].b = (byte)((blue * 255 + 7) / 15);
+                            imageData[offset].a = (byte)((alpha * 255 + 7) / 15);
                         }
                     }
                 }
@@ -151,11 +150,11 @@ namespace CodeImp.DoomBuilder.IO
                         for (int x = 0; x < width; x++)
                         {
                             int palentry = scanlines[x + y * srcpitch];
-                            int offset = x * 4 + y * destpitch;
-                            imageData[offset + 2] = vgaPalette[palentry * 3];
-                            imageData[offset + 1] = vgaPalette[palentry * 3 + 1];
-                            imageData[offset + 0] = vgaPalette[palentry * 3 + 2];
-                            imageData[offset + 3] = 255;
+                            int offset = x + y * width;
+                            imageData[offset].r = vgaPalette[palentry * 3];
+                            imageData[offset].g = vgaPalette[palentry * 3 + 1];
+                            imageData[offset].b = vgaPalette[palentry * 3 + 2];
+                            imageData[offset].a = 255;
                         }
                     }
                 }
@@ -166,11 +165,11 @@ namespace CodeImp.DoomBuilder.IO
                         for (int x = 0; x < width; x++)
                         {
                             byte gray = scanlines[x + y * srcpitch];
-                            int offset = x * 4 + y * destpitch;
-                            imageData[offset + 2] = gray;
-                            imageData[offset + 1] = gray;
-                            imageData[offset + 0] = gray;
-                            imageData[offset + 3] = 255;
+                            int offset = x + y * width;
+                            imageData[offset].r = gray;
+                            imageData[offset].g = gray;
+                            imageData[offset].b = gray;
+                            imageData[offset].a = 255;
                         }
                     }
                 }
@@ -181,11 +180,11 @@ namespace CodeImp.DoomBuilder.IO
                         for (int x = 0; x < width; x++)
                         {
                             int srcoffset = x + y * srcpitch;
-                            int offset = x * 4 + y * destpitch;
-                            imageData[offset + 2] = scanlines[srcoffset];
-                            imageData[offset + 1] = scanlines[srcoffset + planePitch];
-                            imageData[offset + 0] = scanlines[srcoffset + planePitch * 2];
-                            imageData[offset + 3] = 255;
+                            int offset = x + y * width;
+                            imageData[offset].r = scanlines[srcoffset];
+                            imageData[offset].g = scanlines[srcoffset + planePitch];
+                            imageData[offset].b = scanlines[srcoffset + planePitch * 2];
+                            imageData[offset].a = 255;
                         }
                     }
                 }
@@ -196,11 +195,11 @@ namespace CodeImp.DoomBuilder.IO
                         for (int x = 0; x < width; x++)
                         {
                             int srcoffset = x + y * srcpitch;
-                            int offset = x * 4 + y * destpitch;
-                            imageData[offset + 2] = scanlines[srcoffset];
-                            imageData[offset + 1] = scanlines[srcoffset + planePitch];
-                            imageData[offset + 0] = scanlines[srcoffset + planePitch * 2];
-                            imageData[offset + 3] = scanlines[srcoffset + planePitch * 3];
+                            int offset = x + y * width;
+                            imageData[offset].r = scanlines[srcoffset];
+                            imageData[offset].g = scanlines[srcoffset + planePitch];
+                            imageData[offset].b = scanlines[srcoffset + planePitch * 2];
+                            imageData[offset].a = scanlines[srcoffset + planePitch * 3];
                         }
                     }
                 }
@@ -209,14 +208,14 @@ namespace CodeImp.DoomBuilder.IO
                     throw new InvalidDataException(string.Format("Unsupported pcx subformat (bits={0}, planes={1})", bitsPerComponent, numColorPlanes));
                 }
 
-                return new Bitmap(width, height, destpitch, PixelFormat.Format32bppArgb, Marshal.UnsafeAddrOfPinnedArrayElement(imageData, 0));
+                return new PixelData(width, height, imageData);
             }
         }
     }
 
     class TgaImageReader : IImageReader
     {
-        public Bitmap ReadAsBitmap(Stream stream, out int offsetx, out int offsety)
+        public PixelData ReadAsBitmap(Stream stream, out int offsetx, out int offsety)
         {
             offsetx = int.MinValue;
             offsety = int.MinValue;
@@ -228,8 +227,8 @@ namespace CodeImp.DoomBuilder.IO
                 read_color_map(reader);
                 read_image_data(reader);
                 decode_palette();
-                byte[] image = decode_image();
-                return new Bitmap(image_width, image_height, image_width * 4, PixelFormat.Format32bppArgb, Marshal.UnsafeAddrOfPinnedArrayElement(image, 0));
+                PixelColor[] image = decode_image();
+                return new PixelData(image_width, image_height, image);
             }
         }
 
@@ -384,7 +383,7 @@ namespace CodeImp.DoomBuilder.IO
             }
         }
 
-        byte[] decode_image()
+        PixelColor[] decode_image()
         {
             // single color-map index for Pseudo-Color
             // Attribute, Red, Green and Blue ordered data for True-Color
@@ -392,7 +391,7 @@ namespace CodeImp.DoomBuilder.IO
 
             if (image_type == 0) // no image data
             {
-                return new byte[image_width * image_height * 4];
+                return new PixelColor[image_width * image_height];
             }
             else if (image_type == 1 || image_type == 9) // color-mapped
             {
@@ -412,9 +411,9 @@ namespace CodeImp.DoomBuilder.IO
             }
         }
 
-        byte[] decode_color_mapped()
+        PixelColor[] decode_color_mapped()
         {
-            var image = new byte[image_width * image_height * 4];
+            var image = new PixelColor[image_width * image_height];
 
             for (int y = 0; y < image_height; y++)
             {
@@ -422,7 +421,7 @@ namespace CodeImp.DoomBuilder.IO
                 for (int x = 0; x < image_width; x++)
                 {
                     int inx = (x + y * image_width) * bytes_per_pixel_entry;
-                    int outx = output_line + (right_to_left ? image_width - 1 - x : x) * 4;
+                    int outx = output_line + (right_to_left ? image_width - 1 - x : x);
 
                     int index = 0;
                     for (int i = 0; i < bytes_per_pixel_entry; i++)
@@ -430,19 +429,19 @@ namespace CodeImp.DoomBuilder.IO
                     index = Math.Min(Math.Max(index - colormap_orig, 0), (int)colormap_length - 1);
                     index *= 4;
 
-                    image[outx] = palette[index];
-                    image[outx + 1] = palette[index + 1];
-                    image[outx + 2] = palette[index + 2];
-                    image[outx + 3] = palette[index + 3];
+                    image[outx].b = palette[index];
+                    image[outx].g = palette[index + 1];
+                    image[outx].r = palette[index + 2];
+                    image[outx].a = palette[index + 3];
                 }
             }
 
             return image;
         }
 
-        byte[] decode_true_color()
+        PixelColor[] decode_true_color()
         {
-            var image = new byte[image_width * image_height * 4];
+            var image = new PixelColor[image_width * image_height];
 
             if (image_pixel_size == 32)
             {
@@ -453,11 +452,11 @@ namespace CodeImp.DoomBuilder.IO
                     for (int x = 0; x < image_width; x++)
                     {
                         int inx = input_line + x * 4;
-                        int outx = output_line + (right_to_left ? image_width - 1 - x : x) * 4;
-                        image[outx] = image_data[inx];
-                        image[outx + 1] = image_data[inx + 1];
-                        image[outx + 2] = image_data[inx + 2];
-                        image[outx + 3] = (num_alpha_bits != 0) ? image_data[inx + 3] : (byte)255;
+                        int outx = output_line + (right_to_left ? image_width - 1 - x : x);
+                        image[outx].b = image_data[inx];
+                        image[outx + 1].g = image_data[inx + 1];
+                        image[outx + 2].r = image_data[inx + 2];
+                        image[outx + 3].a = (num_alpha_bits != 0) ? image_data[inx + 3] : (byte)255;
                     }
                 }
             }
@@ -470,11 +469,11 @@ namespace CodeImp.DoomBuilder.IO
                     for (int x = 0; x < image_width; x++)
                     {
                         int inx = input_line + x * 3;
-                        int outx = output_line + (right_to_left ? image_width - 1 - x : x) * 4;
-                        image[outx] = image_data[inx];
-                        image[outx + 1] = image_data[inx + 1];
-                        image[outx + 2] = image_data[inx + 2];
-                        image[outx + 3] = 255;
+                        int outx = output_line + (right_to_left ? image_width - 1 - x : x);
+                        image[outx].b = image_data[inx];
+                        image[outx].g = image_data[inx + 1];
+                        image[outx].r = image_data[inx + 2];
+                        image[outx].a = 255;
                     }
                 }
             }
@@ -487,15 +486,15 @@ namespace CodeImp.DoomBuilder.IO
                     for (int x = 0; x < image_width; x++)
                     {
                         int inx = input_line + x * 2;
-                        int outx = output_line + (right_to_left ? image_width - 1 - x : x) * 4;
+                        int outx = output_line + (right_to_left ? image_width - 1 - x : x);
 
                         int color = image_data[inx] | (((int)image_data[inx + 1]) << 8);
                         int alpha_bit = (num_alpha_bits != 0) ? ((color >> 15) & 0x1) : 1;
 
-                        image[outx] = (byte)(((color >> 10) & 0x1f) << 3);
-                        image[outx + 1] = (byte)(((color >> 5) & 0x1f) << 3);
-                        image[outx + 2] = (byte)((color & 0x1f) << 3);
-                        image[outx + 3] = (byte)((alpha_bit == 1) ? 255 : 0);
+                        image[outx].b = (byte)(((color >> 10) & 0x1f) << 3);
+                        image[outx].g = (byte)(((color >> 5) & 0x1f) << 3);
+                        image[outx].r = (byte)((color & 0x1f) << 3);
+                        image[outx].a = (byte)((alpha_bit == 1) ? 255 : 0);
                     }
                 }
             }
@@ -507,9 +506,9 @@ namespace CodeImp.DoomBuilder.IO
             return image;
         }
 
-        byte[] decode_grayscale()
+        PixelColor[] decode_grayscale()
         {
-            var image = new byte[image_width * image_height * 4];
+            var image = new PixelColor[image_width * image_height];
 
             if (image_pixel_size == 8)
             {
@@ -520,11 +519,11 @@ namespace CodeImp.DoomBuilder.IO
                     for (int x = 0; x < image_width; x++)
                     {
                         int inx = input_line + x;
-                        int outx = output_line + (right_to_left ? image_width - 1 - x : x) * 4;
-                        image[outx] = image_data[inx];
-                        image[outx + 1] = image_data[inx];
-                        image[outx + 2] = image_data[inx];
-                        image[outx + 3] = 255;
+                        int outx = output_line + (right_to_left ? image_width - 1 - x : x);
+                        image[outx].b = image_data[inx];
+                        image[outx].g = image_data[inx];
+                        image[outx].r = image_data[inx];
+                        image[outx].a = 255;
                     }
                 }
             }
@@ -573,12 +572,15 @@ namespace CodeImp.DoomBuilder.IO
             this.isPng = isPng;
         }
 
-        public Bitmap ReadAsBitmap(Stream stream, out int offsetx, out int offsety)
+        public PixelData ReadAsBitmap(Stream stream, out int offsetx, out int offsety)
         {
             using (var image = Image.FromStream(new NoCloseStream(stream)))
             {
                 ReadPngOffsets(stream, out offsetx, out offsety);
-                return new Bitmap(image);
+                if (image is Bitmap)
+                    return PixelData.FromBitmap((Bitmap)image);
+                else
+                    return PixelData.FromBitmap(new Bitmap(image));
             }
         }
 

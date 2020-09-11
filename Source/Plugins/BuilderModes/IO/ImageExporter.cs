@@ -161,7 +161,7 @@ namespace CodeImp.DoomBuilder.BuilderModes.IO
 					// but doesn't applie the color correction if we set UseColorCorrection to false first
 					ImageData imagedata = General.Map.Data.GetFlatImage(s.FloorTexture);
 					imagedata.UseColorCorrection = false;
-					brushtexture = imagedata.LocalGetBitmap();
+					brushtexture = imagedata.LocalGetBitmap().CreateBitmap();
 					imagedata.UseColorCorrection = true;
 
 					textureoffset.x = s.Fields.GetValue("xpanningfloor", 0.0);
@@ -177,7 +177,7 @@ namespace CodeImp.DoomBuilder.BuilderModes.IO
 					// but doesn't applie the color correction if we set UseColorCorrection to false first
 					ImageData imagedata = General.Map.Data.GetFlatImage(s.CeilTexture);
 					imagedata.UseColorCorrection = false;
-					brushtexture = imagedata.LocalGetBitmap();
+					brushtexture = imagedata.LocalGetBitmap().CreateBitmap();
 					imagedata.UseColorCorrection = true;
 
 					textureoffset.x = s.Fields.GetValue("xpanningceiling", 0.0);
@@ -212,6 +212,8 @@ namespace CodeImp.DoomBuilder.BuilderModes.IO
 					SolidBrush sbrush = new SolidBrush(Color.FromArgb(255, s.Brightness, s.Brightness, s.Brightness));
 					gbrightmap.FillPath(sbrush, p);
 				}
+
+				brushtexture.Dispose();
 			}
 
 			// Finally save the image(s)

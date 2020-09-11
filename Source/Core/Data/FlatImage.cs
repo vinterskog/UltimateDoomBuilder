@@ -48,7 +48,7 @@ namespace CodeImp.DoomBuilder.Data
 		// This loads the image
 		protected override LocalLoadResult LocalLoadImage()
 		{
-            Bitmap bitmap = null;
+            PixelData bitmap = null;
             string error = null;
 
 			// Get the lump data stream
@@ -85,11 +85,11 @@ namespace CodeImp.DoomBuilder.Data
 				error = "Missing flat lump \"" + Name + "\". Did you forget to include required resources?";
 			}
 
-            return new LocalLoadResult(bitmap, error, () =>
-            {
-                scale.x = General.Map.Config.DefaultFlatScale;
-                scale.y = General.Map.Config.DefaultFlatScale;
-            });
+			return new LocalLoadResult(bitmap, error, () =>
+			{
+				scale.x = General.Map.Config.DefaultFlatScale;
+				scale.y = General.Map.Config.DefaultFlatScale;
+			});
         }
 
         #endregion

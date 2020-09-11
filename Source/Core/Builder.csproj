@@ -201,6 +201,7 @@
     <Compile Include="Data\FileImage.cs" />
     <Compile Include="Data\FlatImage.cs" />
     <Compile Include="Data\ImageLoadState.cs" />
+    <Compile Include="Data\PixelData.cs" />
     <Compile Include="Data\Scripting\ZScriptScriptHandler.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

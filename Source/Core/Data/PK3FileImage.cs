@@ -113,7 +113,7 @@ namespace CodeImp.DoomBuilder.Data
 		protected override LocalLoadResult LocalLoadImage()
 		{
             // Load file data
-            Bitmap bitmap = null;
+            PixelData bitmap = null;
             string error = null;
 			MemoryStream filedata = datareader.LoadFile(filepathname); //mxd
 
@@ -133,9 +133,9 @@ namespace CodeImp.DoomBuilder.Data
 				filedata.Dispose();
 			}
 
-            return new LocalLoadResult(bitmap, error);
-        }
+			return new LocalLoadResult(bitmap, error);
+		}
 
-        #endregion
-    }
+		#endregion
+	}
 }

@@ -88,45 +88,14 @@ namespace CodeImp.DoomBuilder.IO
 		
 		// This creates a Bitmap from the given data
 		// Returns null on failure
-		public Bitmap ReadAsBitmap(Stream stream, out int offsetx, out int offsety)
+		public PixelData ReadAsBitmap(Stream stream, out int offsetx, out int offsety)
 		{
 			int width, height;
-			Bitmap bmp;
-
-			// Read pixel data
 			PixelColor[] pixeldata = ReadAsPixelData(stream, out width, out height, out offsetx, out offsety);
-			if(pixeldata != null)
-			{
-				// Create bitmap and lock pixels
-				try
-				{
-					bmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-					BitmapData bitmapdata = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
-					PixelColor* targetdata = (PixelColor*)bitmapdata.Scan0.ToPointer();
-
-					//mxd. Copy the pixels
-					int size = pixeldata.Length - 1;
-					for(PixelColor* cp = targetdata + size; cp >= targetdata; cp--)
-						*cp = pixeldata[size--];
-
-					// Done
-					bmp.UnlockBits(bitmapdata);
-				}
-				catch(Exception e)
-				{
-					// Unable to make bitmap
-					General.ErrorLogger.Add(ErrorType.Error, "Unable to make Doom picture data. " + e.GetType().Name + ": " + e.Message);
-					return null;
-				}
-			}
+			if (pixeldata != null)
+				return new PixelData(width, height, pixeldata);
 			else
-			{
-				// Failed loading picture
-				bmp = null;
-			}
-
-			// Return result
-			return bmp;
+				return null;
 		}
 		
 		// This creates pixel color data from the given data

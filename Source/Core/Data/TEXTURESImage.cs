@@ -132,7 +132,7 @@ namespace CodeImp.DoomBuilder.Data
 				//mxd. Empty image will suffice here, I suppose...
 				if(nulltexture)
 				{
-                    return new LocalLoadResult(bitmap, messages);
+					using (bitmap) return new LocalLoadResult(PixelData.FromBitmap(bitmap), messages);
 				}
 
                 // No patches!
@@ -163,7 +163,7 @@ namespace CodeImp.DoomBuilder.Data
 						MemoryStream mem = new MemoryStream(membytes);
 						mem.Seek(0, SeekOrigin.Begin);
 
-						Bitmap patchbmp = ImageDataFormat.TryLoadImage(mem, ImageDataFormat.DOOMPICTURE, General.Map.Data.Palette);
+						PixelData patchbmp = ImageDataFormat.TryLoadImage(mem, ImageDataFormat.DOOMPICTURE, General.Map.Data.Palette);
 						if(patchbmp == null)
 						{
 							//mxd. Probably that's a flat?..
@@ -182,13 +182,14 @@ namespace CodeImp.DoomBuilder.Data
 
 						if(patchbmp != null) 
 						{
+							Bitmap patchbmp2 = patchbmp.CreateBitmap();
 							//mxd. Apply transformations from TexturePatch 
-							patchbmp = TransformPatch(bitmap, p, patchbmp);
+							patchbmp2 = TransformPatch(bitmap, p, patchbmp2);
 
 							// Draw the patch on the texture image
-							Rectangle tgtrect = new Rectangle(p.X, p.Y, patchbmp.Size.Width, patchbmp.Size.Height);
-							g.DrawImageUnscaledAndClipped(patchbmp, tgtrect);
-							patchbmp.Dispose();
+							Rectangle tgtrect = new Rectangle(p.X, p.Y, patchbmp2.Size.Width, patchbmp2.Size.Height);
+							g.DrawImageUnscaledAndClipped(patchbmp2, tgtrect);
+							patchbmp2.Dispose();
 						}
 
 						// Done
@@ -203,13 +204,14 @@ namespace CodeImp.DoomBuilder.Data
 							if(!(img is UnknownImage) && img != this)
 							{
                                 //mxd. Apply transformations from TexturePatch. We don't want to modify the original bitmap here, so make a copy
-                                Bitmap bmp = new Bitmap(img.LocalGetBitmap());
+                                Bitmap bmp = img.LocalGetBitmap().CreateBitmap();
                                 Bitmap patchbmp = TransformPatch(bitmap, p, bmp);
 
 								// Draw the patch on the texture image
 								Rectangle tgtrect = new Rectangle(p.X, p.Y, patchbmp.Size.Width, patchbmp.Size.Height);
 								g.DrawImageUnscaledAndClipped(patchbmp, tgtrect);
 								patchbmp.Dispose();
+								bmp.Dispose();
 
 								continue;
 							}
@@ -229,7 +231,7 @@ namespace CodeImp.DoomBuilder.Data
 				bitmap = null;
 			}
 
-            return new LocalLoadResult(bitmap, messages);
+			using (bitmap) return new LocalLoadResult(PixelData.FromBitmap(bitmap), messages);
         }
 
         //mxd
