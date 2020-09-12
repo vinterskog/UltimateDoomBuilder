@@ -205,6 +205,7 @@ namespace CodeImp.DoomBuilder.Windows
 			
 			// Setup controls
 			InitializeComponent();
+			InitializeComponent2();
 
 			//mxd. Resize status labels
 			if(DPIScaler.Width != 1.0f)
@@ -426,9 +427,9 @@ namespace CodeImp.DoomBuilder.Windows
 		private void UpdateTitle()
 		{
 			string programname = this.Text = Application.ProductName + " R" + General.ThisAssembly.GetName().Version.Revision;
-            if (Environment.Is64BitProcess)
-                programname += " (64-bit)";
-            else programname += " (32-bit)";
+			if (Environment.Is64BitProcess)
+				programname += " (64-bit)";
+			else programname += " (32-bit)";
 
 			// Map opened?
 			if (General.Map != null)
@@ -1883,7 +1884,7 @@ namespace CodeImp.DoomBuilder.Windows
 		{
 			toolbar.SuspendLayout();
 			modestoolbar.SuspendLayout();
-			modecontrolsloolbar.SuspendLayout();
+			modecontrolstoolbar.SuspendLayout();
 		}
 
 		//mxd
@@ -1891,7 +1892,7 @@ namespace CodeImp.DoomBuilder.Windows
 		{
 			toolbar.ResumeLayout(true);
 			modestoolbar.ResumeLayout(true);
-			modecontrolsloolbar.ResumeLayout(true);
+			modecontrolstoolbar.ResumeLayout(true);
 		}
 
 		// This adds a button to the toolbar
@@ -1927,7 +1928,7 @@ namespace CodeImp.DoomBuilder.Windows
 				case ToolbarSection.Helpers: toolbar.Items.Insert(toolbar.Items.IndexOf(separatorgzmodes), button); break; //mxd
 				case ToolbarSection.Testing: toolbar.Items.Insert(toolbar.Items.IndexOf(seperatortesting), button); break;
 				case ToolbarSection.Modes: modestoolbar.Items.Add(button); break; //mxd
-				case ToolbarSection.Custom: modecontrolsloolbar.Items.Add(button); modecontrolsloolbar.Visible = true; break; //mxd
+				case ToolbarSection.Custom: modecontrolstoolbar.Items.Add(button); modecontrolstoolbar.Visible = true; break; //mxd
 			}
 			
 			UpdateToolbar();
@@ -1993,8 +1994,8 @@ namespace CodeImp.DoomBuilder.Windows
 						modestoolbar.Items.Remove(button);
 						break;
 					case ToolbarSection.Custom:
-						modecontrolsloolbar.Items.Remove(button);
-						modecontrolsloolbar.Visible = (modecontrolsloolbar.Items.Count > 0);
+						modecontrolstoolbar.Items.Remove(button);
+						modecontrolstoolbar.Visible = (modecontrolstoolbar.Items.Count > 0);
 						break;
 					default:
 						toolbar.Items.Remove(button);
@@ -2023,7 +2024,7 @@ namespace CodeImp.DoomBuilder.Windows
 
 			//mxd
 			UpdateToolStripSeparators(modestoolbar.Items, true);
-			UpdateToolStripSeparators(modecontrolsloolbar.Items, true);
+			UpdateToolStripSeparators(modecontrolstoolbar.Items, true);
 		}
 		
 		// This hides redundant separators
@@ -2112,7 +2113,7 @@ namespace CodeImp.DoomBuilder.Windows
 			//mxd. Show/hide additional panels
 			modestoolbar.Visible = maploaded;
 			panelinfo.Visible = maploaded;
-			modecontrolsloolbar.Visible = (maploaded && modecontrolsloolbar.Items.Count > 0);
+			modecontrolstoolbar.Visible = (maploaded && modecontrolstoolbar.Items.Count > 0);
 			
 			//mxd. modestoolbar index in Controls gets messed up when it's invisible. This fixes it.
 			//TODO: find out why this happens in the first place
@@ -3176,7 +3177,7 @@ namespace CodeImp.DoomBuilder.Windows
 		//mxd. Check updates clicked
 		private void itemhelpcheckupdates_Click(object sender, EventArgs e)
 		{
-            UpdateChecker.PerformCheck(true);
+			UpdateChecker.PerformCheck(true);
 		}
 
 		//mxd. Github issues clicked
@@ -4137,98 +4138,98 @@ namespace CodeImp.DoomBuilder.Windows
 			}
 		}
 
-        #endregion
+		#endregion
 
-        #region ================== Threadsafe updates
+		#region ================== Threadsafe updates
 
-        object syncobject = new object();
-        List<System.Action> queuedActions = new List<System.Action>();
+		object syncobject = new object();
+		List<System.Action> queuedActions = new List<System.Action>();
 
-        internal void ProcessQueuedUIActions()
-        {
-            List<System.Action> queue;
-            lock (syncobject)
-            {
-                queue = queuedActions;
-                queuedActions = new List<System.Action>();
-            }
+		internal void ProcessQueuedUIActions()
+		{
+			List<System.Action> queue;
+			lock (syncobject)
+			{
+				queue = queuedActions;
+				queuedActions = new List<System.Action>();
+			}
 
-            foreach (System.Action action in queue)
-            {
-                action();
-            }
-        }
+			foreach (System.Action action in queue)
+			{
+				action();
+			}
+		}
 
-        public void RunOnUIThread(System.Action action)
-        {
-            if (!InvokeRequired)
-            {
-                action();
-            }
-            else
-            {
-                bool notify;
-                lock (syncobject)
-                {
-                    notify = queuedActions.Count == 0;
-                    queuedActions.Add(action);
-                }
+		public void RunOnUIThread(System.Action action)
+		{
+			if (!InvokeRequired)
+			{
+				action();
+			}
+			else
+			{
+				bool notify;
+				lock (syncobject)
+				{
+					notify = queuedActions.Count == 0;
+					queuedActions.Add(action);
+				}
 
-                if (notify)
-                    General.InvokeUIActions(this);
-            }
-        }
+				if (notify)
+					General.InvokeUIActions(this);
+			}
+		}
 
-        public void UpdateStatus()
-        {
-            RunOnUIThread(() =>
-            {
-                DisplayStatus(status);
-            });
-        }
+		public void UpdateStatus()
+		{
+			RunOnUIThread(() =>
+			{
+				DisplayStatus(status);
+			});
+		}
 
-        public void ImageDataLoaded(string imagename)
-        {
-            RunOnUIThread(() =>
-            {
-                if ((General.Map != null) && (General.Map.Data != null))
-                {
-                    ImageData img = General.Map.Data.GetFlatImage(imagename);
-                    ImageDataLoaded(img);
-                }
-            });
-        }
+		public void ImageDataLoaded(string imagename)
+		{
+			RunOnUIThread(() =>
+			{
+				if ((General.Map != null) && (General.Map.Data != null))
+				{
+					ImageData img = General.Map.Data.GetFlatImage(imagename);
+					ImageDataLoaded(img);
+				}
+			});
+		}
 
-        public void SpriteDataLoaded(string spritename)
-        {
-            RunOnUIThread(() =>
-            {
-                if ((General.Map != null) && (General.Map.Data != null))
-                {
-                    ImageData img = General.Map.Data.GetSpriteImage(spritename);
-                    if (img != null && img.UsedInMap && !img.IsDisposed)
-                    {
-                        DelayedRedraw();
-                    }
-                }
-            });
-        }
+		public void SpriteDataLoaded(string spritename)
+		{
+			RunOnUIThread(() =>
+			{
+				if ((General.Map != null) && (General.Map.Data != null))
+				{
+					ImageData img = General.Map.Data.GetSpriteImage(spritename);
+					if (img != null && img.UsedInMap && !img.IsDisposed)
+					{
+						DelayedRedraw();
+					}
+				}
+			});
+		}
 
-        #endregion
+		#endregion
 
-        #region ================== Message Pump
+		#region ================== Message Pump
 
-        // This handles messages
-        protected override void WndProc(ref Message m)
+		// This handles messages
+		protected override void WndProc(ref Message m)
 		{
 			// Notify message?
 			switch(m.Msg)
 			{
-                case General.WM_UIACTION:
-                    ProcessQueuedUIActions();
-                    break;
+				case General.WM_UIACTION:
+					ProcessQueuedUIActions();
+					break;
 
-                case General.WM_SYSCOMMAND:
+				case General.WM_SYSCOMMAND:
 					// We don't want to open a menu when ALT is pressed
 					if(m.WParam.ToInt32() != General.SC_KEYMENU)
 					{
@@ -4237,8 +4238,8 @@ namespace CodeImp.DoomBuilder.Windows
 					break;
 
 				case General.WM_MOUSEHWHEEL:
-                    int delta = unchecked((short)(m.WParam.ToInt64() >> 16));
-                    OnMouseHWheel(delta);
+					int delta = unchecked((short)(m.WParam.ToInt64() >> 16));
+					OnMouseHWheel(delta);
 					m.Result = new IntPtr(delta);
 					break;
 					
@@ -4253,24 +4254,24 @@ namespace CodeImp.DoomBuilder.Windows
 		private delegate void SetWarningsCountCallback(int count, bool blink);
 		internal void SetWarningsCount(int count, bool blink) 
 		{
-            RunOnUIThread(() =>
-            {
-                // Update icon, start annoying blinking if necessary
-                if (count > 0)
-                {
-                    if (blink && !blinkTimer.Enabled) blinkTimer.Start();
-                    warnsLabel.Image = Resources.Warning;
-                }
-                else
-                {
-                    blinkTimer.Stop();
-                    warnsLabel.Image = Resources.WarningOff;
-                    warnsLabel.BackColor = SystemColors.Control;
-                }
+			RunOnUIThread(() =>
+			{
+				// Update icon, start annoying blinking if necessary
+				if (count > 0)
+				{
+					if (blink && !blinkTimer.Enabled) blinkTimer.Start();
+					warnsLabel.Image = Resources.Warning;
+				}
+				else
+				{
+					blinkTimer.Stop();
+					warnsLabel.Image = Resources.WarningOff;
+					warnsLabel.BackColor = SystemColors.Control;
+				}
 
-                // Update errors count
-                warnsLabel.Text = count.ToString();
-            });
+				// Update errors count
+				warnsLabel.Text = count.ToString();
+			});
 		}
 
 		//mxd. Bliks warnings indicator
@@ -4291,10 +4292,10 @@ namespace CodeImp.DoomBuilder.Windows
 			if(!blinkTimer.Enabled) return;
 			try 
 			{
-                RunOnUIThread(() =>
-                {
-                    Blink();
-                });
+				RunOnUIThread(() =>
+				{
+					Blink();
+				});
 			} catch(ObjectDisposedException) { } //la-la-la. We don't care.
 		}
 		
@@ -4515,18 +4516,18 @@ namespace CodeImp.DoomBuilder.Windows
 		#region ================== Updater (mxd)
 
 		private delegate void UpdateAvailableCallback(int remoterev, string changelog);
-        internal void UpdateAvailable(int remoterev, string changelog)
-        {
-            RunOnUIThread(() => {
-                // Show the window
-                UpdateForm form = new UpdateForm(remoterev, changelog);
-                form.FormClosing += delegate
-                {
-                    // Update ignored revision number
-                    General.Settings.IgnoredRemoteRevision = (form.IgnoreThisUpdate ? remoterev : 0);
-                };
-                form.Show(this);
-            });
+		internal void UpdateAvailable(int remoterev, string changelog)
+		{
+			RunOnUIThread(() => {
+				// Show the window
+				UpdateForm form = new UpdateForm(remoterev, changelog);
+				form.FormClosing += delegate
+				{
+					// Update ignored revision number
+					General.Settings.IgnoredRemoteRevision = (form.IgnoreThisUpdate ? remoterev : 0);
+				};
+				form.Show(this);
+			});
 		}
 
 		#endregion
@@ -4561,5 +4562,2769 @@ namespace CodeImp.DoomBuilder.Windows
 		}
 
 		#endregion
+
+		RenderTargetControl display = new RenderTargetControl();
+		Panel panelinfo = new Panel();
+		Panel heightpanel1 = new Panel();
+		Panel dockersspace = new Panel();
+		MenuStrip menumain = new MenuStrip();
+		ToolStrip toolbar = new ToolStrip();
+		ToolStrip modestoolbar = new ToolStrip();
+		ToolStrip modecontrolstoolbar = new ToolStrip();
+		StatusStrip statusbar = new StatusStrip();
+		ToolStripButton buttonsnaptogrid = new ToolStripButton();
+		ToolStripButton buttonautomerge = new ToolStripButton();
+		ToolStripButton buttonviewnormal = new ToolStripButton();
+		ToolStripButton buttonviewbrightness = new ToolStripButton();
+		ToolStripButton buttonviewfloors = new ToolStripButton();
+		ToolStripButton buttonviewceilings = new ToolStripButton();
+		ToolStripButton buttonmergegeoclassic = new ToolStripButton();
+		ToolStripButton buttonmergegeo = new ToolStripButton();
+		ToolStripButton buttonplacegeo = new ToolStripButton();
+		ToolStripButton buttontoggledynamicgrid = new ToolStripButton();
+		ToolStripButton buttonnewmap = new ToolStripButton();
+		ToolStripButton buttonopenmap = new ToolStripButton();
+		ToolStripButton buttonsavemap = new ToolStripButton();
+		ToolStripButton buttonscripteditor = new ToolStripButton();
+		ToolStripButton buttonundo = new ToolStripButton();
+		ToolStripButton buttonredo = new ToolStripButton();
+		ToolStripButton buttoncut = new ToolStripButton();
+		ToolStripButton buttoncopy = new ToolStripButton();
+		ToolStripButton buttonpaste = new ToolStripButton();
+		ToolStripButton buttoninsertprefabfile = new ToolStripButton();
+		ToolStripButton buttoninsertpreviousprefab = new ToolStripButton();
+		ToolStripButton buttonthingsfilter = new ToolStripButton();
+		ToolStripButton buttonfullbrightness = new ToolStripButton();
+		ToolStripButton buttonlinededfcolors = new ToolStripButton();
+		ToolStripButton buttontogglegrid = new ToolStripButton();
+		ToolStripButton buttontogglecomments = new ToolStripButton();
+		ToolStripButton buttontogglefixedthingsscale = new ToolStripButton();
+		ToolStripButton buttonsplitjoinedsectors = new ToolStripButton();
+		ToolStripButton buttontogglefog = new ToolStripButton();
+		ToolStripButton buttontogglesky = new ToolStripButton();
+		ToolStripButton buttontoggleeventlines = new ToolStripButton();
+		ToolStripButton buttontogglevisualvertices = new ToolStripButton();
+		ToolStripButton buttonautoclearsidetextures = new ToolStripButton();
+		ToolStripSplitButton buttontest = new ToolStripSplitButton();
+		ToolStripSplitButton dynamiclightmode = new ToolStripSplitButton();
+		ToolStripSplitButton modelrendermode = new ToolStripSplitButton();
+		ToolStripDropDownButton buttonzoom = new ToolStripDropDownButton();
+		ToolStripDropDownButton buttongrid = new ToolStripDropDownButton();
+		ToolStripDropDownButton linedefcolorpresets = new ToolStripDropDownButton();
+		ToolStripDropDownButton thingfilters = new ToolStripDropDownButton();
+		ToolStripSeparator seperatorfile = new ToolStripSeparator();
+		ToolStripSeparator seperatorscript = new ToolStripSeparator();
+		ToolStripSeparator seperatorprefabs = new ToolStripSeparator();
+		ToolStripSeparator seperatorundo = new ToolStripSeparator();
+		ToolStripSeparator seperatorcopypaste = new ToolStripSeparator();
+		ToolStripSeparator seperatorfileopen = new ToolStripSeparator();
+		ToolStripSeparator seperatorfilerecent = new ToolStripSeparator();
+		ToolStripSeparator seperatoreditgrid = new ToolStripSeparator();
+		ToolStripSeparator seperatoreditcopypaste = new ToolStripSeparator();
+		ToolStripSeparator seperatorgeometry = new ToolStripSeparator();
+		ToolStripSeparator seperatorviews = new ToolStripSeparator();
+		ToolStripSeparator separatorgzmodes = new ToolStripSeparator();
+		ToolStripSeparator seperatorfilesave = new ToolStripSeparator();
+		ToolStripSeparator seperatortesting = new ToolStripSeparator();
+		ToolStripSeparator seperatoreditgeometry = new ToolStripSeparator();
+		ToolStripSeparator separatorlinecolors = new ToolStripSeparator();
+		ToolStripSeparator separatorfilters = new ToolStripSeparator();
+		ToolStripSeparator separatorhelpers = new ToolStripSeparator();
+		ToolStripSeparator separatorfullbrightness = new ToolStripSeparator();
+		ToolStripSeparator separatorrendering = new ToolStripSeparator();
+		ToolStripSeparator seperatoreditundo = new ToolStripSeparator();
+		ToolStripSeparator separatorgeomergemodes = new ToolStripSeparator();
+		ToolStripSeparator seperatortoolsresources = new ToolStripSeparator();
+		ToolStripSeparator seperatorviewthings = new ToolStripSeparator();
+		ToolStripSeparator seperatorviewzoom = new ToolStripSeparator();
+		ToolStripSeparator separatorgeomerge = new ToolStripSeparator();
+		ToolStripSeparator seperatortoolsconfig = new ToolStripSeparator();
+		ToolStripSeparator seperatorprefabsinsert = new ToolStripSeparator();
+		ToolStripSeparator seperatorviewviews = new ToolStripSeparator();
+		ToolStripSeparator seperatorhelpmanual = new ToolStripSeparator();
+		ToolStripSeparator separatorDrawModes = new ToolStripSeparator();
+		ToolStripSeparator toolStripSeparator5 = new ToolStripSeparator();
+		ToolStripSeparator separatortoolsscreenshots = new ToolStripSeparator();
+		ToolStripSeparator separatorTransformModes = new ToolStripSeparator();
+		ToolStripSeparator toolStripSeparator1 = new ToolStripSeparator();
+		ToolStripSeparator toolStripSeparator9 = new ToolStripSeparator();
+		ToolStripSeparator toolStripSeparator12 = new ToolStripSeparator();
+		ToolStripSeparator toolStripMenuItem4 = new ToolStripSeparator();
+		ToolStripSeparator toolStripSeparator2 = new ToolStripSeparator();
+		ToolStripSeparator toolStripSeparator3 = new ToolStripSeparator();
+		ToolStripSeparator separatorio = new ToolStripSeparator();
+		ToolStripMenuItem menufile = new ToolStripMenuItem();
+		ToolStripMenuItem menuhelp = new ToolStripMenuItem();
+		ToolStripMenuItem menutools = new ToolStripMenuItem();
+		ToolStripMenuItem menuedit = new ToolStripMenuItem();
+		ToolStripMenuItem menuview = new ToolStripMenuItem();
+		ToolStripMenuItem menuprefabs = new ToolStripMenuItem();
+		ToolStripMenuItem menuzoom = new ToolStripMenuItem();
+		ToolStripMenuItem menumode = new ToolStripMenuItem();
+		ToolStripMenuItem itemviewnormal = new ToolStripMenuItem();
+		ToolStripMenuItem itemviewbrightness = new ToolStripMenuItem();
+		ToolStripMenuItem itemviewfloors = new ToolStripMenuItem();
+		ToolStripMenuItem itemviewceilings = new ToolStripMenuItem();
+		ToolStripMenuItem itemmergegeoclassic = new ToolStripMenuItem();
+		ToolStripMenuItem itemmergegeo = new ToolStripMenuItem();
+		ToolStripMenuItem itemreplacegeo = new ToolStripMenuItem();
+		ToolStripMenuItem itemgrid05 = new ToolStripMenuItem();
+		ToolStripMenuItem itemgrid025 = new ToolStripMenuItem();
+		ToolStripMenuItem itemgrid0125 = new ToolStripMenuItem();
+		ToolStripMenuItem itemdynamicgridsize = new ToolStripMenuItem();
+		ToolStripMenuItem itemundo = new ToolStripMenuItem();
+		ToolStripMenuItem itemredo = new ToolStripMenuItem();
+		ToolStripMenuItem itemsnaptogrid = new ToolStripMenuItem();
+		ToolStripMenuItem itemautomerge = new ToolStripMenuItem();
+		ToolStripMenuItem toggleFile = new ToolStripMenuItem();
+		ToolStripMenuItem toggleScript = new ToolStripMenuItem();
+		ToolStripMenuItem toggleUndo = new ToolStripMenuItem();
+		ToolStripMenuItem toggleCopy = new ToolStripMenuItem();
+		ToolStripMenuItem togglePrefabs = new ToolStripMenuItem();
+		ToolStripMenuItem toggleFilter = new ToolStripMenuItem();
+		ToolStripMenuItem toggleViewModes = new ToolStripMenuItem();
+		ToolStripMenuItem toggleGeometry = new ToolStripMenuItem();
+		ToolStripMenuItem toggleTesting = new ToolStripMenuItem();
+		ToolStripMenuItem toggleRendering = new ToolStripMenuItem();
+		ToolStripMenuItem addToGroup = new ToolStripMenuItem();
+		ToolStripMenuItem selectGroup = new ToolStripMenuItem();
+		ToolStripMenuItem clearGroup = new ToolStripMenuItem();
+		ToolStripMenuItem itemopenmap = new ToolStripMenuItem();
+		ToolStripMenuItem itemsavemap = new ToolStripMenuItem();
+		ToolStripMenuItem itemsavemapas = new ToolStripMenuItem();
+		ToolStripMenuItem itemsavemapinto = new ToolStripMenuItem();
+		ToolStripMenuItem itemexit = new ToolStripMenuItem();
+		ToolStripMenuItem itemclosemap = new ToolStripMenuItem();
+		ToolStripMenuItem itemhelpissues = new ToolStripMenuItem();
+		ToolStripMenuItem itemhelpabout = new ToolStripMenuItem();
+		ToolStripMenuItem itemhelpcheckupdates = new ToolStripMenuItem();
+		ToolStripMenuItem itemnorecent = new ToolStripMenuItem();
+		ToolStripMenuItem itemzoomfittoscreen = new ToolStripMenuItem();
+		ToolStripMenuItem itemzoom100 = new ToolStripMenuItem();
+		ToolStripMenuItem itemzoom200 = new ToolStripMenuItem();
+		ToolStripMenuItem itemzoom50 = new ToolStripMenuItem();
+		ToolStripMenuItem itemzoom25 = new ToolStripMenuItem();
+		ToolStripMenuItem itemzoom10 = new ToolStripMenuItem();
+		ToolStripMenuItem itemzoom5 = new ToolStripMenuItem();
+		ToolStripMenuItem configurationToolStripMenuItem = new ToolStripMenuItem();
+		ToolStripMenuItem preferencesToolStripMenuItem = new ToolStripMenuItem();
+		ToolStripMenuItem itemmapoptions = new ToolStripMenuItem();
+		ToolStripMenuItem itemreloadresources = new ToolStripMenuItem();
+		ToolStripMenuItem itemgrid1024 = new ToolStripMenuItem();
+		ToolStripMenuItem itemgrid256 = new ToolStripMenuItem();
+		ToolStripMenuItem itemgrid128 = new ToolStripMenuItem();
+		ToolStripMenuItem itemgrid64 = new ToolStripMenuItem();
+		ToolStripMenuItem itemgrid32 = new ToolStripMenuItem();
+		ToolStripMenuItem itemgrid16 = new ToolStripMenuItem();
+		ToolStripMenuItem itemgrid4 = new ToolStripMenuItem();
+		ToolStripMenuItem itemgrid8 = new ToolStripMenuItem();
+		ToolStripMenuItem itemgridcustom = new ToolStripMenuItem();
+		ToolStripMenuItem itemgrid512 = new ToolStripMenuItem();
+		ToolStripMenuItem itemsplitjoinedsectors = new ToolStripMenuItem();
+		ToolStripMenuItem itemgridinc = new ToolStripMenuItem();
+		ToolStripMenuItem itemgriddec = new ToolStripMenuItem();
+		ToolStripMenuItem itemgridsetup = new ToolStripMenuItem();
+		ToolStripMenuItem itemcut = new ToolStripMenuItem();
+		ToolStripMenuItem itemcopy = new ToolStripMenuItem();
+		ToolStripMenuItem itempaste = new ToolStripMenuItem();
+		ToolStripMenuItem itemnewmap = new ToolStripMenuItem();
+		ToolStripMenuItem itemthingsfilter = new ToolStripMenuItem();
+		ToolStripMenuItem itemscripteditor = new ToolStripMenuItem();
+		ToolStripMenuItem itemtestmap = new ToolStripMenuItem();
+		ToolStripMenuItem itemcreateprefab = new ToolStripMenuItem();
+		ToolStripMenuItem iteminsertprefabfile = new ToolStripMenuItem();
+		ToolStripMenuItem iteminsertpreviousprefab = new ToolStripMenuItem();
+		ToolStripMenuItem itemshowerrors = new ToolStripMenuItem();
+		ToolStripMenuItem item2zoom5 = new ToolStripMenuItem();
+		ToolStripMenuItem item2zoom10 = new ToolStripMenuItem();
+		ToolStripMenuItem itemfittoscreen = new ToolStripMenuItem();
+		ToolStripMenuItem item2zoom200 = new ToolStripMenuItem();
+		ToolStripMenuItem item2zoom100 = new ToolStripMenuItem();
+		ToolStripMenuItem item2zoom50 = new ToolStripMenuItem();
+		ToolStripMenuItem item2zoom25 = new ToolStripMenuItem();
+		ToolStripMenuItem itemhelprefmanual = new ToolStripMenuItem();
+		ToolStripMenuItem itemhelpeditmode = new ToolStripMenuItem();
+		ToolStripMenuItem itemtoggleinfo = new ToolStripMenuItem();
+		ToolStripMenuItem itempastespecial = new ToolStripMenuItem();
+		ToolStripMenuItem itemReloadModedef = new ToolStripMenuItem();
+		ToolStripMenuItem itemReloadGldefs = new ToolStripMenuItem();
+		ToolStripMenuItem itemviewusedtags = new ToolStripMenuItem();
+		ToolStripMenuItem itemsavescreenshot = new ToolStripMenuItem();
+		ToolStripMenuItem itemsaveeditareascreenshot = new ToolStripMenuItem();
+		ToolStripMenuItem itemShortcutReference = new ToolStripMenuItem();
+		ToolStripMenuItem itemopenconfigfolder = new ToolStripMenuItem();
+		ToolStripMenuItem itemopenmapincurwad = new ToolStripMenuItem();
+		ToolStripMenuItem itemgrid1 = new ToolStripMenuItem();
+		ToolStripMenuItem itemzoom400 = new ToolStripMenuItem();
+		ToolStripMenuItem itemautoclearsidetextures = new ToolStripMenuItem();
+		ToolStripMenuItem itemgotocoords = new ToolStripMenuItem();
+		ToolStripMenuItem itemdosnaptogrid = new ToolStripMenuItem();
+		ToolStripMenuItem itemfullbrightness = new ToolStripMenuItem();
+		ToolStripMenuItem itemdynlightmodes = new ToolStripMenuItem();
+		ToolStripMenuItem itemnodynlights = new ToolStripMenuItem();
+		ToolStripMenuItem itemdynlights = new ToolStripMenuItem();
+		ToolStripMenuItem itemdynlightsanim = new ToolStripMenuItem();
+		ToolStripMenuItem itemmodelmodes = new ToolStripMenuItem();
+		ToolStripMenuItem itemnomdl = new ToolStripMenuItem();
+		ToolStripMenuItem itemselmdl = new ToolStripMenuItem();
+		ToolStripMenuItem itemfiltermdl = new ToolStripMenuItem();
+		ToolStripMenuItem itemallmdl = new ToolStripMenuItem();
+		ToolStripMenuItem itemtogglefog = new ToolStripMenuItem();
+		ToolStripMenuItem itemtogglesky = new ToolStripMenuItem();
+		ToolStripMenuItem itemtoggleeventlines = new ToolStripMenuItem();
+		ToolStripMenuItem itemtogglevisualverts = new ToolStripMenuItem();
+		ToolStripMenuItem itemimport = new ToolStripMenuItem();
+		ToolStripMenuItem itemexport = new ToolStripMenuItem();
+		ToolStripMenuItem itemviewthingtypes = new ToolStripMenuItem();
+		ToolStripMenuItem sightsdontshow = new ToolStripMenuItem();
+		ToolStripMenuItem lightsshow = new ToolStripMenuItem();
+		ToolStripMenuItem lightsshowanimated = new ToolStripMenuItem();
+		ToolStripMenuItem modelsdontshow = new ToolStripMenuItem();
+		ToolStripMenuItem modelsshowselection = new ToolStripMenuItem();
+		ToolStripMenuItem modelsshowfiltered = new ToolStripMenuItem();
+		ToolStripMenuItem modelsshowall = new ToolStripMenuItem();
+		ToolStripMenuItem item2zoom400 = new ToolStripMenuItem();
+		ToolStripMenuItem item2zoom800 = new ToolStripMenuItem();
+		ToolStripMenuItem itemzoom800 = new ToolStripMenuItem();
+		ToolStripMenuItem itemlinedefcolors = new ToolStripMenuItem();
+		ToolStripMenuItem itemtogglegrid = new ToolStripMenuItem();
+		ToolStripMenuItem itemaligngridtolinedef = new ToolStripMenuItem();
+		ToolStripMenuItem itemsetgridorigintovertex = new ToolStripMenuItem();
+		ToolStripMenuItem itemresetgrid = new ToolStripMenuItem();
+		ToolStripMenuItem itemtogglecomments = new ToolStripMenuItem();
+		ToolStripMenuItem itemtogglefixedthingsscale = new ToolStripMenuItem();
+		DockersControl dockerspanel = new DockersControl();
+		LinedefInfoPanel linedefinfo = new LinedefInfoPanel();
+		VertexInfoPanel vertexinfo = new VertexInfoPanel();
+		SectorInfoPanel sectorinfo = new SectorInfoPanel();
+		ThingInfoPanel thinginfo = new ThingInfoPanel();
+		ToolStripStatusLabel gridlabel = new ToolStripStatusLabel();
+		ToolStripStatusLabel zoomlabel = new ToolStripStatusLabel();
+		ToolStripStatusLabel xposlabel = new ToolStripStatusLabel();
+		ToolStripStatusLabel yposlabel = new ToolStripStatusLabel();
+		ToolStripStatusLabel warnsLabel = new ToolStripStatusLabel();
+		ToolStripStatusLabel poscommalabel = new ToolStripStatusLabel();
+		ToolStripStatusLabel configlabel = new ToolStripStatusLabel();
+		ToolStripStatusLabel statuslabel = new ToolStripStatusLabel();
+		Label labelcollapsedinfo = new Label();
+		Label modename = new Label();
+		ContextMenuStrip toolbarContextMenu;
+		Timer statusflasher;
+		Timer statusresetter;
+		Timer redrawtimer;
+		Timer processor;
+		Timer dockerscollapser;
+		StatisticsControl statistics = new StatisticsControl();
+		Button buttontoggleinfo = new Button();
+		DebugConsole console = new DebugConsole();
+
+		void InitializeComponent2()
+		{
+			if (components == null)
+				components = new Container();
+
+			ComponentResourceManager resources = new ComponentResourceManager(typeof(MainForm));
+
+			toolbarContextMenu = new ContextMenuStrip(components);
+			redrawtimer = new Timer(components);
+			processor = new Timer(components);
+			statusflasher = new Timer(components);
+			statusresetter = new Timer(components);
+			dockerscollapser = new Timer(components);
+
+			menumain.SuspendLayout();
+			toolbar.SuspendLayout();
+			toolbarContextMenu.SuspendLayout();
+			statusbar.SuspendLayout();
+			panelinfo.SuspendLayout();
+			SuspendLayout();
+
+			Name = "MainForm";
+			Text = Application.ProductName + " R" + General.ThisAssembly.GetName().Version.Revision;
+			AutoScaleDimensions = new SizeF(96F, 96F);
+			AutoScaleMode = AutoScaleMode.Dpi;
+			ClientSize = new Size(1012, 693);
+			Icon = ((Icon)(resources.GetObject("$Icon")));
+			StartPosition = FormStartPosition.Manual;
+			Deactivate += new EventHandler(MainForm_Deactivate);
+			Load += new EventHandler(MainForm_Load);
+			Shown += new EventHandler(MainForm_Shown);
+			Activated += new EventHandler(MainForm_Activated);
+			KeyUp += new KeyEventHandler(MainForm_KeyUp);
+			KeyDown += new KeyEventHandler(MainForm_KeyDown);
+			MainMenuStrip = menumain;
+
+			Controls.Add(dockerspanel);
+			Controls.Add(display);
+			Controls.Add(dockersspace);
+			Controls.Add(modestoolbar);
+			Controls.Add(toolbar);
+			Controls.Add(modecontrolstoolbar);
+			Controls.Add(panelinfo);
+			Controls.Add(statusbar);
+			Controls.Add(menumain);
+
+			panelinfo.Controls.Add(statistics);
+			panelinfo.Controls.Add(heightpanel1);
+			panelinfo.Controls.Add(labelcollapsedinfo);
+			panelinfo.Controls.Add(modename);
+			panelinfo.Controls.Add(buttontoggleinfo);
+			panelinfo.Controls.Add(console);
+			panelinfo.Controls.Add(vertexinfo);
+			panelinfo.Controls.Add(linedefinfo);
+			panelinfo.Controls.Add(thinginfo);
+			panelinfo.Controls.Add(sectorinfo);
+			panelinfo.Dock = DockStyle.Bottom;
+			panelinfo.Location = new Point(0, 564);
+			panelinfo.Name = "panelinfo";
+			panelinfo.Size = new Size(1012, 106);
+			panelinfo.TabIndex = 4;
+
+			menumain.Dock = DockStyle.Top;
+			menumain.Location = new Point(0, 0);
+			menumain.Name = "menumain";
+			menumain.Size = new Size(328, 24);
+			menumain.ImageScalingSize = MainForm.ScaledIconSize;
+			menumain.TabIndex = 0;
+			menumain.Items.AddRange(new ToolStripItem[] {
+				menufile,
+				menuedit,
+				menuview,
+				menumode,
+				menuprefabs,
+				menutools,
+				menuhelp
+			});
+
+			menufile.Name = "menufile";
+			menufile.Size = new Size(37, 20);
+			menufile.Text = "&File";
+			menufile.DropDownOpening += menufile_DropDownOpening;
+			menufile.DropDownItems.AddRange(new ToolStripItem[] {
+				itemnewmap,
+				itemopenmap,
+				itemopenmapincurwad,
+				itemclosemap,
+				seperatorfileopen,
+				itemsavemap,
+				itemsavemapas,
+				itemsavemapinto,
+				seperatorfilesave,
+				itemimport,
+				itemexport,
+				separatorio,
+				itemnorecent,
+				seperatorfilerecent,
+				itemexit
+			});
+
+			menuedit.Name = "menuedit";
+			menuedit.Size = new Size(39, 20);
+			menuedit.Text = "&Edit";
+			menuedit.DropDownOpening += new EventHandler(menuedit_DropDownOpening);
+			menuedit.DropDownItems.AddRange(new ToolStripItem[] {
+				itemundo,
+				itemredo,
+				seperatoreditundo,
+				itemcut,
+				itemcopy,
+				itempaste,
+				itempastespecial,
+				seperatoreditcopypaste,
+				itemmergegeoclassic,
+				itemmergegeo,
+				itemreplacegeo,
+				separatorgeomerge,
+				itemsnaptogrid,
+				itemdynamicgridsize,
+				itemautomerge,
+				itemsplitjoinedsectors,
+				itemautoclearsidetextures,
+				seperatoreditgeometry,
+				itemgridinc,
+				itemgriddec,
+				itemdosnaptogrid,
+				itemaligngridtolinedef,
+				itemsetgridorigintovertex,
+				itemresetgrid,
+				itemgridsetup,
+				toolStripSeparator5,
+				addToGroup,
+				selectGroup,
+				clearGroup,
+				seperatoreditgrid,
+				itemmapoptions,
+				itemviewusedtags,
+				itemviewthingtypes
+			});
+
+			menuview.Name = "menuview";
+			menuview.Size = new Size(44, 20);
+			menuview.Text = "&View";
+			menuview.DropDownItems.AddRange(new ToolStripItem[] {
+				itemthingsfilter,
+				itemlinedefcolors,
+				seperatorviewthings,
+				itemviewnormal,
+				itemviewbrightness,
+				itemviewfloors,
+				itemviewceilings,
+				seperatorviewviews,
+				itemfullbrightness,
+				itemtogglegrid,
+				itemtogglecomments,
+				itemtogglefixedthingsscale,
+				separatorrendering,
+				itemdynlightmodes,
+				itemmodelmodes,
+				itemtogglefog,
+				itemtogglesky,
+				itemtoggleeventlines,
+				itemtogglevisualverts,
+				separatorhelpers,
+				menuzoom,
+				itemgotocoords,
+				itemfittoscreen,
+				itemtoggleinfo,
+				seperatorviewzoom,
+				itemscripteditor
+			});
+
+			menuzoom.Image = global::CodeImp.DoomBuilder.Properties.Resources.Zoom;
+			menuzoom.Name = "menuzoom";
+			menuzoom.Size = new Size(215, 22);
+			menuzoom.Text = "&Zoom";
+			menuzoom.DropDownItems.AddRange(new ToolStripItem[] {
+				item2zoom800,
+				item2zoom400,
+				item2zoom200,
+				item2zoom100,
+				item2zoom50,
+				item2zoom25,
+				item2zoom10,
+				item2zoom5
+			});
+
+			menumode.Name = "menumode";
+			menumode.Size = new Size(50, 20);
+			menumode.Text = "&Mode";
+			menumode.DropDownItems.AddRange(new ToolStripItem[] {
+				separatorDrawModes,
+				separatorTransformModes
+			});
+
+			menuprefabs.Name = "menuprefabs";
+			menuprefabs.Size = new Size(58, 20);
+			menuprefabs.Text = "&Prefabs";
+			menuprefabs.DropDownItems.AddRange(new ToolStripItem[] {
+				iteminsertprefabfile,
+				iteminsertpreviousprefab,
+				seperatorprefabsinsert,
+				itemcreateprefab
+			});
+
+			menutools.Name = "menutools";
+			menutools.Size = new Size(48, 20);
+			menutools.Text = "&Tools";
+			menutools.DropDownItems.AddRange(new ToolStripItem[] {
+				itemreloadresources,
+				itemReloadModedef,
+				itemReloadGldefs,
+				itemshowerrors,
+				seperatortoolsresources,
+				configurationToolStripMenuItem,
+				preferencesToolStripMenuItem,
+				seperatortoolsconfig,
+				itemsavescreenshot,
+				itemsaveeditareascreenshot,
+				separatortoolsscreenshots,
+				itemtestmap
+			});
+
+			menuhelp.Name = "menuhelp";
+			menuhelp.Size = new Size(44, 20);
+			menuhelp.Text = "&Help";
+			menuhelp.DropDownItems.AddRange(new ToolStripItem[] {
+				itemhelprefmanual,
+				itemShortcutReference,
+				itemopenconfigfolder,
+				itemhelpeditmode,
+				itemhelpissues,
+				itemhelpcheckupdates,
+				seperatorhelpmanual,
+				itemhelpabout
+			});
+
+			itemdynlightmodes.Image = global::CodeImp.DoomBuilder.Properties.Resources.Light;
+			itemdynlightmodes.Name = "itemdynlightmodes";
+			itemdynlightmodes.Size = new Size(273, 22);
+			itemdynlightmodes.Text = "Dynamic light rendering mode";
+			itemdynlightmodes.DropDownItems.AddRange(new ToolStripItem[] {
+				itemnodynlights,
+				itemdynlights,
+				itemdynlightsanim
+			});
+
+			itemmodelmodes.Image = global::CodeImp.DoomBuilder.Properties.Resources.Model;
+			itemmodelmodes.Name = "itemmodelmodes";
+			itemmodelmodes.Size = new Size(273, 22);
+			itemmodelmodes.Text = "Model rendering mode";
+			itemmodelmodes.DropDownItems.AddRange(new ToolStripItem[] {
+				itemnomdl,
+				itemselmdl,
+				itemfiltermdl,
+				itemallmdl
+			});
+
+			toolbarContextMenu.Name = "toolbarContextMenu";
+			toolbarContextMenu.Size = new Size(227, 224);
+			toolbarContextMenu.ImageScalingSize = MainForm.ScaledIconSize;
+			toolbarContextMenu.Opening += new System.ComponentModel.CancelEventHandler(toolbarContextMenu_Opening);
+			toolbarContextMenu.Closing += new ToolStripDropDownClosingEventHandler(toolbarContextMenu_Closing);
+			toolbarContextMenu.Items.AddRange(new ToolStripItem[] {
+				toggleFile,
+				toggleScript,
+				toggleUndo,
+				toggleCopy,
+				togglePrefabs,
+				toggleFilter,
+				toggleViewModes,
+				toggleGeometry,
+				toggleTesting,
+				toggleRendering
+			});
+
+			buttongrid.AutoToolTip = false;
+			buttongrid.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttongrid.Image = global::CodeImp.DoomBuilder.Properties.Resources.Grid2_arrowup;
+			buttongrid.ImageScaling = ToolStripItemImageScaling.None;
+			buttongrid.ImageTransparentColor = Color.Transparent;
+			buttongrid.Name = "buttongrid";
+			buttongrid.ShowDropDownArrow = false;
+			buttongrid.Size = new Size(29, 21);
+			buttongrid.Text = "Grid";
+			buttongrid.DropDownItems.AddRange(new ToolStripItem[] {
+				itemgrid1024,
+				itemgrid512,
+				itemgrid256,
+				itemgrid128,
+				itemgrid64,
+				itemgrid32,
+				itemgrid16,
+				itemgrid8,
+				itemgrid4,
+				itemgrid1,
+				itemgrid05,
+				itemgrid025,
+				itemgrid0125,
+				toolStripMenuItem4,
+				itemgridcustom
+			});
+
+			buttonzoom.AutoToolTip = false;
+			buttonzoom.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonzoom.Image = global::CodeImp.DoomBuilder.Properties.Resources.Zoom_arrowup;
+			buttonzoom.ImageScaling = ToolStripItemImageScaling.None;
+			buttonzoom.ImageTransparentColor = Color.Transparent;
+			buttonzoom.Name = "buttonzoom";
+			buttonzoom.ShowDropDownArrow = false;
+			buttonzoom.Size = new Size(29, 21);
+			buttonzoom.Text = "Zoom";
+			buttonzoom.DropDownItems.AddRange(new ToolStripItem[] {
+				itemzoom800,
+				itemzoom400,
+				itemzoom200,
+				itemzoom100,
+				itemzoom50,
+				itemzoom25,
+				itemzoom10,
+				itemzoom5,
+				toolStripSeparator2,
+				itemzoomfittoscreen
+			});
+
+			dynamiclightmode.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			dynamiclightmode.Image = global::CodeImp.DoomBuilder.Properties.Resources.Light;
+			dynamiclightmode.ImageTransparentColor = Color.Magenta;
+			dynamiclightmode.Name = "dynamiclightmode";
+			dynamiclightmode.Size = new Size(32, 20);
+			dynamiclightmode.Tag = "builder_gztogglelights";
+			dynamiclightmode.Text = "Dynamic light mode";
+			dynamiclightmode.ButtonClick += new EventHandler(InvokeTaggedAction);
+			dynamiclightmode.DropDownItems.AddRange(new ToolStripItem[] {
+				sightsdontshow,
+				lightsshow,
+				lightsshowanimated
+			});
+
+			modelrendermode.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			modelrendermode.Image = global::CodeImp.DoomBuilder.Properties.Resources.Model;
+			modelrendermode.ImageTransparentColor = Color.Magenta;
+			modelrendermode.Name = "modelrendermode";
+			modelrendermode.Size = new Size(32, 20);
+			modelrendermode.Tag = "builder_gztogglemodels";
+			modelrendermode.Text = "Model rendering mode";
+			modelrendermode.ButtonClick += new EventHandler(InvokeTaggedAction);
+			modelrendermode.DropDownItems.AddRange(new ToolStripItem[] {
+				modelsdontshow,
+				modelsshowselection,
+				modelsshowfiltered,
+				modelsshowall
+			});
+
+			toolbar.AutoSize = false;
+			toolbar.ImageScalingSize = MainForm.ScaledIconSize;
+			toolbar.ContextMenuStrip = toolbarContextMenu;
+			toolbar.GripStyle = ToolStripGripStyle.Hidden;
+			toolbar.Items.AddRange(new ToolStripItem[] {
+				buttonnewmap,
+				buttonopenmap,
+				buttonsavemap,
+				seperatorfile,
+				buttonscripteditor,
+				seperatorscript,
+				buttonundo,
+				buttonredo,
+				seperatorundo,
+				buttoncut,
+				buttoncopy,
+				buttonpaste,
+				seperatorcopypaste,
+				buttoninsertprefabfile,
+				buttoninsertpreviousprefab,
+				seperatorprefabs,
+				buttonthingsfilter,
+				thingfilters,
+				separatorlinecolors,
+				buttonlinededfcolors,
+				linedefcolorpresets,
+				separatorfilters,
+				buttonfullbrightness,
+				buttontogglegrid,
+				buttontogglecomments,
+				buttontogglefixedthingsscale,
+				separatorfullbrightness,
+				buttonviewnormal,
+				buttonviewbrightness,
+				buttonviewfloors,
+				buttonviewceilings,
+				separatorgeomergemodes,
+				buttonmergegeoclassic,
+				buttonmergegeo,
+				buttonplacegeo,
+				seperatorviews,
+				buttonsnaptogrid,
+				buttontoggledynamicgrid,
+				buttonautomerge,
+				buttonsplitjoinedsectors,
+				buttonautoclearsidetextures,
+				seperatorgeometry,
+				dynamiclightmode,
+				modelrendermode,
+				buttontogglefog,
+				buttontogglesky,
+				buttontoggleeventlines,
+				buttontogglevisualvertices,
+				separatorgzmodes,
+				buttontest,
+				seperatortesting
+			});
+			toolbar.Location = new Point(0, 24);
+			toolbar.Name = "toolbar";
+			toolbar.Size = new Size(1012, 25);
+			toolbar.TabIndex = 1;
+
+			statusbar.Font = new Font("Verdana", 8.25F, FontStyle.Bold, GraphicsUnit.Point, ((byte)(0)));
+			statusbar.Location = new Point(0, 670);
+			statusbar.Name = "statusbar";
+			statusbar.ShowItemToolTips = true;
+			statusbar.Size = new Size(1012, 23);
+			statusbar.ImageScalingSize = MainForm.ScaledIconSize;
+			statusbar.TabIndex = 2;
+			statusbar.Items.AddRange(new ToolStripItem[] {
+				statuslabel,
+				configlabel,
+				toolStripSeparator12,
+				gridlabel,
+				buttongrid,
+				toolStripSeparator1,
+				zoomlabel,
+				buttonzoom,
+				toolStripSeparator3,
+				xposlabel,
+				poscommalabel,
+				yposlabel,
+				toolStripSeparator9,
+				warnsLabel
+			});
+
+
+			// 
+			// seperatorfileopen
+			// 
+			seperatorfileopen.Margin = new Padding(0, 3, 0, 3);
+			seperatorfileopen.Name = "seperatorfileopen";
+			seperatorfileopen.Size = new Size(222, 6);
+			// 
+			// seperatorfilerecent
+			// 
+			seperatorfilerecent.Margin = new Padding(0, 3, 0, 3);
+			seperatorfilerecent.Name = "seperatorfilerecent";
+			seperatorfilerecent.Size = new Size(222, 6);
+			// 
+			// seperatoreditgrid
+			// 
+			seperatoreditgrid.Margin = new Padding(0, 3, 0, 3);
+			seperatoreditgrid.Name = "seperatoreditgrid";
+			seperatoreditgrid.Size = new Size(216, 6);
+			// 
+			// seperatoreditcopypaste
+			// 
+			seperatoreditcopypaste.Margin = new Padding(0, 3, 0, 3);
+			seperatoreditcopypaste.Name = "seperatoreditcopypaste";
+			seperatoreditcopypaste.Size = new Size(216, 6);
+			// 
+			// seperatorfile
+			// 
+			seperatorfile.Margin = new Padding(6, 0, 6, 0);
+			seperatorfile.Name = "seperatorfile";
+			seperatorfile.Size = new Size(6, 25);
+			// 
+			// seperatorscript
+			// 
+			seperatorscript.Margin = new Padding(6, 0, 6, 0);
+			seperatorscript.Name = "seperatorscript";
+			seperatorscript.Size = new Size(6, 25);
+			// 
+			// seperatorprefabs
+			// 
+			seperatorprefabs.Margin = new Padding(6, 0, 6, 0);
+			seperatorprefabs.Name = "seperatorprefabs";
+			seperatorprefabs.Size = new Size(6, 25);
+			// 
+			// seperatorundo
+			// 
+			seperatorundo.Margin = new Padding(6, 0, 6, 0);
+			seperatorundo.Name = "seperatorundo";
+			seperatorundo.Size = new Size(6, 25);
+			// 
+			// seperatorcopypaste
+			// 
+			seperatorcopypaste.Margin = new Padding(6, 0, 6, 0);
+			seperatorcopypaste.Name = "seperatorcopypaste";
+			seperatorcopypaste.Size = new Size(6, 25);
+			// 
+			// poscommalabel
+			// 
+			poscommalabel.Name = "poscommalabel";
+			poscommalabel.Size = new Size(11, 18);
+			poscommalabel.Tag = "builder_centeroncoordinates";
+			poscommalabel.Text = ",";
+			poscommalabel.ToolTipText = "Current X, Y coordinates on map.\r\nClick to set specific coordinates.";
+			poscommalabel.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemnewmap
+			// 
+			itemnewmap.Image = global::CodeImp.DoomBuilder.Properties.Resources.File;
+			itemnewmap.Name = "itemnewmap";
+			itemnewmap.ShortcutKeyDisplayString = "";
+			itemnewmap.Size = new Size(225, 22);
+			itemnewmap.Tag = "builder_newmap";
+			itemnewmap.Text = "&New Map";
+			itemnewmap.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemopenmap
+			// 
+			itemopenmap.Image = global::CodeImp.DoomBuilder.Properties.Resources.OpenMap;
+			itemopenmap.Name = "itemopenmap";
+			itemopenmap.Size = new Size(225, 22);
+			itemopenmap.Tag = "builder_openmap";
+			itemopenmap.Text = "&Open Map...";
+			itemopenmap.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemopenmapincurwad
+			// 
+			itemopenmapincurwad.Name = "itemopenmapincurwad";
+			itemopenmapincurwad.Size = new Size(225, 22);
+			itemopenmapincurwad.Tag = "builder_openmapincurrentwad";
+			itemopenmapincurwad.Text = "Open Map in Current &WAD...";
+			itemopenmapincurwad.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemclosemap
+			// 
+			itemclosemap.Name = "itemclosemap";
+			itemclosemap.Size = new Size(225, 22);
+			itemclosemap.Tag = "builder_closemap";
+			itemclosemap.Text = "&Close Map";
+			itemclosemap.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemsavemap
+			// 
+			itemsavemap.Image = global::CodeImp.DoomBuilder.Properties.Resources.SaveMap;
+			itemsavemap.Name = "itemsavemap";
+			itemsavemap.Size = new Size(225, 22);
+			itemsavemap.Tag = "builder_savemap";
+			itemsavemap.Text = "&Save Map";
+			itemsavemap.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemsavemapas
+			// 
+			itemsavemapas.Name = "itemsavemapas";
+			itemsavemapas.Size = new Size(225, 22);
+			itemsavemapas.Tag = "builder_savemapas";
+			itemsavemapas.Text = "Save Map &As...";
+			itemsavemapas.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemsavemapinto
+			// 
+			itemsavemapinto.Name = "itemsavemapinto";
+			itemsavemapinto.Size = new Size(225, 22);
+			itemsavemapinto.Tag = "builder_savemapinto";
+			itemsavemapinto.Text = "Save Map &Into...";
+			itemsavemapinto.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// seperatorfilesave
+			// 
+			seperatorfilesave.Margin = new Padding(0, 3, 0, 3);
+			seperatorfilesave.Name = "seperatorfilesave";
+			seperatorfilesave.Size = new Size(222, 6);
+			// 
+			// itemimport
+			// 
+			itemimport.Name = "itemimport";
+			itemimport.Size = new Size(225, 22);
+			itemimport.Text = "Import";
+			// 
+			// itemexport
+			// 
+			itemexport.Name = "itemexport";
+			itemexport.Size = new Size(225, 22);
+			itemexport.Text = "Export";
+			// 
+			// separatorio
+			// 
+			separatorio.Name = "separatorio";
+			separatorio.Size = new Size(222, 6);
+			// 
+			// itemnorecent
+			// 
+			itemnorecent.Enabled = false;
+			itemnorecent.Name = "itemnorecent";
+			itemnorecent.Size = new Size(225, 22);
+			itemnorecent.Text = "No recently opened files";
+			// 
+			// itemexit
+			// 
+			itemexit.Name = "itemexit";
+			itemexit.Size = new Size(225, 22);
+			itemexit.Text = "E&xit";
+			itemexit.Click += new EventHandler(itemexit_Click);
+			// 
+			// menuedit
+			// 
+			// 
+			// itemundo
+			// 
+			itemundo.Image = global::CodeImp.DoomBuilder.Properties.Resources.Undo;
+			itemundo.Name = "itemundo";
+			itemundo.Size = new Size(219, 22);
+			itemundo.Tag = "builder_undo";
+			itemundo.Text = "&Undo";
+			itemundo.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemredo
+			// 
+			itemredo.Image = global::CodeImp.DoomBuilder.Properties.Resources.Redo;
+			itemredo.Name = "itemredo";
+			itemredo.Size = new Size(219, 22);
+			itemredo.Tag = "builder_redo";
+			itemredo.Text = "&Redo";
+			itemredo.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// seperatoreditundo
+			// 
+			seperatoreditundo.Margin = new Padding(0, 3, 0, 3);
+			seperatoreditundo.Name = "seperatoreditundo";
+			seperatoreditundo.Size = new Size(216, 6);
+			// 
+			// itemcut
+			// 
+			itemcut.Image = global::CodeImp.DoomBuilder.Properties.Resources.Cut;
+			itemcut.Name = "itemcut";
+			itemcut.Size = new Size(219, 22);
+			itemcut.Tag = "builder_cutselection";
+			itemcut.Text = "Cu&t";
+			itemcut.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemcopy
+			// 
+			itemcopy.Image = global::CodeImp.DoomBuilder.Properties.Resources.Copy;
+			itemcopy.Name = "itemcopy";
+			itemcopy.Size = new Size(219, 22);
+			itemcopy.Tag = "builder_copyselection";
+			itemcopy.Text = "&Copy";
+			itemcopy.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itempaste
+			// 
+			itempaste.Image = global::CodeImp.DoomBuilder.Properties.Resources.Paste;
+			itempaste.Name = "itempaste";
+			itempaste.Size = new Size(219, 22);
+			itempaste.Tag = "builder_pasteselection";
+			itempaste.Text = "&Paste";
+			itempaste.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itempastespecial
+			// 
+			itempastespecial.Image = global::CodeImp.DoomBuilder.Properties.Resources.PasteSpecial;
+			itempastespecial.Name = "itempastespecial";
+			itempastespecial.Size = new Size(219, 22);
+			itempastespecial.Tag = "builder_pasteselectionspecial";
+			itempastespecial.Text = "Paste Special...";
+			itempastespecial.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemsnaptogrid
+			// 
+			itemsnaptogrid.Checked = true;
+			itemsnaptogrid.CheckState = CheckState.Checked;
+			itemsnaptogrid.Image = global::CodeImp.DoomBuilder.Properties.Resources.Grid4;
+			itemsnaptogrid.Name = "itemsnaptogrid";
+			itemsnaptogrid.Size = new Size(219, 22);
+			itemsnaptogrid.Tag = "builder_togglesnap";
+			itemsnaptogrid.Text = "&Snap to Grid";
+			itemsnaptogrid.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemautomerge
+			// 
+			itemautomerge.Checked = true;
+			itemautomerge.CheckState = CheckState.Checked;
+			itemautomerge.Image = global::CodeImp.DoomBuilder.Properties.Resources.mergegeometry2;
+			itemautomerge.Name = "itemautomerge";
+			itemautomerge.Size = new Size(219, 22);
+			itemautomerge.Tag = "builder_toggleautomerge";
+			itemautomerge.Text = "Snap to &Geometry";
+			itemautomerge.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemsplitjoinedsectors
+			// 
+			itemsplitjoinedsectors.Checked = true;
+			itemsplitjoinedsectors.CheckState = CheckState.Checked;
+			itemsplitjoinedsectors.Image = global::CodeImp.DoomBuilder.Properties.Resources.SplitSectors;
+			itemsplitjoinedsectors.Name = "itemsplitjoinedsectors";
+			itemsplitjoinedsectors.Size = new Size(219, 22);
+			itemsplitjoinedsectors.Tag = "builder_togglejoinedsectorssplitting";
+			itemsplitjoinedsectors.Text = "Split &Joined Sectors when Drawing Lines";
+			itemsplitjoinedsectors.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemautoclearsidetextures
+			// 
+			itemautoclearsidetextures.Checked = true;
+			itemautoclearsidetextures.CheckState = CheckState.Checked;
+			itemautoclearsidetextures.Image = global::CodeImp.DoomBuilder.Properties.Resources.ClearTextures;
+			itemautoclearsidetextures.Name = "itemautoclearsidetextures";
+			itemautoclearsidetextures.Size = new Size(219, 22);
+			itemautoclearsidetextures.Tag = "builder_toggleautoclearsidetextures";
+			itemautoclearsidetextures.Text = "&Auto Clear Sidedef Textures";
+			itemautoclearsidetextures.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// seperatoreditgeometry
+			// 
+			seperatoreditgeometry.Margin = new Padding(0, 3, 0, 3);
+			seperatoreditgeometry.Name = "seperatoreditgeometry";
+			seperatoreditgeometry.Size = new Size(216, 6);
+			// 
+			// itemgridinc
+			// 
+			itemgridinc.Image = global::CodeImp.DoomBuilder.Properties.Resources.GridIncrease;
+			itemgridinc.Name = "itemgridinc";
+			itemgridinc.Size = new Size(219, 22);
+			itemgridinc.Tag = "builder_griddec";
+			itemgridinc.Text = "&Increase Grid Size";
+			itemgridinc.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemgriddec
+			// 
+			itemgriddec.Image = global::CodeImp.DoomBuilder.Properties.Resources.GridDecrease;
+			itemgriddec.Name = "itemgriddec";
+			itemgriddec.Size = new Size(219, 22);
+			itemgriddec.Tag = "builder_gridinc";
+			itemgriddec.Text = "&Decrease Grid Size";
+			itemgriddec.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemdosnaptogrid
+			// 
+			itemdosnaptogrid.Image = global::CodeImp.DoomBuilder.Properties.Resources.SnapVerts;
+			itemdosnaptogrid.Name = "itemdosnaptogrid";
+			itemdosnaptogrid.Size = new Size(219, 22);
+			itemdosnaptogrid.Tag = "builder_snapvertstogrid";
+			itemdosnaptogrid.Text = "Snap Selection to Grid";
+			itemdosnaptogrid.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemgridsetup
+			// 
+			itemgridsetup.Image = global::CodeImp.DoomBuilder.Properties.Resources.Grid2;
+			itemgridsetup.Name = "itemgridsetup";
+			itemgridsetup.Size = new Size(219, 22);
+			itemgridsetup.Tag = "builder_gridsetup";
+			itemgridsetup.Text = "&Grid and Backdrop Setup...";
+			itemgridsetup.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// addToGroup
+			// 
+			addToGroup.Image = global::CodeImp.DoomBuilder.Properties.Resources.GroupAdd;
+			addToGroup.Name = "addToGroup";
+			addToGroup.Size = new Size(219, 22);
+			addToGroup.Text = "Add Selection to Group";
+			// 
+			// selectGroup
+			// 
+			selectGroup.Image = global::CodeImp.DoomBuilder.Properties.Resources.Group;
+			selectGroup.Name = "selectGroup";
+			selectGroup.Size = new Size(219, 22);
+			selectGroup.Text = "Select Group";
+			// 
+			// clearGroup
+			// 
+			clearGroup.Image = global::CodeImp.DoomBuilder.Properties.Resources.GroupRemove;
+			clearGroup.Name = "clearGroup";
+			clearGroup.Size = new Size(219, 22);
+			clearGroup.Text = "Clear Group";
+			// 
+			// itemmapoptions
+			// 
+			itemmapoptions.Image = global::CodeImp.DoomBuilder.Properties.Resources.Properties;
+			itemmapoptions.Name = "itemmapoptions";
+			itemmapoptions.Size = new Size(219, 22);
+			itemmapoptions.Tag = "builder_mapoptions";
+			itemmapoptions.Text = "Map &Options...";
+			itemmapoptions.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemviewusedtags
+			// 
+			itemviewusedtags.Image = global::CodeImp.DoomBuilder.Properties.Resources.TagStatistics;
+			itemviewusedtags.Name = "itemviewusedtags";
+			itemviewusedtags.Size = new Size(219, 22);
+			itemviewusedtags.Tag = "builder_viewusedtags";
+			itemviewusedtags.Text = "View Used Tags...";
+			itemviewusedtags.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemviewthingtypes
+			// 
+			itemviewthingtypes.Image = global::CodeImp.DoomBuilder.Properties.Resources.ThingStatistics;
+			itemviewthingtypes.Name = "itemviewthingtypes";
+			itemviewthingtypes.Size = new Size(219, 22);
+			itemviewthingtypes.Tag = "builder_viewthingtypes";
+			itemviewthingtypes.Text = "View Thing Types...";
+			itemviewthingtypes.Click += new EventHandler(InvokeTaggedAction);
+
+			// 
+			// itemthingsfilter
+			// 
+			itemthingsfilter.Image = global::CodeImp.DoomBuilder.Properties.Resources.Filter;
+			itemthingsfilter.Name = "itemthingsfilter";
+			itemthingsfilter.Size = new Size(215, 22);
+			itemthingsfilter.Tag = "builder_thingsfilterssetup";
+			itemthingsfilter.Text = "Configure &Things Filters...";
+			itemthingsfilter.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemlinedefcolors
+			// 
+			itemlinedefcolors.Image = global::CodeImp.DoomBuilder.Properties.Resources.LinedefColorPresets;
+			itemlinedefcolors.Name = "itemlinedefcolors";
+			itemlinedefcolors.Size = new Size(215, 22);
+			itemlinedefcolors.Tag = "builder_linedefcolorssetup";
+			itemlinedefcolors.Text = "Configure &Linedef Colors...";
+			itemlinedefcolors.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// seperatorviewthings
+			// 
+			seperatorviewthings.Margin = new Padding(0, 3, 0, 3);
+			seperatorviewthings.Name = "seperatorviewthings";
+			seperatorviewthings.Size = new Size(212, 6);
+			// 
+			// itemviewnormal
+			// 
+			itemviewnormal.Image = global::CodeImp.DoomBuilder.Properties.Resources.ViewNormal;
+			itemviewnormal.Name = "itemviewnormal";
+			itemviewnormal.Size = new Size(215, 22);
+			itemviewnormal.Tag = "builder_viewmodenormal";
+			itemviewnormal.Text = "&Wireframe";
+			itemviewnormal.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemviewbrightness
+			// 
+			itemviewbrightness.Image = global::CodeImp.DoomBuilder.Properties.Resources.ViewBrightness;
+			itemviewbrightness.Name = "itemviewbrightness";
+			itemviewbrightness.Size = new Size(215, 22);
+			itemviewbrightness.Tag = "builder_viewmodebrightness";
+			itemviewbrightness.Text = "&Brightness Levels";
+			itemviewbrightness.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemviewfloors
+			// 
+			itemviewfloors.Image = global::CodeImp.DoomBuilder.Properties.Resources.ViewTextureFloor;
+			itemviewfloors.Name = "itemviewfloors";
+			itemviewfloors.Size = new Size(215, 22);
+			itemviewfloors.Tag = "builder_viewmodefloors";
+			itemviewfloors.Text = "&Floor Textures";
+			itemviewfloors.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemviewceilings
+			// 
+			itemviewceilings.Image = global::CodeImp.DoomBuilder.Properties.Resources.ViewTextureCeiling;
+			itemviewceilings.Name = "itemviewceilings";
+			itemviewceilings.Size = new Size(215, 22);
+			itemviewceilings.Tag = "builder_viewmodeceilings";
+			itemviewceilings.Text = "&Ceiling Textures";
+			itemviewceilings.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// seperatorviewviews
+			// 
+			seperatorviewviews.Name = "seperatorviewviews";
+			seperatorviewviews.Size = new Size(212, 6);
+			// 
+			// itemmergegeoclassic
+			// 
+			itemmergegeoclassic.Image = global::CodeImp.DoomBuilder.Properties.Resources.MergeGeoClassic;
+			itemmergegeoclassic.Name = "itemmergegeoclassic";
+			itemmergegeoclassic.Size = new Size(215, 22);
+			itemmergegeoclassic.Tag = "builder_geomergeclassic";
+			itemmergegeoclassic.Text = "Merge Dragged Vertices Only";
+			itemmergegeoclassic.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemmergegeo
+			// 
+			itemmergegeo.Image = global::CodeImp.DoomBuilder.Properties.Resources.MergeGeo;
+			itemmergegeo.Name = "itemmergegeo";
+			itemmergegeo.Size = new Size(215, 22);
+			itemmergegeo.Tag = "builder_geomerge";
+			itemmergegeo.Text = "Merge Dragged Geometry";
+			itemmergegeo.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemreplacegeo
+			// 
+			itemreplacegeo.Image = global::CodeImp.DoomBuilder.Properties.Resources.MergeGeoRemoveLines;
+			itemreplacegeo.Name = "itemreplacegeo";
+			itemreplacegeo.Size = new Size(215, 22);
+			itemreplacegeo.Tag = "builder_georeplace";
+			itemreplacegeo.Text = "Replace with Dragged Geometry";
+			itemreplacegeo.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// separatorgeomerge
+			// 
+			separatorgeomerge.Name = "separatorgeomerge";
+			separatorgeomerge.Size = new Size(212, 6);
+			// 
+			// itemfullbrightness
+			// 
+			itemfullbrightness.Checked = true;
+			itemfullbrightness.CheckOnClick = true;
+			itemfullbrightness.CheckState = CheckState.Checked;
+			itemfullbrightness.Image = global::CodeImp.DoomBuilder.Properties.Resources.Brightness;
+			itemfullbrightness.Name = "itemfullbrightness";
+			itemfullbrightness.Size = new Size(215, 22);
+			itemfullbrightness.Tag = "builder_togglebrightness";
+			itemfullbrightness.Text = "Full Brightness";
+			itemfullbrightness.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemtogglegrid
+			// 
+			itemtogglegrid.Checked = true;
+			itemtogglegrid.CheckOnClick = true;
+			itemtogglegrid.CheckState = CheckState.Checked;
+			itemtogglegrid.Image = global::CodeImp.DoomBuilder.Properties.Resources.Grid2;
+			itemtogglegrid.Name = "itemtogglegrid";
+			itemtogglegrid.Size = new Size(215, 22);
+			itemtogglegrid.Tag = "builder_togglegrid";
+			itemtogglegrid.Text = "&Render Grid";
+			itemtogglegrid.Click += new EventHandler(InvokeTaggedAction);
+
+			// 
+			// itemaligngridtolinedef
+			//
+			itemaligngridtolinedef.Name = "itemaligngridtolinedef";
+			itemaligngridtolinedef.Size = new Size(215, 22);
+			itemaligngridtolinedef.Tag = "builder_aligngridtolinedef";
+			itemaligngridtolinedef.Text = "Align Grid To Selected Linedef";
+			itemaligngridtolinedef.Click += new EventHandler(InvokeTaggedAction);
+
+			// 
+			// itemsetgridorigintovertex
+			//
+			itemsetgridorigintovertex.Name = "itemsetgridorigintovertex";
+			itemsetgridorigintovertex.Size = new Size(215, 22);
+			itemsetgridorigintovertex.Tag = "builder_setgridorigintovertex";
+			itemsetgridorigintovertex.Text = "Set Grid Origin To Selected Vertex";
+			itemsetgridorigintovertex.Click += new EventHandler(InvokeTaggedAction);
+
+			// 
+			// itemresetgrid
+			//
+			itemresetgrid.Name = "itemresetgrid";
+			itemresetgrid.Size = new Size(215, 22);
+			itemresetgrid.Tag = "builder_resetgrid";
+			itemresetgrid.Text = "Reset Grid Transform";
+			itemresetgrid.Click += new EventHandler(InvokeTaggedAction);
+
+			// 
+			// item2zoom800
+			// 
+			item2zoom800.Name = "item2zoom800";
+			item2zoom800.Size = new Size(102, 22);
+			item2zoom800.Tag = "800";
+			item2zoom800.Text = "800%";
+			item2zoom800.Click += new EventHandler(itemzoomto_Click);
+			// 
+			// item2zoom400
+			// 
+			item2zoom400.Name = "item2zoom400";
+			item2zoom400.Size = new Size(102, 22);
+			item2zoom400.Tag = "400";
+			item2zoom400.Text = "400%";
+			item2zoom400.Click += new EventHandler(itemzoomto_Click);
+			// 
+			// item2zoom200
+			// 
+			item2zoom200.Name = "item2zoom200";
+			item2zoom200.Size = new Size(102, 22);
+			item2zoom200.Tag = "200";
+			item2zoom200.Text = "200%";
+			item2zoom200.Click += new EventHandler(itemzoomto_Click);
+			// 
+			// item2zoom100
+			// 
+			item2zoom100.Name = "item2zoom100";
+			item2zoom100.Size = new Size(102, 22);
+			item2zoom100.Tag = "100";
+			item2zoom100.Text = "100%";
+			item2zoom100.Click += new EventHandler(itemzoomto_Click);
+			// 
+			// item2zoom50
+			// 
+			item2zoom50.Name = "item2zoom50";
+			item2zoom50.Size = new Size(102, 22);
+			item2zoom50.Tag = "50";
+			item2zoom50.Text = "50%";
+			item2zoom50.Click += new EventHandler(itemzoomto_Click);
+			// 
+			// item2zoom25
+			// 
+			item2zoom25.Name = "item2zoom25";
+			item2zoom25.Size = new Size(102, 22);
+			item2zoom25.Tag = "25";
+			item2zoom25.Text = "25%";
+			item2zoom25.Click += new EventHandler(itemzoomto_Click);
+			// 
+			// item2zoom10
+			// 
+			item2zoom10.Name = "item2zoom10";
+			item2zoom10.Size = new Size(102, 22);
+			item2zoom10.Tag = "10";
+			item2zoom10.Text = "10%";
+			item2zoom10.Click += new EventHandler(itemzoomto_Click);
+			// 
+			// item2zoom5
+			// 
+			item2zoom5.Name = "item2zoom5";
+			item2zoom5.Size = new Size(102, 22);
+			item2zoom5.Tag = "5";
+			item2zoom5.Text = "5%";
+			item2zoom5.Click += new EventHandler(itemzoomto_Click);
+			// 
+			// itemgotocoords
+			// 
+			itemgotocoords.Name = "itemgotocoords";
+			itemgotocoords.Size = new Size(215, 22);
+			itemgotocoords.Tag = "builder_centeroncoordinates";
+			itemgotocoords.Text = "Go To Coordinates...";
+			itemgotocoords.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemfittoscreen
+			// 
+			itemfittoscreen.Name = "itemfittoscreen";
+			itemfittoscreen.Size = new Size(215, 22);
+			itemfittoscreen.Tag = "builder_centerinscreen";
+			itemfittoscreen.Text = "Fit to Screen";
+			itemfittoscreen.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemtoggleinfo
+			// 
+			itemtoggleinfo.Name = "itemtoggleinfo";
+			itemtoggleinfo.Size = new Size(215, 22);
+			itemtoggleinfo.Tag = "builder_toggleinfopanel";
+			itemtoggleinfo.Text = "&Expanded Info Panel";
+			itemtoggleinfo.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// seperatorviewzoom
+			// 
+			seperatorviewzoom.Margin = new Padding(0, 3, 0, 3);
+			seperatorviewzoom.Name = "seperatorviewzoom";
+			seperatorviewzoom.Size = new Size(212, 6);
+			// 
+			// itemscripteditor
+			// 
+			itemscripteditor.Image = global::CodeImp.DoomBuilder.Properties.Resources.Script2;
+			itemscripteditor.Name = "itemscripteditor";
+			itemscripteditor.Size = new Size(215, 22);
+			itemscripteditor.Tag = "builder_openscripteditor";
+			itemscripteditor.Text = "&Script Editor...";
+			itemscripteditor.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// separatorDrawModes
+			// 
+			separatorDrawModes.Name = "separatorDrawModes";
+			separatorDrawModes.Size = new Size(57, 6);
+			// 
+			// separatorTransformModes
+			// 
+			separatorTransformModes.Name = "separatorTransformModes";
+			separatorTransformModes.Size = new Size(57, 6);
+
+			// 
+			// iteminsertprefabfile
+			// 
+			iteminsertprefabfile.Image = global::CodeImp.DoomBuilder.Properties.Resources.Prefab;
+			iteminsertprefabfile.Name = "iteminsertprefabfile";
+			iteminsertprefabfile.Size = new Size(199, 22);
+			iteminsertprefabfile.Tag = "builder_insertprefabfile";
+			iteminsertprefabfile.Text = "&Insert Prefab from File...";
+			iteminsertprefabfile.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// iteminsertpreviousprefab
+			// 
+			iteminsertpreviousprefab.Image = global::CodeImp.DoomBuilder.Properties.Resources.Prefab2;
+			iteminsertpreviousprefab.Name = "iteminsertpreviousprefab";
+			iteminsertpreviousprefab.Size = new Size(199, 22);
+			iteminsertpreviousprefab.Tag = "builder_insertpreviousprefab";
+			iteminsertpreviousprefab.Text = "Insert &Previous Prefab";
+			iteminsertpreviousprefab.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// seperatorprefabsinsert
+			// 
+			seperatorprefabsinsert.Margin = new Padding(0, 3, 0, 3);
+			seperatorprefabsinsert.Name = "seperatorprefabsinsert";
+			seperatorprefabsinsert.Size = new Size(196, 6);
+			// 
+			// itemcreateprefab
+			// 
+			itemcreateprefab.Name = "itemcreateprefab";
+			itemcreateprefab.Size = new Size(199, 22);
+			itemcreateprefab.Tag = "builder_createprefab";
+			itemcreateprefab.Text = "&Create From Selection...";
+			itemcreateprefab.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemreloadresources
+			// 
+			itemreloadresources.Image = global::CodeImp.DoomBuilder.Properties.Resources.Reload;
+			itemreloadresources.Name = "itemreloadresources";
+			itemreloadresources.Size = new Size(246, 22);
+			itemreloadresources.Tag = "builder_reloadresources";
+			itemreloadresources.Text = "&Reload Resources";
+			itemreloadresources.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemReloadModedef
+			// 
+			itemReloadModedef.Image = global::CodeImp.DoomBuilder.Properties.Resources.Reload;
+			itemReloadModedef.Name = "itemReloadModedef";
+			itemReloadModedef.Size = new Size(246, 22);
+			itemReloadModedef.Tag = "builder_gzreloadmodeldef";
+			itemReloadModedef.Text = "Reload MODELDEF/VOXELDEF";
+			itemReloadModedef.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemReloadGldefs
+			// 
+			itemReloadGldefs.Image = global::CodeImp.DoomBuilder.Properties.Resources.Reload;
+			itemReloadGldefs.Name = "itemReloadGldefs";
+			itemReloadGldefs.Size = new Size(246, 22);
+			itemReloadGldefs.Tag = "builder_gzreloadgldefs";
+			itemReloadGldefs.Text = "Reload GLDEFS";
+			itemReloadGldefs.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemshowerrors
+			// 
+			itemshowerrors.Image = global::CodeImp.DoomBuilder.Properties.Resources.Warning;
+			itemshowerrors.Name = "itemshowerrors";
+			itemshowerrors.Size = new Size(246, 22);
+			itemshowerrors.Tag = "builder_showerrors";
+			itemshowerrors.Text = "&Errors and Warnings...";
+			itemshowerrors.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// seperatortoolsresources
+			// 
+			seperatortoolsresources.Margin = new Padding(0, 3, 0, 3);
+			seperatortoolsresources.Name = "seperatortoolsresources";
+			seperatortoolsresources.Size = new Size(243, 6);
+			// 
+			// configurationToolStripMenuItem
+			// 
+			configurationToolStripMenuItem.Image = global::CodeImp.DoomBuilder.Properties.Resources.Configuration;
+			configurationToolStripMenuItem.Name = "configurationToolStripMenuItem";
+			configurationToolStripMenuItem.Size = new Size(246, 22);
+			configurationToolStripMenuItem.Tag = "builder_configuration";
+			configurationToolStripMenuItem.Text = "&Game Configurations...";
+			configurationToolStripMenuItem.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// preferencesToolStripMenuItem
+			// 
+			preferencesToolStripMenuItem.Image = global::CodeImp.DoomBuilder.Properties.Resources.Preferences;
+			preferencesToolStripMenuItem.Name = "preferencesToolStripMenuItem";
+			preferencesToolStripMenuItem.Size = new Size(246, 22);
+			preferencesToolStripMenuItem.Tag = "builder_preferences";
+			preferencesToolStripMenuItem.Text = "Preferences...";
+			preferencesToolStripMenuItem.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// seperatortoolsconfig
+			// 
+			seperatortoolsconfig.Margin = new Padding(0, 3, 0, 3);
+			seperatortoolsconfig.Name = "seperatortoolsconfig";
+			seperatortoolsconfig.Size = new Size(243, 6);
+			// 
+			// itemsavescreenshot
+			// 
+			itemsavescreenshot.Image = global::CodeImp.DoomBuilder.Properties.Resources.Screenshot;
+			itemsavescreenshot.Name = "itemsavescreenshot";
+			itemsavescreenshot.Size = new Size(246, 22);
+			itemsavescreenshot.Tag = "builder_savescreenshot";
+			itemsavescreenshot.Text = "Save Screenshot";
+			itemsavescreenshot.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemsaveeditareascreenshot
+			// 
+			itemsaveeditareascreenshot.Image = global::CodeImp.DoomBuilder.Properties.Resources.ScreenshotActiveWindow;
+			itemsaveeditareascreenshot.Name = "itemsaveeditareascreenshot";
+			itemsaveeditareascreenshot.Size = new Size(246, 22);
+			itemsaveeditareascreenshot.Tag = "builder_saveeditareascreenshot";
+			itemsaveeditareascreenshot.Text = "Save Screenshot (active window)";
+			itemsaveeditareascreenshot.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// separatortoolsscreenshots
+			// 
+			separatortoolsscreenshots.Name = "separatortoolsscreenshots";
+			separatortoolsscreenshots.Size = new Size(243, 6);
+			// 
+			// itemtestmap
+			// 
+			itemtestmap.Image = global::CodeImp.DoomBuilder.Properties.Resources.Test;
+			itemtestmap.Name = "itemtestmap";
+			itemtestmap.Size = new Size(246, 22);
+			itemtestmap.Tag = "builder_testmap";
+			itemtestmap.Text = "&Test Map";
+			itemtestmap.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemhelprefmanual
+			// 
+			itemhelprefmanual.Image = global::CodeImp.DoomBuilder.Properties.Resources.Help;
+			itemhelprefmanual.Name = "itemhelprefmanual";
+			itemhelprefmanual.Size = new Size(232, 22);
+			itemhelprefmanual.Text = "Reference &Manual";
+			itemhelprefmanual.Click += new EventHandler(itemhelprefmanual_Click);
+			// 
+			// itemShortcutReference
+			// 
+			itemShortcutReference.Image = global::CodeImp.DoomBuilder.Properties.Resources.Keyboard;
+			itemShortcutReference.Name = "itemShortcutReference";
+			itemShortcutReference.Size = new Size(232, 22);
+			itemShortcutReference.Tag = "";
+			itemShortcutReference.Text = "Keyboard Shortcuts Reference";
+			itemShortcutReference.Click += new EventHandler(itemShortcutReference_Click);
+			// 
+			// itemopenconfigfolder
+			//
+			itemopenconfigfolder.Image = global::CodeImp.DoomBuilder.Properties.Resources.FolderExplore;
+			itemopenconfigfolder.Name = "itemopenconfigfolder";
+			itemopenconfigfolder.Size = new Size(232, 22);
+			itemopenconfigfolder.Tag = "";
+			itemopenconfigfolder.Text = "Program Configuration Folder";
+			itemopenconfigfolder.Click += new EventHandler(itemopenconfigfolder_Click);
+			// 
+			// itemhelpeditmode
+			// 
+			itemhelpeditmode.Image = global::CodeImp.DoomBuilder.Properties.Resources.Question;
+			itemhelpeditmode.Name = "itemhelpeditmode";
+			itemhelpeditmode.Size = new Size(232, 22);
+			itemhelpeditmode.Text = "About this &Editing Mode";
+			itemhelpeditmode.Click += new EventHandler(itemhelpeditmode_Click);
+			// 
+			// itemhelpcheckupdates
+			// 
+			itemhelpcheckupdates.Image = global::CodeImp.DoomBuilder.Properties.Resources.Update;
+			itemhelpcheckupdates.Name = "itemhelpcheckupdates";
+			itemhelpcheckupdates.Size = new Size(232, 22);
+			itemhelpcheckupdates.Text = "&Check for updates...";
+			itemhelpcheckupdates.Click += new EventHandler(itemhelpcheckupdates_Click);
+			// 
+			// seperatorhelpmanual
+			// 
+			seperatorhelpmanual.Margin = new Padding(0, 3, 0, 3);
+			seperatorhelpmanual.Name = "seperatorhelpmanual";
+			seperatorhelpmanual.Size = new Size(229, 6);
+			// 
+			// itemhelpissues
+			// 
+			itemhelpissues.Image = global::CodeImp.DoomBuilder.Properties.Resources.Github;
+			itemhelpissues.Name = "itemhelpissues";
+			itemhelpissues.Size = new Size(232, 22);
+			itemhelpissues.Text = "&GitHub issues tracker";
+			itemhelpissues.Click += new EventHandler(itemhelpissues_Click);
+			// 
+			// itemhelpabout
+			// 
+			itemhelpabout.Image = global::CodeImp.DoomBuilder.Properties.Resources.About;
+			itemhelpabout.Name = "itemhelpabout";
+			itemhelpabout.Size = new Size(232, 22);
+			itemhelpabout.Text = "&About Ultimate Doom Builder...";
+			itemhelpabout.Click += new EventHandler(itemhelpabout_Click);
+
+			// 
+			// toggleFile
+			// 
+			toggleFile.Name = "toggleFile";
+			toggleFile.Size = new Size(226, 22);
+			toggleFile.Text = "New / Open / Save";
+			toggleFile.Click += new EventHandler(toggleFile_Click);
+			// 
+			// toggleScript
+			// 
+			toggleScript.Name = "toggleScript";
+			toggleScript.Size = new Size(226, 22);
+			toggleScript.Text = "Script Editor";
+			toggleScript.Click += new EventHandler(toggleScript_Click);
+			// 
+			// toggleUndo
+			// 
+			toggleUndo.Name = "toggleUndo";
+			toggleUndo.Size = new Size(226, 22);
+			toggleUndo.Text = "Undo / Redo";
+			toggleUndo.Click += new EventHandler(toggleUndo_Click);
+			// 
+			// toggleCopy
+			// 
+			toggleCopy.Name = "toggleCopy";
+			toggleCopy.Size = new Size(226, 22);
+			toggleCopy.Text = "Cut / Copy / Paste";
+			toggleCopy.Click += new EventHandler(toggleCopy_Click);
+			// 
+			// togglePrefabs
+			// 
+			togglePrefabs.Name = "togglePrefabs";
+			togglePrefabs.Size = new Size(226, 22);
+			togglePrefabs.Text = "Prefabs";
+			togglePrefabs.Click += new EventHandler(togglePrefabs_Click);
+			// 
+			// toggleFilter
+			// 
+			toggleFilter.Name = "toggleFilter";
+			toggleFilter.Size = new Size(226, 22);
+			toggleFilter.Text = "Things Filter / Linedef Colors";
+			toggleFilter.Click += new EventHandler(toggleFilter_Click);
+			// 
+			// toggleViewModes
+			// 
+			toggleViewModes.Name = "toggleViewModes";
+			toggleViewModes.Size = new Size(226, 22);
+			toggleViewModes.Text = "View Modes";
+			toggleViewModes.Click += new EventHandler(toggleViewModes_Click);
+			// 
+			// toggleGeometry
+			// 
+			toggleGeometry.Name = "toggleGeometry";
+			toggleGeometry.Size = new Size(226, 22);
+			toggleGeometry.Text = "Snap / Merge";
+			toggleGeometry.Click += new EventHandler(toggleGeometry_Click);
+			// 
+			// toggleTesting
+			// 
+			toggleTesting.Name = "toggleTesting";
+			toggleTesting.Size = new Size(226, 22);
+			toggleTesting.Text = "Testing";
+			toggleTesting.Click += new EventHandler(toggleTesting_Click);
+			// 
+			// toggleRendering
+			// 
+			toggleRendering.Name = "toggleRendering";
+			toggleRendering.Size = new Size(226, 22);
+			toggleRendering.Text = "Rendering";
+			toggleRendering.Click += new EventHandler(toggleRendering_Click);
+			// 
+			// buttonnewmap
+			// 
+			buttonnewmap.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonnewmap.Image = global::CodeImp.DoomBuilder.Properties.Resources.NewMap;
+			buttonnewmap.ImageTransparentColor = Color.Magenta;
+			buttonnewmap.Margin = new Padding(6, 1, 0, 2);
+			buttonnewmap.Name = "buttonnewmap";
+			buttonnewmap.Size = new Size(23, 22);
+			buttonnewmap.Tag = "builder_newmap";
+			buttonnewmap.Text = "New Map";
+			buttonnewmap.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttonopenmap
+			// 
+			buttonopenmap.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonopenmap.Image = global::CodeImp.DoomBuilder.Properties.Resources.OpenMap;
+			buttonopenmap.ImageTransparentColor = Color.Magenta;
+			buttonopenmap.Name = "buttonopenmap";
+			buttonopenmap.Size = new Size(23, 22);
+			buttonopenmap.Tag = "builder_openmap";
+			buttonopenmap.Text = "Open Map";
+			buttonopenmap.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttonsavemap
+			// 
+			buttonsavemap.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonsavemap.Image = global::CodeImp.DoomBuilder.Properties.Resources.SaveMap;
+			buttonsavemap.ImageTransparentColor = Color.Magenta;
+			buttonsavemap.Name = "buttonsavemap";
+			buttonsavemap.Size = new Size(23, 22);
+			buttonsavemap.Tag = "builder_savemap";
+			buttonsavemap.Text = "Save Map";
+			buttonsavemap.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttonscripteditor
+			// 
+			buttonscripteditor.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonscripteditor.Image = global::CodeImp.DoomBuilder.Properties.Resources.Script2;
+			buttonscripteditor.ImageTransparentColor = Color.Magenta;
+			buttonscripteditor.Name = "buttonscripteditor";
+			buttonscripteditor.Size = new Size(23, 22);
+			buttonscripteditor.Tag = "builder_openscripteditor";
+			buttonscripteditor.Text = "Open Script Editor";
+			buttonscripteditor.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttonundo
+			// 
+			buttonundo.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonundo.Image = global::CodeImp.DoomBuilder.Properties.Resources.Undo;
+			buttonundo.ImageTransparentColor = Color.Magenta;
+			buttonundo.Name = "buttonundo";
+			buttonundo.Size = new Size(23, 22);
+			buttonundo.Tag = "builder_undo";
+			buttonundo.Text = "Undo";
+			buttonundo.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttonredo
+			// 
+			buttonredo.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonredo.Image = global::CodeImp.DoomBuilder.Properties.Resources.Redo;
+			buttonredo.ImageTransparentColor = Color.Magenta;
+			buttonredo.Name = "buttonredo";
+			buttonredo.Size = new Size(23, 22);
+			buttonredo.Tag = "builder_redo";
+			buttonredo.Text = "Redo";
+			buttonredo.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttoncut
+			// 
+			buttoncut.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttoncut.Image = global::CodeImp.DoomBuilder.Properties.Resources.Cut;
+			buttoncut.ImageTransparentColor = Color.Magenta;
+			buttoncut.Name = "buttoncut";
+			buttoncut.Size = new Size(23, 22);
+			buttoncut.Tag = "builder_cutselection";
+			buttoncut.Text = "Cut Selection";
+			buttoncut.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttoncopy
+			// 
+			buttoncopy.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttoncopy.Image = global::CodeImp.DoomBuilder.Properties.Resources.Copy;
+			buttoncopy.ImageTransparentColor = Color.Magenta;
+			buttoncopy.Name = "buttoncopy";
+			buttoncopy.Size = new Size(23, 22);
+			buttoncopy.Tag = "builder_copyselection";
+			buttoncopy.Text = "Copy Selection";
+			buttoncopy.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttonpaste
+			// 
+			buttonpaste.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonpaste.Image = global::CodeImp.DoomBuilder.Properties.Resources.Paste;
+			buttonpaste.ImageTransparentColor = Color.Magenta;
+			buttonpaste.Name = "buttonpaste";
+			buttonpaste.Size = new Size(23, 22);
+			buttonpaste.Tag = "builder_pasteselection";
+			buttonpaste.Text = "Paste Selection";
+			buttonpaste.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttoninsertprefabfile
+			// 
+			buttoninsertprefabfile.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttoninsertprefabfile.Image = global::CodeImp.DoomBuilder.Properties.Resources.Prefab;
+			buttoninsertprefabfile.ImageTransparentColor = Color.Magenta;
+			buttoninsertprefabfile.Name = "buttoninsertprefabfile";
+			buttoninsertprefabfile.Size = new Size(23, 22);
+			buttoninsertprefabfile.Tag = "builder_insertprefabfile";
+			buttoninsertprefabfile.Text = "Insert Prefab from File";
+			buttoninsertprefabfile.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttoninsertpreviousprefab
+			// 
+			buttoninsertpreviousprefab.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttoninsertpreviousprefab.Image = global::CodeImp.DoomBuilder.Properties.Resources.Prefab2;
+			buttoninsertpreviousprefab.ImageTransparentColor = Color.Magenta;
+			buttoninsertpreviousprefab.Name = "buttoninsertpreviousprefab";
+			buttoninsertpreviousprefab.Size = new Size(23, 22);
+			buttoninsertpreviousprefab.Tag = "builder_insertpreviousprefab";
+			buttoninsertpreviousprefab.Text = "Insert Previous Prefab";
+			buttoninsertpreviousprefab.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttonthingsfilter
+			// 
+			buttonthingsfilter.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonthingsfilter.Image = global::CodeImp.DoomBuilder.Properties.Resources.Filter;
+			buttonthingsfilter.ImageTransparentColor = Color.Magenta;
+			buttonthingsfilter.Name = "buttonthingsfilter";
+			buttonthingsfilter.Size = new Size(23, 22);
+			buttonthingsfilter.Tag = "builder_thingsfilterssetup";
+			buttonthingsfilter.Text = "Configure Things Filters";
+			buttonthingsfilter.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// thingfilters
+			// 
+			thingfilters.AutoSize = false;
+			thingfilters.AutoToolTip = false;
+			thingfilters.DisplayStyle = ToolStripItemDisplayStyle.Text;
+			thingfilters.Image = ((Image)(resources.GetObject("thingfilters.Image")));
+			thingfilters.ImageTransparentColor = Color.Magenta;
+			thingfilters.Margin = new Padding(1, 1, 0, 2);
+			thingfilters.Name = "thingfilters";
+			thingfilters.Size = new Size(120, 22);
+			thingfilters.Text = "(show all)";
+			thingfilters.TextAlign = ContentAlignment.MiddleLeft;
+			thingfilters.DropDownClosed += new EventHandler(LoseFocus);
+			// 
+			// separatorlinecolors
+			// 
+			separatorlinecolors.Margin = new Padding(6, 0, 6, 0);
+			separatorlinecolors.Name = "separatorlinecolors";
+			separatorlinecolors.Size = new Size(6, 25);
+			// 
+			// buttonlinededfcolors
+			// 
+			buttonlinededfcolors.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonlinededfcolors.Image = global::CodeImp.DoomBuilder.Properties.Resources.LinedefColorPresets;
+			buttonlinededfcolors.ImageTransparentColor = Color.Magenta;
+			buttonlinededfcolors.Name = "buttonlinededfcolors";
+			buttonlinededfcolors.Size = new Size(23, 22);
+			buttonlinededfcolors.Tag = "builder_linedefcolorssetup";
+			buttonlinededfcolors.Text = "Configure Linedef Colors";
+			buttonlinededfcolors.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// linedefcolorpresets
+			// 
+			linedefcolorpresets.AutoSize = false;
+			linedefcolorpresets.AutoToolTip = false;
+			linedefcolorpresets.DisplayStyle = ToolStripItemDisplayStyle.Text;
+			linedefcolorpresets.ImageTransparentColor = Color.Magenta;
+			linedefcolorpresets.Margin = new Padding(1, 1, 0, 2);
+			linedefcolorpresets.Name = "linedefcolorpresets";
+			linedefcolorpresets.Size = new Size(120, 22);
+			linedefcolorpresets.Text = "No presets";
+			linedefcolorpresets.TextAlign = ContentAlignment.MiddleLeft;
+			linedefcolorpresets.DropDownItemClicked += new ToolStripItemClickedEventHandler(linedefcolorpresets_DropDownItemClicked);
+			linedefcolorpresets.DropDownClosed += new EventHandler(LoseFocus);
+			linedefcolorpresets.Click += new EventHandler(linedefcolorpresets_MouseLeave);
+			// 
+			// separatorfilters
+			// 
+			separatorfilters.Margin = new Padding(6, 0, 6, 0);
+			separatorfilters.Name = "separatorfilters";
+			separatorfilters.Size = new Size(6, 25);
+			// 
+			// separatorrendering
+			// 
+			separatorrendering.Name = "separatorrendering";
+			separatorrendering.Size = new Size(270, 6);
+			// 
+			// itemnodynlights
+			// 
+			itemnodynlights.CheckOnClick = true;
+			itemnodynlights.Image = global::CodeImp.DoomBuilder.Properties.Resources.LightDisabled;
+			itemnodynlights.Name = "itemnodynlights";
+			itemnodynlights.Size = new Size(237, 22);
+			itemnodynlights.Tag = 0;
+			itemnodynlights.Text = "Don\'t show dynamic lights";
+			itemnodynlights.Click += new EventHandler(ChangeLightRenderingMode);
+			// 
+			// itemdynlights
+			// 
+			itemdynlights.CheckOnClick = true;
+			itemdynlights.Image = global::CodeImp.DoomBuilder.Properties.Resources.Light;
+			itemdynlights.Name = "itemdynlights";
+			itemdynlights.Size = new Size(237, 22);
+			itemdynlights.Tag = 1;
+			itemdynlights.Text = "Show dynamic lights";
+			itemdynlights.Click += new EventHandler(ChangeLightRenderingMode);
+			// 
+			// itemdynlightsanim
+			// 
+			itemdynlightsanim.CheckOnClick = true;
+			itemdynlightsanim.Image = global::CodeImp.DoomBuilder.Properties.Resources.Light_animate;
+			itemdynlightsanim.Name = "itemdynlightsanim";
+			itemdynlightsanim.Size = new Size(237, 22);
+			itemdynlightsanim.Tag = 2;
+			itemdynlightsanim.Text = "Show animated dynamic lights";
+			itemdynlightsanim.Click += new EventHandler(ChangeLightRenderingMode);
+			// 
+			// itemnomdl
+			// 
+			itemnomdl.CheckOnClick = true;
+			itemnomdl.Image = global::CodeImp.DoomBuilder.Properties.Resources.ModelDisabled;
+			itemnomdl.Name = "itemnomdl";
+			itemnomdl.Size = new Size(298, 22);
+			itemnomdl.Tag = 0;
+			itemnomdl.Text = "Don\'t show models";
+			itemnomdl.Click += new EventHandler(ChangeModelRenderingMode);
+			// 
+			// itemselmdl
+			// 
+			itemselmdl.CheckOnClick = true;
+			itemselmdl.Image = global::CodeImp.DoomBuilder.Properties.Resources.Model_selected;
+			itemselmdl.Name = "itemselmdl";
+			itemselmdl.Size = new Size(298, 22);
+			itemselmdl.Tag = 1;
+			itemselmdl.Text = "Show models for selected Things only";
+			itemselmdl.Click += new EventHandler(ChangeModelRenderingMode);
+			// 
+			// itemfiltermdl
+			// 
+			itemfiltermdl.CheckOnClick = true;
+			itemfiltermdl.Image = global::CodeImp.DoomBuilder.Properties.Resources.ModelFiltered;
+			itemfiltermdl.Name = "itemfiltermdl";
+			itemfiltermdl.Size = new Size(298, 22);
+			itemfiltermdl.Tag = 2;
+			itemfiltermdl.Text = "Show models for current Things Filter only";
+			itemfiltermdl.Click += new EventHandler(ChangeModelRenderingMode);
+			// 
+			// itemallmdl
+			// 
+			itemallmdl.CheckOnClick = true;
+			itemallmdl.Image = global::CodeImp.DoomBuilder.Properties.Resources.Model;
+			itemallmdl.Name = "itemallmdl";
+			itemallmdl.Size = new Size(298, 22);
+			itemallmdl.Tag = 3;
+			itemallmdl.Text = "Always show models";
+			itemallmdl.Click += new EventHandler(ChangeModelRenderingMode);
+			// 
+			// itemfog
+			// 
+			itemtogglefog.CheckOnClick = true;
+			itemtogglefog.Image = global::CodeImp.DoomBuilder.Properties.Resources.fog;
+			itemtogglefog.Name = "itemtogglefog";
+			itemtogglefog.Size = new Size(273, 22);
+			itemtogglefog.Tag = "builder_gztogglefog";
+			itemtogglefog.Text = "Render fog (Visual mode)";
+			itemtogglefog.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemsky
+			// 
+			itemtogglesky.CheckOnClick = true;
+			itemtogglesky.Image = global::CodeImp.DoomBuilder.Properties.Resources.Sky;
+			itemtogglesky.Name = "itemtogglesky";
+			itemtogglesky.Size = new Size(273, 22);
+			itemtogglesky.Tag = "builder_gztogglesky";
+			itemtogglesky.Text = "Render sky (Visual mode)";
+			itemtogglesky.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemeventlines
+			// 
+			itemtoggleeventlines.CheckOnClick = true;
+			itemtoggleeventlines.Image = global::CodeImp.DoomBuilder.Properties.Resources.InfoLine;
+			itemtoggleeventlines.Name = "itemtoggleeventlines";
+			itemtoggleeventlines.Size = new Size(273, 22);
+			itemtoggleeventlines.Tag = "builder_gztoggleeventlines";
+			itemtoggleeventlines.Text = "Show Event Lines";
+			itemtoggleeventlines.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemvisualverts
+			// 
+			itemtogglevisualverts.CheckOnClick = true;
+			itemtogglevisualverts.Image = global::CodeImp.DoomBuilder.Properties.Resources.VisualVertices;
+			itemtogglevisualverts.Name = "itemtogglevisualverts";
+			itemtogglevisualverts.Size = new Size(273, 22);
+			itemtogglevisualverts.Tag = "builder_gztogglevisualvertices";
+			itemtogglevisualverts.Text = "Show Editable Vertices (Visual mode)";
+			itemtogglevisualverts.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttonfullbrightness
+			// 
+			buttonfullbrightness.Checked = true;
+			buttonfullbrightness.CheckOnClick = true;
+			buttonfullbrightness.CheckState = CheckState.Checked;
+			buttonfullbrightness.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonfullbrightness.Image = global::CodeImp.DoomBuilder.Properties.Resources.Brightness;
+			buttonfullbrightness.ImageTransparentColor = Color.Magenta;
+			buttonfullbrightness.Name = "buttonfullbrightness";
+			buttonfullbrightness.Size = new Size(23, 22);
+			buttonfullbrightness.Tag = "builder_togglebrightness";
+			buttonfullbrightness.Text = "Full Brightness";
+			buttonfullbrightness.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttontogglegrid
+			// 
+			buttontogglegrid.Checked = true;
+			buttontogglegrid.CheckOnClick = true;
+			buttontogglegrid.CheckState = CheckState.Checked;
+			buttontogglegrid.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttontogglegrid.Image = global::CodeImp.DoomBuilder.Properties.Resources.Grid2;
+			buttontogglegrid.ImageTransparentColor = Color.Magenta;
+			buttontogglegrid.Name = "buttontogglegrid";
+			buttontogglegrid.Size = new Size(23, 22);
+			buttontogglegrid.Tag = "builder_togglegrid";
+			buttontogglegrid.Text = "Render Grid";
+			buttontogglegrid.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttontoggledynamicgrid
+			// 
+			buttontoggledynamicgrid.Checked = true;
+			buttontoggledynamicgrid.CheckOnClick = true;
+			buttontoggledynamicgrid.CheckState = CheckState.Checked;
+			buttontoggledynamicgrid.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttontoggledynamicgrid.Image = global::CodeImp.DoomBuilder.Properties.Resources.GridDynamic;
+			buttontoggledynamicgrid.ImageTransparentColor = Color.Magenta;
+			buttontoggledynamicgrid.Name = "buttontoggledynamicgrid";
+			buttontoggledynamicgrid.Size = new Size(23, 22);
+			buttontoggledynamicgrid.Tag = "builder_toggledynamicgrid";
+			buttontoggledynamicgrid.Text = "Dynamic Grid Size";
+			buttontoggledynamicgrid.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// separatorfullbrightness
+			// 
+			separatorfullbrightness.Margin = new Padding(6, 0, 6, 0);
+			separatorfullbrightness.Name = "separatorfullbrightness";
+			separatorfullbrightness.Size = new Size(6, 25);
+			// 
+			// buttonviewnormal
+			// 
+			buttonviewnormal.CheckOnClick = true;
+			buttonviewnormal.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonviewnormal.Image = global::CodeImp.DoomBuilder.Properties.Resources.ViewNormal;
+			buttonviewnormal.ImageTransparentColor = Color.Magenta;
+			buttonviewnormal.Name = "buttonviewnormal";
+			buttonviewnormal.Size = new Size(23, 22);
+			buttonviewnormal.Tag = "builder_viewmodenormal";
+			buttonviewnormal.Text = "View Wireframe";
+			buttonviewnormal.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttonviewbrightness
+			// 
+			buttonviewbrightness.CheckOnClick = true;
+			buttonviewbrightness.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonviewbrightness.Image = global::CodeImp.DoomBuilder.Properties.Resources.ViewBrightness;
+			buttonviewbrightness.ImageTransparentColor = Color.Magenta;
+			buttonviewbrightness.Name = "buttonviewbrightness";
+			buttonviewbrightness.Size = new Size(23, 22);
+			buttonviewbrightness.Tag = "builder_viewmodebrightness";
+			buttonviewbrightness.Text = "View Brightness Levels";
+			buttonviewbrightness.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttonviewfloors
+			// 
+			buttonviewfloors.CheckOnClick = true;
+			buttonviewfloors.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonviewfloors.Image = global::CodeImp.DoomBuilder.Properties.Resources.ViewTextureFloor;
+			buttonviewfloors.ImageTransparentColor = Color.Magenta;
+			buttonviewfloors.Name = "buttonviewfloors";
+			buttonviewfloors.Size = new Size(23, 22);
+			buttonviewfloors.Tag = "builder_viewmodefloors";
+			buttonviewfloors.Text = "View Floor Textures";
+			buttonviewfloors.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttonviewceilings
+			// 
+			buttonviewceilings.CheckOnClick = true;
+			buttonviewceilings.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonviewceilings.Image = global::CodeImp.DoomBuilder.Properties.Resources.ViewTextureCeiling;
+			buttonviewceilings.ImageTransparentColor = Color.Magenta;
+			buttonviewceilings.Name = "buttonviewceilings";
+			buttonviewceilings.Size = new Size(23, 22);
+			buttonviewceilings.Tag = "builder_viewmodeceilings";
+			buttonviewceilings.Text = "View Ceiling Textures";
+			buttonviewceilings.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// separatorgeomergemodes
+			// 
+			separatorgeomergemodes.Margin = new Padding(6, 0, 6, 0);
+			separatorgeomergemodes.Name = "separatorgeomergemodes";
+			separatorgeomergemodes.Size = new Size(6, 25);
+			// 
+			// buttonmergegeoclassic
+			// 
+			buttonmergegeoclassic.CheckOnClick = true;
+			buttonmergegeoclassic.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonmergegeoclassic.Image = global::CodeImp.DoomBuilder.Properties.Resources.MergeGeoClassic;
+			buttonmergegeoclassic.ImageTransparentColor = Color.Magenta;
+			buttonmergegeoclassic.Name = "buttonmergegeoclassic";
+			buttonmergegeoclassic.Size = new Size(23, 22);
+			buttonmergegeoclassic.Tag = "builder_geomergeclassic";
+			buttonmergegeoclassic.Text = "Merge Dragged Vertices Only";
+			buttonmergegeoclassic.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttonmergegeoclassic
+			// 
+			buttonmergegeo.CheckOnClick = true;
+			buttonmergegeo.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonmergegeo.Image = global::CodeImp.DoomBuilder.Properties.Resources.MergeGeo;
+			buttonmergegeo.ImageTransparentColor = Color.Magenta;
+			buttonmergegeo.Name = "buttonmergegeo";
+			buttonmergegeo.Size = new Size(23, 22);
+			buttonmergegeo.Tag = "builder_geomerge";
+			buttonmergegeo.Text = "Merge Dragged Geometry";
+			buttonmergegeo.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttonmergegeoclassic
+			// 
+			buttonplacegeo.CheckOnClick = true;
+			buttonplacegeo.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonplacegeo.Image = global::CodeImp.DoomBuilder.Properties.Resources.MergeGeoRemoveLines;
+			buttonplacegeo.ImageTransparentColor = Color.Magenta;
+			buttonplacegeo.Name = "buttonmergegeoclassic";
+			buttonplacegeo.Size = new Size(23, 22);
+			buttonplacegeo.Tag = "builder_georeplace";
+			buttonplacegeo.Text = "Replace with Dragged Geometry";
+			buttonplacegeo.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// seperatorviews
+			// 
+			seperatorviews.Margin = new Padding(6, 0, 6, 0);
+			seperatorviews.Name = "seperatorviews";
+			seperatorviews.Size = new Size(6, 25);
+			// 
+			// buttontogglecomments
+			// 
+			buttontogglecomments.Checked = true;
+			buttontogglecomments.CheckState = CheckState.Checked;
+			buttontogglecomments.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttontogglecomments.Image = global::CodeImp.DoomBuilder.Properties.Resources.Comment;
+			buttontogglecomments.ImageTransparentColor = Color.Magenta;
+			buttontogglecomments.Name = "buttontogglecomments";
+			buttontogglecomments.Size = new Size(23, 22);
+			buttontogglecomments.Tag = "builder_togglecomments";
+			buttontogglecomments.Text = "Show Comments";
+			buttontogglecomments.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttontogglefixedthingsscale
+			// 
+			buttontogglefixedthingsscale.Checked = true;
+			buttontogglefixedthingsscale.CheckState = CheckState.Checked;
+			buttontogglefixedthingsscale.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttontogglefixedthingsscale.Image = global::CodeImp.DoomBuilder.Properties.Resources.FixedThingsScale;
+			buttontogglefixedthingsscale.ImageTransparentColor = Color.Magenta;
+			buttontogglefixedthingsscale.Name = "buttontogglefixedthingsscale";
+			buttontogglefixedthingsscale.Size = new Size(23, 22);
+			buttontogglefixedthingsscale.Tag = "builder_togglefixedthingsscale";
+			buttontogglefixedthingsscale.Text = "Fixed Things Scale";
+			buttontogglefixedthingsscale.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttonsnaptogrid
+			// 
+			buttonsnaptogrid.Checked = true;
+			buttonsnaptogrid.CheckState = CheckState.Checked;
+			buttonsnaptogrid.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonsnaptogrid.Image = global::CodeImp.DoomBuilder.Properties.Resources.Grid4;
+			buttonsnaptogrid.ImageTransparentColor = Color.Magenta;
+			buttonsnaptogrid.Name = "buttonsnaptogrid";
+			buttonsnaptogrid.Size = new Size(23, 22);
+			buttonsnaptogrid.Tag = "builder_togglesnap";
+			buttonsnaptogrid.Text = "Snap to Grid";
+			buttonsnaptogrid.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttonautomerge
+			// 
+			buttonautomerge.Checked = true;
+			buttonautomerge.CheckState = CheckState.Checked;
+			buttonautomerge.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonautomerge.Image = global::CodeImp.DoomBuilder.Properties.Resources.mergegeometry2;
+			buttonautomerge.ImageTransparentColor = Color.Magenta;
+			buttonautomerge.Name = "buttonautomerge";
+			buttonautomerge.Size = new Size(23, 22);
+			buttonautomerge.Tag = "builder_toggleautomerge";
+			buttonautomerge.Text = "Snap to Geometry";
+			buttonautomerge.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttonsplitjoinedsectors
+			// 
+			buttonsplitjoinedsectors.Checked = true;
+			buttonsplitjoinedsectors.CheckState = CheckState.Checked;
+			buttonsplitjoinedsectors.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonsplitjoinedsectors.Image = global::CodeImp.DoomBuilder.Properties.Resources.SplitSectors;
+			buttonsplitjoinedsectors.ImageTransparentColor = Color.Magenta;
+			buttonsplitjoinedsectors.Name = "buttonsplitjoinedsectors";
+			buttonsplitjoinedsectors.Size = new Size(23, 22);
+			buttonsplitjoinedsectors.Tag = "builder_togglejoinedsectorssplitting";
+			buttonsplitjoinedsectors.Text = "Split Joined Sectors when Drawing Lines";
+			buttonsplitjoinedsectors.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttonautoclearsidetextures
+			// 
+			buttonautoclearsidetextures.Checked = true;
+			buttonautoclearsidetextures.CheckState = CheckState.Checked;
+			buttonautoclearsidetextures.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttonautoclearsidetextures.Image = global::CodeImp.DoomBuilder.Properties.Resources.ClearTextures;
+			buttonautoclearsidetextures.ImageTransparentColor = Color.Magenta;
+			buttonautoclearsidetextures.Name = "buttonautoclearsidetextures";
+			buttonautoclearsidetextures.Size = new Size(23, 22);
+			buttonautoclearsidetextures.Tag = "builder_toggleautoclearsidetextures";
+			buttonautoclearsidetextures.Text = "Auto Clear Sidedef Textures";
+			buttonautoclearsidetextures.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// seperatorgeometry
+			// 
+			seperatorgeometry.Margin = new Padding(6, 0, 6, 0);
+			seperatorgeometry.Name = "seperatorgeometry";
+			seperatorgeometry.Size = new Size(6, 25);
+			// 
+			// sightsdontshow
+			// 
+			sightsdontshow.CheckOnClick = true;
+			sightsdontshow.Image = global::CodeImp.DoomBuilder.Properties.Resources.LightDisabled;
+			sightsdontshow.Name = "sightsdontshow";
+			sightsdontshow.Size = new Size(237, 22);
+			sightsdontshow.Tag = 0;
+			sightsdontshow.Text = "Don\'t show dynamic lights";
+			sightsdontshow.Click += new EventHandler(ChangeLightRenderingMode);
+			// 
+			// lightsshow
+			// 
+			lightsshow.CheckOnClick = true;
+			lightsshow.Image = global::CodeImp.DoomBuilder.Properties.Resources.Light;
+			lightsshow.Name = "lightsshow";
+			lightsshow.Size = new Size(237, 22);
+			lightsshow.Tag = 1;
+			lightsshow.Text = "Show dynamic lights";
+			lightsshow.Click += new EventHandler(ChangeLightRenderingMode);
+			// 
+			// lightsshowanimated
+			// 
+			lightsshowanimated.CheckOnClick = true;
+			lightsshowanimated.Image = global::CodeImp.DoomBuilder.Properties.Resources.Light_animate;
+			lightsshowanimated.Name = "lightsshowanimated";
+			lightsshowanimated.Size = new Size(237, 22);
+			lightsshowanimated.Tag = 2;
+			lightsshowanimated.Text = "Show animated dynamic lights";
+			lightsshowanimated.Click += new EventHandler(ChangeLightRenderingMode);
+			// 
+			// modelsdontshow
+			// 
+			modelsdontshow.CheckOnClick = true;
+			modelsdontshow.Image = global::CodeImp.DoomBuilder.Properties.Resources.ModelDisabled;
+			modelsdontshow.Name = "modelsdontshow";
+			modelsdontshow.Size = new Size(293, 22);
+			modelsdontshow.Tag = 0;
+			modelsdontshow.Text = "Don\'t show models";
+			modelsdontshow.Click += new EventHandler(ChangeModelRenderingMode);
+			// 
+			// modelsshowselection
+			// 
+			modelsshowselection.CheckOnClick = true;
+			modelsshowselection.Image = global::CodeImp.DoomBuilder.Properties.Resources.Model_selected;
+			modelsshowselection.Name = "modelsshowselection";
+			modelsshowselection.Size = new Size(293, 22);
+			modelsshowselection.Tag = 1;
+			modelsshowselection.Text = "Show models for selected things only";
+			modelsshowselection.Click += new EventHandler(ChangeModelRenderingMode);
+			// 
+			// modelsshowfiltered
+			// 
+			modelsshowfiltered.CheckOnClick = true;
+			modelsshowfiltered.Image = global::CodeImp.DoomBuilder.Properties.Resources.ModelFiltered;
+			modelsshowfiltered.Name = "modelsshowfiltered";
+			modelsshowfiltered.Size = new Size(293, 22);
+			modelsshowfiltered.Tag = 2;
+			modelsshowfiltered.Text = "Show models for current things filter only";
+			modelsshowfiltered.Click += new EventHandler(ChangeModelRenderingMode);
+			// 
+			// modelsshowall
+			// 
+			modelsshowall.CheckOnClick = true;
+			modelsshowall.Image = global::CodeImp.DoomBuilder.Properties.Resources.Model;
+			modelsshowall.Name = "modelsshowall";
+			modelsshowall.Size = new Size(293, 22);
+			modelsshowall.Tag = 3;
+			modelsshowall.Text = "Always show models";
+			modelsshowall.Click += new EventHandler(ChangeModelRenderingMode);
+			// 
+			// buttontogglefog
+			// 
+			buttontogglefog.CheckOnClick = true;
+			buttontogglefog.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttontogglefog.Image = global::CodeImp.DoomBuilder.Properties.Resources.fog;
+			buttontogglefog.ImageTransparentColor = Color.Magenta;
+			buttontogglefog.Name = "buttontogglefog";
+			buttontogglefog.Size = new Size(23, 20);
+			buttontogglefog.Tag = "builder_gztogglefog";
+			buttontogglefog.Text = "Render Fog (Visual mode)";
+			buttontogglefog.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttontogglesky
+			// 
+			buttontogglesky.CheckOnClick = true;
+			buttontogglesky.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttontogglesky.Image = global::CodeImp.DoomBuilder.Properties.Resources.Sky;
+			buttontogglesky.ImageTransparentColor = Color.Magenta;
+			buttontogglesky.Name = "buttontogglesky";
+			buttontogglesky.Size = new Size(23, 20);
+			buttontogglesky.Tag = "builder_gztogglesky";
+			buttontogglesky.Text = "Render Sky (Visual mode)";
+			buttontogglesky.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttontoggleeventlines
+			// 
+			buttontoggleeventlines.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttontoggleeventlines.Image = global::CodeImp.DoomBuilder.Properties.Resources.InfoLine;
+			buttontoggleeventlines.ImageTransparentColor = Color.Magenta;
+			buttontoggleeventlines.Name = "buttontoggleeventlines";
+			buttontoggleeventlines.Size = new Size(23, 20);
+			buttontoggleeventlines.Tag = "builder_gztoggleeventlines";
+			buttontoggleeventlines.Text = "Show Event Lines";
+			buttontoggleeventlines.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// buttontogglevisualvertices
+			// 
+			buttontogglevisualvertices.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttontogglevisualvertices.Image = global::CodeImp.DoomBuilder.Properties.Resources.VisualVertices;
+			buttontogglevisualvertices.ImageTransparentColor = Color.Magenta;
+			buttontogglevisualvertices.Name = "buttontogglevisualvertices";
+			buttontogglevisualvertices.Size = new Size(23, 20);
+			buttontogglevisualvertices.Tag = "builder_gztogglevisualvertices";
+			buttontogglevisualvertices.Text = "Show Editable Vertices (Visual mode)";
+			buttontogglevisualvertices.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// separatorgzmodes
+			// 
+			separatorgzmodes.Margin = new Padding(6, 0, 6, 0);
+			separatorgzmodes.Name = "separatorgzmodes";
+			separatorgzmodes.Size = new Size(6, 25);
+			// 
+			// buttontest
+			// 
+			buttontest.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			buttontest.Image = global::CodeImp.DoomBuilder.Properties.Resources.Test;
+			buttontest.ImageTransparentColor = Color.Magenta;
+			buttontest.Name = "buttontest";
+			buttontest.Size = new Size(32, 20);
+			buttontest.Tag = "builder_testmap";
+			buttontest.Text = "Test Map";
+			buttontest.ButtonClick += new EventHandler(InvokeTaggedAction);
+			// 
+			// seperatortesting
+			// 
+			seperatortesting.Margin = new Padding(6, 0, 6, 0);
+			seperatortesting.Name = "seperatortesting";
+			seperatortesting.Size = new Size(6, 25);
+			// 
+			// statuslabel
+			// 
+			statuslabel.Image = global::CodeImp.DoomBuilder.Properties.Resources.Status2;
+			statuslabel.ImageAlign = ContentAlignment.MiddleLeft;
+			statuslabel.Margin = new Padding(2, 3, 0, 2);
+			statuslabel.Name = "statuslabel";
+			statuslabel.Size = new Size(340, 18);
+			statuslabel.Spring = true;
+			statuslabel.Text = "Initializing user interface...";
+			statuslabel.TextAlign = ContentAlignment.MiddleLeft;
+			// 
+			// configlabel
+			// 
+			configlabel.AutoSize = false;
+			configlabel.Font = new Font("Verdana", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+			configlabel.Name = "configlabel";
+			configlabel.Size = new Size(280, 18);
+			configlabel.Text = "ZDoom (Doom in Hexen Format)";
+			configlabel.TextAlign = ContentAlignment.MiddleRight;
+			configlabel.ToolTipText = "Current Game Configuration";
+			// 
+			// gridlabel
+			// 
+			gridlabel.AutoSize = false;
+			gridlabel.AutoToolTip = true;
+			gridlabel.Name = "gridlabel";
+			gridlabel.Size = new Size(64, 18);
+			gridlabel.Text = "32 mp";
+			gridlabel.TextAlign = ContentAlignment.MiddleRight;
+			gridlabel.TextImageRelation = TextImageRelation.Overlay;
+			gridlabel.ToolTipText = "Grid size";
+			// 
+			// itemgrid1024
+			// 
+			itemgrid1024.Name = "itemgrid1024";
+			itemgrid1024.Size = new Size(153, 22);
+			itemgrid1024.Tag = "1024";
+			itemgrid1024.Text = "1024 mp";
+			itemgrid1024.Click += new EventHandler(itemgridsize_Click);
+			// 
+			// itemgrid512
+			// 
+			itemgrid512.Name = "itemgrid512";
+			itemgrid512.Size = new Size(153, 22);
+			itemgrid512.Tag = "512";
+			itemgrid512.Text = "512 mp";
+			itemgrid512.Click += new EventHandler(itemgridsize_Click);
+			// 
+			// itemgrid256
+			// 
+			itemgrid256.Name = "itemgrid256";
+			itemgrid256.Size = new Size(153, 22);
+			itemgrid256.Tag = "256";
+			itemgrid256.Text = "256 mp";
+			itemgrid256.Click += new EventHandler(itemgridsize_Click);
+			// 
+			// itemgrid128
+			// 
+			itemgrid128.Name = "itemgrid128";
+			itemgrid128.Size = new Size(153, 22);
+			itemgrid128.Tag = "128";
+			itemgrid128.Text = "128 mp";
+			itemgrid128.Click += new EventHandler(itemgridsize_Click);
+			// 
+			// itemgrid64
+			// 
+			itemgrid64.Name = "itemgrid64";
+			itemgrid64.Size = new Size(153, 22);
+			itemgrid64.Tag = "64";
+			itemgrid64.Text = "64 mp";
+			itemgrid64.Click += new EventHandler(itemgridsize_Click);
+			// 
+			// itemgrid32
+			// 
+			itemgrid32.Name = "itemgrid32";
+			itemgrid32.Size = new Size(153, 22);
+			itemgrid32.Tag = "32";
+			itemgrid32.Text = "32 mp";
+			itemgrid32.Click += new EventHandler(itemgridsize_Click);
+			// 
+			// itemgrid16
+			// 
+			itemgrid16.Name = "itemgrid16";
+			itemgrid16.Size = new Size(153, 22);
+			itemgrid16.Tag = "16";
+			itemgrid16.Text = "16 mp";
+			itemgrid16.Click += new EventHandler(itemgridsize_Click);
+			// 
+			// itemgrid8
+			// 
+			itemgrid8.Name = "itemgrid8";
+			itemgrid8.Size = new Size(153, 22);
+			itemgrid8.Tag = "8";
+			itemgrid8.Text = "8 mp";
+			itemgrid8.Click += new EventHandler(itemgridsize_Click);
+			// 
+			// itemgrid4
+			// 
+			itemgrid4.Name = "itemgrid4";
+			itemgrid4.Size = new Size(153, 22);
+			itemgrid4.Tag = "4";
+			itemgrid4.Text = "4 mp";
+			itemgrid4.Click += new EventHandler(itemgridsize_Click);
+			// 
+			// itemgrid1
+			// 
+			itemgrid1.Name = "itemgrid1";
+			itemgrid1.Size = new Size(153, 22);
+			itemgrid1.Tag = "1";
+			itemgrid1.Text = "1 mp";
+			itemgrid1.Click += new EventHandler(itemgridsize_Click);
+			// 
+			// itemgrid05
+			// 
+			itemgrid05.Name = "itemgrid05";
+			itemgrid05.Size = new Size(153, 22);
+			itemgrid05.Tag = "0.5";
+			itemgrid05.Text = "0.5 mp";
+			itemgrid05.Click += new EventHandler(itemgridsize_Click);
+			// 
+			// itemgrid025
+			// 
+			itemgrid025.Name = "itemgrid025";
+			itemgrid025.Size = new Size(153, 22);
+			itemgrid025.Tag = "0.25";
+			itemgrid025.Text = "0.25 mp";
+			itemgrid025.Click += new EventHandler(itemgridsize_Click);
+			// 
+			// itemgrid0125
+			// 
+			itemgrid0125.Name = "itemgrid0125";
+			itemgrid0125.Size = new Size(153, 22);
+			itemgrid0125.Tag = "0.125";
+			itemgrid0125.Text = "0.125 mp";
+			itemgrid0125.Click += new EventHandler(itemgridsize_Click);
+			// 
+			// itemgridcustom
+			// 
+			itemgridcustom.Name = "itemgridcustom";
+			itemgridcustom.Size = new Size(153, 22);
+			itemgridcustom.Text = "Customize...";
+			itemgridcustom.Click += new EventHandler(itemgridcustom_Click);
+			// 
+			// zoomlabel
+			// 
+			zoomlabel.AutoSize = false;
+			zoomlabel.AutoToolTip = true;
+			zoomlabel.Name = "zoomlabel";
+			zoomlabel.Size = new Size(54, 18);
+			zoomlabel.Text = "50%";
+			zoomlabel.TextAlign = ContentAlignment.MiddleRight;
+			zoomlabel.TextImageRelation = TextImageRelation.Overlay;
+			zoomlabel.ToolTipText = "Zoom level";
+			// 
+			// itemzoom800
+			// 
+			itemzoom800.Name = "itemzoom800";
+			itemzoom800.Size = new Size(156, 22);
+			itemzoom800.Tag = "800";
+			itemzoom800.Text = "800%";
+			itemzoom800.Click += new EventHandler(itemzoomto_Click);
+			// 
+			// itemzoom400
+			// 
+			itemzoom400.Name = "itemzoom400";
+			itemzoom400.Size = new Size(156, 22);
+			itemzoom400.Tag = "400";
+			itemzoom400.Text = "400%";
+			itemzoom400.Click += new EventHandler(itemzoomto_Click);
+			// 
+			// itemzoom200
+			// 
+			itemzoom200.Name = "itemzoom200";
+			itemzoom200.Size = new Size(156, 22);
+			itemzoom200.Tag = "200";
+			itemzoom200.Text = "200%";
+			itemzoom200.Click += new EventHandler(itemzoomto_Click);
+			// 
+			// itemzoom100
+			// 
+			itemzoom100.Name = "itemzoom100";
+			itemzoom100.Size = new Size(156, 22);
+			itemzoom100.Tag = "100";
+			itemzoom100.Text = "100%";
+			itemzoom100.Click += new EventHandler(itemzoomto_Click);
+			// 
+			// itemzoom50
+			// 
+			itemzoom50.Name = "itemzoom50";
+			itemzoom50.Size = new Size(156, 22);
+			itemzoom50.Tag = "50";
+			itemzoom50.Text = "50%";
+			itemzoom50.Click += new EventHandler(itemzoomto_Click);
+			// 
+			// itemzoom25
+			// 
+			itemzoom25.Name = "itemzoom25";
+			itemzoom25.Size = new Size(156, 22);
+			itemzoom25.Tag = "25";
+			itemzoom25.Text = "25%";
+			itemzoom25.Click += new EventHandler(itemzoomto_Click);
+			// 
+			// itemzoom10
+			// 
+			itemzoom10.Name = "itemzoom10";
+			itemzoom10.Size = new Size(156, 22);
+			itemzoom10.Tag = "10";
+			itemzoom10.Text = "10%";
+			itemzoom10.Click += new EventHandler(itemzoomto_Click);
+			// 
+			// itemzoom5
+			// 
+			itemzoom5.Name = "itemzoom5";
+			itemzoom5.Size = new Size(156, 22);
+			itemzoom5.Tag = "5";
+			itemzoom5.Text = "5%";
+			itemzoom5.Click += new EventHandler(itemzoomto_Click);
+			// 
+			// itemzoomfittoscreen
+			// 
+			itemzoomfittoscreen.Name = "itemzoomfittoscreen";
+			itemzoomfittoscreen.Size = new Size(156, 22);
+			itemzoomfittoscreen.Text = "Fit to screen";
+			itemzoomfittoscreen.Click += new EventHandler(itemzoomfittoscreen_Click);
+			// 
+			// xposlabel
+			// 
+			xposlabel.AutoSize = false;
+			xposlabel.Name = "xposlabel";
+			xposlabel.Size = new Size(50, 18);
+			xposlabel.Tag = "builder_centeroncoordinates";
+			xposlabel.Text = "0";
+			xposlabel.TextAlign = ContentAlignment.MiddleRight;
+			xposlabel.ToolTipText = "Current X, Y coordinates on map.\r\nClick to set specific coordinates.";
+			xposlabel.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// yposlabel
+			// 
+			yposlabel.AutoSize = false;
+			yposlabel.Name = "yposlabel";
+			yposlabel.Size = new Size(50, 18);
+			yposlabel.Tag = "builder_centeroncoordinates";
+			yposlabel.Text = "0";
+			yposlabel.TextAlign = ContentAlignment.MiddleLeft;
+			yposlabel.ToolTipText = "Current X, Y coordinates on map.\r\nClick to set specific coordinates.";
+			yposlabel.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// warnsLabel
+			// 
+			warnsLabel.AutoSize = false;
+			warnsLabel.Font = new Font("Verdana", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+			warnsLabel.Image = global::CodeImp.DoomBuilder.Properties.Resources.WarningOff;
+			warnsLabel.ImageAlign = ContentAlignment.MiddleRight;
+			warnsLabel.Name = "warnsLabel";
+			warnsLabel.Size = new Size(44, 18);
+			warnsLabel.Text = "0";
+			warnsLabel.TextAlign = ContentAlignment.MiddleRight;
+			warnsLabel.TextImageRelation = TextImageRelation.TextBeforeImage;
+			warnsLabel.Click += new EventHandler(warnsLabel_Click);
+
+			// 
+			// statistics
+			// 
+			statistics.Anchor = ((AnchorStyles)((AnchorStyles.Top | AnchorStyles.Right)));
+			statistics.ForeColor = SystemColors.GrayText;
+			statistics.Location = new Point(849, 2);
+			statistics.Name = "statistics";
+			statistics.Size = new Size(138, 102);
+			statistics.TabIndex = 9;
+			statistics.Visible = false;
+			// 
+			// heightpanel1
+			// 
+			heightpanel1.BackColor = Color.Navy;
+			heightpanel1.ForeColor = SystemColors.ControlText;
+			heightpanel1.Location = new Point(0, 0);
+			heightpanel1.Name = "heightpanel1";
+			heightpanel1.Size = new Size(29, 106);
+			heightpanel1.TabIndex = 7;
+			heightpanel1.Visible = false;
+			// 
+			// labelcollapsedinfo
+			// 
+			labelcollapsedinfo.AutoSize = true;
+			labelcollapsedinfo.Font = new Font("Verdana", 8.25F, FontStyle.Bold, GraphicsUnit.Point, ((byte)(0)));
+			labelcollapsedinfo.Location = new Point(2, 2);
+			labelcollapsedinfo.Name = "labelcollapsedinfo";
+			labelcollapsedinfo.Size = new Size(155, 13);
+			labelcollapsedinfo.TabIndex = 6;
+			labelcollapsedinfo.Text = "Collapsed Descriptions";
+			labelcollapsedinfo.Visible = false;
+			// 
+			// modename
+			// 
+			modename.AutoSize = true;
+			modename.Font = new Font("Verdana", 36F, FontStyle.Bold, GraphicsUnit.Point, ((byte)(0)));
+			modename.ForeColor = SystemColors.GrayText;
+			modename.Location = new Point(12, 20);
+			modename.Name = "modename";
+			modename.Size = new Size(476, 59);
+			modename.TabIndex = 8;
+			modename.Text = "Hi. I missed you.";
+			modename.TextAlign = ContentAlignment.MiddleLeft;
+			modename.UseMnemonic = false;
+			modename.Visible = false;
+			// 
+			// buttontoggleinfo
+			// 
+			buttontoggleinfo.Anchor = ((AnchorStyles)((AnchorStyles.Top | AnchorStyles.Right)));
+			buttontoggleinfo.FlatStyle = FlatStyle.Popup;
+			buttontoggleinfo.Image = global::CodeImp.DoomBuilder.Properties.Resources.InfoPanelCollapse;
+			buttontoggleinfo.Location = new Point(988, 1);
+			buttontoggleinfo.Name = "buttontoggleinfo";
+			buttontoggleinfo.Size = new Size(22, 19);
+			buttontoggleinfo.TabIndex = 5;
+			buttontoggleinfo.TabStop = false;
+			buttontoggleinfo.Tag = "builder_toggleinfopanel";
+			buttontoggleinfo.UseVisualStyleBackColor = true;
+			buttontoggleinfo.Click += new EventHandler(InvokeTaggedAction);
+			buttontoggleinfo.MouseUp += new MouseEventHandler(buttontoggleinfo_MouseUp);
+			// 
+			// console
+			// 
+			console.Anchor = ((AnchorStyles)((((AnchorStyles.Top | AnchorStyles.Bottom)
+						| AnchorStyles.Left)
+						| AnchorStyles.Right)));
+			console.Location = new Point(3, 3);
+			console.Name = "console";
+			console.Size = new Size(851, 98);
+			console.TabIndex = 10;
+			// 
+			// vertexinfo
+			// 
+			vertexinfo.Location = new Point(0, 0);
+			vertexinfo.MaximumSize = new Size(10000, 100);
+			vertexinfo.MinimumSize = new Size(100, 100);
+			vertexinfo.Name = "vertexinfo";
+			vertexinfo.Size = new Size(310, 100);
+			vertexinfo.TabIndex = 1;
+			vertexinfo.Visible = false;
+			// 
+			// linedefinfo
+			// 
+			linedefinfo.Anchor = ((AnchorStyles)(((AnchorStyles.Top | AnchorStyles.Left)
+						| AnchorStyles.Right)));
+			linedefinfo.Location = new Point(3, 3);
+			linedefinfo.MaximumSize = new Size(10000, 100);
+			linedefinfo.MinimumSize = new Size(100, 100);
+			linedefinfo.Name = "linedefinfo";
+			linedefinfo.Size = new Size(1006, 100);
+			linedefinfo.TabIndex = 0;
+			linedefinfo.Visible = false;
+			// 
+			// thinginfo
+			// 
+			thinginfo.Anchor = ((AnchorStyles)(((AnchorStyles.Top | AnchorStyles.Left)
+						| AnchorStyles.Right)));
+			thinginfo.Location = new Point(3, 3);
+			thinginfo.MaximumSize = new Size(10000, 100);
+			thinginfo.MinimumSize = new Size(100, 100);
+			thinginfo.Name = "thinginfo";
+			thinginfo.Size = new Size(1006, 100);
+			thinginfo.TabIndex = 3;
+			thinginfo.Visible = false;
+			// 
+			// sectorinfo
+			// 
+			sectorinfo.Anchor = ((AnchorStyles)(((AnchorStyles.Top | AnchorStyles.Left)
+						| AnchorStyles.Right)));
+			sectorinfo.Location = new Point(3, 3);
+			sectorinfo.MaximumSize = new Size(10000, 100);
+			sectorinfo.MinimumSize = new Size(100, 100);
+			sectorinfo.Name = "sectorinfo";
+			sectorinfo.Size = new Size(1006, 100);
+			sectorinfo.TabIndex = 2;
+			sectorinfo.Visible = false;
+			// 
+			// redrawtimer
+			// 
+			redrawtimer.Interval = 1;
+			redrawtimer.Tick += new EventHandler(redrawtimer_Tick);
+			// 
+			// display
+			// 
+			display.BackColor = SystemColors.ControlDarkDark;
+			display.BackgroundImageLayout = ImageLayout.Center;
+			display.BorderStyle = BorderStyle.Fixed3D;
+			display.CausesValidation = false;
+			display.Location = new Point(373, 141);
+			display.Name = "display";
+			display.Size = new Size(542, 307);
+			display.TabIndex = 5;
+			display.MouseUp += new MouseEventHandler(display_MouseUp);
+			display.MouseLeave += new EventHandler(display_MouseLeave);
+			display.Paint += new PaintEventHandler(display_Paint);
+			display.PreviewKeyDown += new PreviewKeyDownEventHandler(display_PreviewKeyDown);
+			display.MouseMove += new MouseEventHandler(display_MouseMove);
+			display.MouseDoubleClick += new MouseEventHandler(display_MouseDoubleClick);
+			display.MouseClick += new MouseEventHandler(display_MouseClick);
+			display.MouseDown += new MouseEventHandler(display_MouseDown);
+			display.Resize += new EventHandler(display_Resize);
+			display.MouseEnter += new EventHandler(display_MouseEnter);
+			// 
+			// processor
+			// 
+			processor.Interval = 10;
+			processor.Tick += new EventHandler(processor_Tick);
+			// 
+			// statusflasher
+			// 
+			statusflasher.Tick += new EventHandler(statusflasher_Tick);
+			// 
+			// statusresetter
+			// 
+			statusresetter.Tick += new EventHandler(statusresetter_Tick);
+			// 
+			// dockersspace
+			// 
+			dockersspace.Dock = DockStyle.Left;
+			dockersspace.Location = new Point(0, 49);
+			dockersspace.Name = "dockersspace";
+			dockersspace.Size = new Size(26, 515);
+			dockersspace.TabIndex = 6;
+			// 
+			// modestoolbar
+			// 
+			modestoolbar.AutoSize = false;
+			modestoolbar.ImageScalingSize = MainForm.ScaledIconSize;
+			modestoolbar.Dock = DockStyle.Left;
+			modestoolbar.Location = new Point(0, 49);
+			modestoolbar.Name = "modestoolbar";
+			modestoolbar.Padding = new Padding(2, 0, 2, 0);
+			modestoolbar.Size = new Size(30, 515);
+			modestoolbar.TabIndex = 8;
+			modestoolbar.Text = "Editing Modes";
+			// 
+			// dockerspanel
+			// 
+			dockerspanel.Location = new Point(62, 67);
+			dockerspanel.Name = "dockerspanel";
+			dockerspanel.Size = new Size(236, 467);
+			dockerspanel.TabIndex = 7;
+			dockerspanel.TabStop = false;
+			dockerspanel.UserResize += new EventHandler(dockerspanel_UserResize);
+			dockerspanel.Collapsed += new EventHandler(LoseFocus);
+			dockerspanel.MouseContainerEnter += new EventHandler(dockerspanel_MouseContainerEnter);
+			// 
+			// dockerscollapser
+			// 
+			dockerscollapser.Interval = 200;
+			dockerscollapser.Tick += new EventHandler(dockerscollapser_Tick);
+			// 
+			// modecontrolstoolbar
+			// 
+			modecontrolstoolbar.Dock = DockStyle.Top;
+			modecontrolstoolbar.Location = new Point(328, 0);
+			modecontrolstoolbar.Name = "modecontrolstoolbar";
+			modecontrolstoolbar.Size = new Size(43, 24);
+			modecontrolstoolbar.ImageScalingSize = MainForm.ScaledIconSize;
+			modecontrolstoolbar.TabIndex = 1;
+			modecontrolstoolbar.Text = "toolStrip1";
+			modecontrolstoolbar.Visible = false;
+			// 
+			// itemtogglecomments
+			// 
+			itemtogglecomments.Checked = true;
+			itemtogglecomments.CheckOnClick = true;
+			itemtogglecomments.CheckState = CheckState.Checked;
+			itemtogglecomments.Image = global::CodeImp.DoomBuilder.Properties.Resources.Comment;
+			itemtogglecomments.Name = "itemtogglecomments";
+			itemtogglecomments.Size = new Size(215, 22);
+			itemtogglecomments.Tag = "builder_togglecomments";
+			itemtogglecomments.Text = "Show Comments";
+			itemtogglecomments.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemtogglefixedthingsscale
+			// 
+			itemtogglefixedthingsscale.Checked = true;
+			itemtogglefixedthingsscale.CheckOnClick = true;
+			itemtogglefixedthingsscale.CheckState = CheckState.Checked;
+			itemtogglefixedthingsscale.Image = global::CodeImp.DoomBuilder.Properties.Resources.FixedThingsScale;
+			itemtogglefixedthingsscale.Name = "itemtogglefixedthingsscale";
+			itemtogglefixedthingsscale.Size = new Size(215, 22);
+			itemtogglefixedthingsscale.Tag = "builder_togglefixedthingsscale";
+			itemtogglefixedthingsscale.Text = "Fixed Things Scale";
+			itemtogglefixedthingsscale.Click += new EventHandler(InvokeTaggedAction);
+			// 
+			// itemdynamicgridsize
+			// 
+			itemdynamicgridsize.Checked = true;
+			itemdynamicgridsize.CheckOnClick = true;
+			itemdynamicgridsize.CheckState = CheckState.Checked;
+			itemdynamicgridsize.Image = global::CodeImp.DoomBuilder.Properties.Resources.GridDynamic;
+			itemdynamicgridsize.Name = "itemdynamicgridsize";
+			itemdynamicgridsize.Size = new Size(219, 22);
+			itemdynamicgridsize.Tag = "builder_toggledynamicgrid";
+			itemdynamicgridsize.Text = "Dynamic Grid Size";
+			itemdynamicgridsize.Click += new EventHandler(InvokeTaggedAction);
+
+
+			menumain.ResumeLayout(false);
+			menumain.PerformLayout();
+			toolbar.ResumeLayout(false);
+			toolbar.PerformLayout();
+			toolbarContextMenu.ResumeLayout(false);
+			statusbar.ResumeLayout(false);
+			statusbar.PerformLayout();
+			panelinfo.ResumeLayout(false);
+			panelinfo.PerformLayout();
+			ResumeLayout(false);
+			PerformLayout();
+		}
+
 	}
 }
