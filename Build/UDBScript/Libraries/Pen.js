@@ -1,18 +1,17 @@
 function Pen(pos) {
 	this.angle = 0;
 	this.snaptogrid = false;
-	this.ns = importNamespace('CodeImp.DoomBuilder');
-	this.ListOfDrawnVertex = System.Collections.Generic.List(this.ns.Geometry.DrawnVertex);
+	this.ListOfDrawnVertex = System.Collections.Generic.List(UDB.Geometry.DrawnVertex);
 	this.vertices = new this.ListOfDrawnVertex();
 	
 	if(typeof pos !== 'undefined')
 		this.curpos = pos;
 	else
-		this.curpos = new this.ns.Geometry.Vector2D(0, 0);
+		this.curpos = new UDB.Geometry.Vector2D(0, 0);
 }
 
 Pen.prototype.DrawVertex = function() {
-	var v = new this.ns.Geometry.DrawnVertex();
+	var v = new UDB.Geometry.DrawnVertex();
 	v.pos = this.curpos;
 	v.stitch = true;
 	v.stitchline = true;
@@ -22,7 +21,7 @@ Pen.prototype.DrawVertex = function() {
 Pen.prototype.FinishDrawing = function() {
 	this.vertices.Add(this.vertices[0]);
 	
-	var result = this.ns.Geometry.Tools.DrawLines(this.vertices);
+	var result = UDB.Geometry.Tools.DrawLines(this.vertices);
 	
 	this.vertices = new this.ListOfDrawnVertex();
 	
@@ -30,7 +29,7 @@ Pen.prototype.FinishDrawing = function() {
 }
 
 Pen.prototype.MoveForward = function(distance) {
-	this.curpos = new this.ns.Geometry.Vector2D(
+	this.curpos = new UDB.Geometry.Vector2D(
 		this.curpos.x + Math.cos(this.angle) * distance,
 		this.curpos.y + Math.sin(this.angle) * distance
 	);

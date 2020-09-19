@@ -1,5 +1,3 @@
-var UDB = importNamespace('CodeImp.DoomBuilder');
-
 // This script draws a square on the front or back (depending on mouse position) of a highlighted linedef.
 // The size of the square is based on the linedef's length
 

@@ -78,20 +78,46 @@ namespace CodeImp.DoomBuilder.UDBScript
 		}
 
 		/// <summary>
-		/// Gets the code of all script library files in a single string
+		/// Imports the code of all script library files in a single string
 		/// </summary>
-		/// <returns>Code of all script library files</returns>
-		private string GetLibraryCode()
+		/// <param name="engine">Scripting engine to load the code into</param>
+		/// <param name="errortext">Errors that occured while loading the library code</param>
+		/// <returns>true if there were no errors, false if there were errors</returns>
+		private bool ImportLibraryCode(Engine engine, out string errortext)
 		{
-			string code = "";
-
+			bool success = true;
 			string path = Path.Combine(General.AppPath, "UDBScript", "Libraries");
-			string[] files = Directory.GetFiles(path, "*", SearchOption.AllDirectories);
+			string[] files = Directory.GetFiles(path, "*.js", SearchOption.AllDirectories);
 
-			foreach(string file in files)
-				code += File.ReadAllText(file);
+			errortext = string.Empty;
 
-			return code;
+			foreach (string file in files)
+			{
+				try
+				{
+					engine.Execute(File.ReadAllText(file));
+				}
+				catch (Esprima.ParserException e)
+				{
+					if (!string.IsNullOrEmpty(errortext))
+						errortext += "\n----------\n";
+
+					errortext += file + ": " + e.Message;
+
+					success = false;
+				}
+				catch (Jint.Runtime.JavaScriptException e)
+				{
+					if (!string.IsNullOrEmpty(errortext))
+						errortext += "\n----------\n";
+
+					errortext +=  file + " in line " + e.LineNumber + ": " + e.Message;
+
+					success = false;
+				}
+			}
+
+			return success;
 		}
 
 		/// <summary>
@@ -99,6 +125,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 		/// </summary>
 		public void Run()
 		{
+			string importlibraryerrors;
 			bool abort = false;
 
 			// Read the current script file
@@ -122,7 +149,15 @@ namespace CodeImp.DoomBuilder.UDBScript
 			engine.SetValue("QueryParameters", new Func<object, Dictionary<string, object>>(QueryParameters));
 			engine.SetValue("ScriptOptions", BuilderPlug.Me.GetScriptOptions());
 
-			engine.Execute(GetLibraryCode());
+			// We'll always need to import the UDB namespace anyway, so do it here instead in every single script
+			engine.Execute("var UDB = importNamespace('CodeImp.DoomBuilder');");
+
+			// Import all library files into the current engine
+			if(ImportLibraryCode(engine, out importlibraryerrors) == false)
+			{
+				MessageBox.Show("There were one or more errors while loading the library files. Aborting.\n\n" + importlibraryerrors, "Script error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return;
+			}
 
 			// Tell the mode that a script is about to be run
 			General.Editing.Mode.OnScriptRunBegin();

@@ -1,4 +1,3 @@
-var UDB = importNamespace('CodeImp.DoomBuilder');
 var Map = UDB.General.Map.Map;
 var Vector2D = UDB.Geometry.Vector2D;
 var Line2D = UDB.Geometry.Line2D;

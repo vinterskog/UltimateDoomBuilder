@@ -1,4 +1,3 @@
-var UDB = importNamespace('CodeImp.DoomBuilder');
 var General = UDB.General;
 var Map = UDB.General.Map.Map;
 
