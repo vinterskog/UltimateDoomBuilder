@@ -129,7 +129,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 			});
 			engine.SetValue("log", new Action<object>(Console.WriteLine));
 			engine.SetValue("ShowMessage", new Action<string>(ShowMessage));
-			engine.SetValue("QueryParameters", new QueryParameters(stopwatch));
+			engine.SetValue("QueryOptions", new QueryOptions(stopwatch));
 			engine.SetValue("ScriptOptions", BuilderPlug.Me.GetScriptOptions());
 
 			// We'll always need to import the UDB namespace anyway, so do it here instead in every single script
@@ -155,6 +155,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 			}
 			catch (UserScriptAbortException e)
 			{
+				General.Interface.DisplayStatus(Windows.StatusType.Warning, "Script aborted");
 				abort = true;
 			}
 			catch (Esprima.ParserException e)
@@ -167,7 +168,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 				if (e.Error.Type != Jint.Runtime.Types.String)
 					MessageBox.Show("There is an error in the script in line " + e.LineNumber + ":\n\n" + e.Message, "Script error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				else
-					General.Interface.DisplayStatus(Windows.StatusType.Warning, e.Message);
+					General.Interface.DisplayStatus(Windows.StatusType.Warning, e.Message); // We get here if "throw" is used in a script
 
 				abort = true;
 			}

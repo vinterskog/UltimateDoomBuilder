@@ -27,27 +27,27 @@ using System.Windows.Forms;
 
 namespace CodeImp.DoomBuilder.UDBScript
 {
-	class QueryParameters
+	class QueryOptions
 	{
 		#region ================== Variables
 
 		private Stopwatch stopwatch;
-		private QueryParametersForm form;
+		private QueryOptionsForm form;
 
 		#endregion
 
 		#region ================== Properties
 
-		public ExpandoObject Parameters { get { return form.GetScriptOptions(); } }
+		public ExpandoObject Options { get { return form.GetScriptOptions(); } }
 
 		#endregion
 
 		#region ================== Constructor
 
-		public QueryParameters(Stopwatch stopwatch)
+		public QueryOptions(Stopwatch stopwatch)
 		{
 			this.stopwatch = stopwatch;
-			form = new QueryParametersForm(stopwatch);
+			form = new QueryOptionsForm(stopwatch);
 		}
 
 		#endregion
@@ -61,9 +61,9 @@ namespace CodeImp.DoomBuilder.UDBScript
 		/// <param name="description">Textual description of the parameter</param>
 		/// <param name="type">UniversalType value of the parameter</param>
 		/// <param name="defaultvalue">Default value of the parameter</param>
-		public void AddParameter(string name, string description, int type, object defaultvalue)
+		public void AddOption(string name, string description, int type, object defaultvalue)
 		{
-			form.AddParameter(name, description, type, defaultvalue);
+			form.AddOption(name, description, type, defaultvalue);
 		}
 
 		/// <summary>

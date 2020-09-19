@@ -35,18 +35,18 @@ using System.Windows.Forms;
 
 namespace CodeImp.DoomBuilder.UDBScript
 {
-	public partial class QueryParametersForm : Form
+	public partial class QueryOptionsForm : Form
 	{
 		private Stopwatch stopwatch;
 
-		public QueryParametersForm(Stopwatch stopwatch)
+		public QueryOptionsForm(Stopwatch stopwatch)
 		{
 			InitializeComponent();
 
 			this.stopwatch = stopwatch;
 		}
 
-		public void AddParameter(string name, string description, int type, object defaultvalue)
+		public void AddOption(string name, string description, int type, object defaultvalue)	
 		{
 			int index = parametersview.ParametersView.Rows.Add();
 

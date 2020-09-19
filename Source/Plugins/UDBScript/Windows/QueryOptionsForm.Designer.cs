@@ -1,6 +1,6 @@
 ﻿namespace CodeImp.DoomBuilder.UDBScript
 {
-	partial class QueryParametersForm
+	partial class QueryOptionsForm
 	{
 		/// <summary>
 		/// Required designer variable.
@@ -61,7 +61,7 @@
 			this.parametersview.Size = new System.Drawing.Size(408, 268);
 			this.parametersview.TabIndex = 3;
 			// 
-			// QueryParametersForm
+			// QueryOptionsForm
 			// 
 			this.AcceptButton = this.btnOK;
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -74,8 +74,8 @@
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
-			this.Name = "QueryParametersForm";
-			this.Text = "QueryParametersForm";
+			this.Name = "QueryOptionsForm";
+			this.Text = "Query options";
 			this.ResumeLayout(false);
 
 		}

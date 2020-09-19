@@ -93,16 +93,16 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="QueryParameters.cs" />
+    <Compile Include="QueryOptions.cs" />
     <Compile Include="RuntimeConstraint.cs" />
     <Compile Include="ScriptOption.cs" />
     <Compile Include="ScriptRunner.cs" />
     <Compile Include="UserScriptAbortException.cs" />
-    <Compile Include="Windows\QueryParametersForm.cs">
+    <Compile Include="Windows\QueryOptionsForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Windows\QueryParametersForm.Designer.cs">
-      <DependentUpon>QueryParametersForm.cs</DependentUpon>
+    <Compile Include="Windows\QueryOptionsForm.Designer.cs">
+      <DependentUpon>QueryOptionsForm.cs</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -117,8 +117,8 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Actions.cfg" />
-    <EmbeddedResource Include="Windows\QueryParametersForm.resx">
-      <DependentUpon>QueryParametersForm.cs</DependentUpon>
+    <EmbeddedResource Include="Windows\QueryOptionsForm.resx">
+      <DependentUpon>QueryOptionsForm.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
