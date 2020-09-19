@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -36,22 +37,21 @@ namespace CodeImp.DoomBuilder.UDBScript
 	{
 		#region ================== Constants
 
-		private const long CHECK_SECONDS = 5;
+		private const long CHECK_MILLISECONDS = 5000;
 
 		#endregion
 
 		#region ================== Variables
 
-		private long checktime;
-		private long nextchecktime;
+		private Stopwatch stopwatch;
 
 		#endregion
 
 		#region ================== Constructor
 
-		public RuntimeConstraint()
+		public RuntimeConstraint(Stopwatch stopwatch)
 		{
-			checktime = 0;
+			this.stopwatch = stopwatch;
 		}
 
 		#endregion
@@ -67,12 +67,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 		/// </summary>
 		public void Check()
 		{
-			if (checktime == 0 || Clock.CurrentTime < checktime)
-			{
-				checktime = Clock.CurrentTime;
-				nextchecktime = checktime + CHECK_SECONDS * 1000;
-			}
-			else if (Clock.CurrentTime > nextchecktime)
+			if(stopwatch.ElapsedMilliseconds > CHECK_MILLISECONDS)
 			{
 				DialogResult result = MessageBox.Show("The script has been running for some time, want to stop it?", "Script", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
@@ -80,8 +75,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 					throw new UserScriptAbortException();
 				else
 				{
-					checktime = Clock.CurrentTime;
-					nextchecktime = checktime + CHECK_SECONDS * 1000;
+					stopwatch.Restart();
 				}
 			}
 		}

@@ -93,6 +93,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="QueryParameters.cs" />
     <Compile Include="RuntimeConstraint.cs" />
     <Compile Include="ScriptOption.cs" />
     <Compile Include="ScriptRunner.cs" />

@@ -23,6 +23,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Dynamic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
@@ -35,9 +37,13 @@ namespace CodeImp.DoomBuilder.UDBScript
 {
 	public partial class QueryParametersForm : Form
 	{
-		public QueryParametersForm()
+		private Stopwatch stopwatch;
+
+		public QueryParametersForm(Stopwatch stopwatch)
 		{
 			InitializeComponent();
+
+			this.stopwatch = stopwatch;
 		}
 
 		public void AddParameter(string name, string description, int type, object defaultvalue)
@@ -56,30 +62,9 @@ namespace CodeImp.DoomBuilder.UDBScript
 			parametersview.ParametersView.Rows.Clear();
 		}
 
-		/// <summary>
-		/// Shadows the Show method to call ShowDialog instead
-		/// </summary>
-		/// <returns>The result of the dialog</returns>
-		public new DialogResult Show()
+		public ExpandoObject GetScriptOptions()
 		{
-			return ShowDialog();
-		}
-
-		public Dictionary<string, object> GetParameters()
-		{
-			Dictionary<string, object> parameters = new Dictionary<string, object>();
-
-			foreach(DataGridViewRow row in parametersview.ParametersView.Rows)
-			{
-				double number;
-
-				if (double.TryParse((string)row.Cells["Value"].Value, out number))
-					parameters.Add((string)row.Tag, number);
-				else
-					parameters.Add((string)row.Tag, (string)row.Cells["Value"].Value);
-			}
-
-			return parameters;
+			return parametersview.GetScriptOptions();
 		}
 
 		private void btnOK_Click(object sender, EventArgs e)

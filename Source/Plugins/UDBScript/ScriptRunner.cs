@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -56,25 +57,6 @@ namespace CodeImp.DoomBuilder.UDBScript
 		public void ShowMessage(string s)
 		{
 			MessageBox.Show(s);
-		}
-
-		public Dictionary<string, object> QueryParameters(object input)
-		{
-			QueryParametersForm qpf = new QueryParametersForm();
-
-			object[] parameters = input as object[];
-
-			for (int i = 0; i < parameters.Length; i++)
-			{
-				object[] setting = parameters[i] as object[];
-
-				//qpf.AddParameter(setting[0].ToString(), setting[1].ToString(), setting[2]);
-			}
-
-			if (qpf.ShowDialog() == DialogResult.OK)
-				return qpf.GetParameters();
-
-			throw new UserScriptAbortException("Query parameters dialog was canceled");
 		}
 
 		/// <summary>
@@ -125,6 +107,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 		/// </summary>
 		public void Run()
 		{
+			Stopwatch stopwatch = new Stopwatch();
 			string importlibraryerrors;
 			bool abort = false;
 
@@ -142,12 +125,11 @@ namespace CodeImp.DoomBuilder.UDBScript
 			// Create the script engine
 			Engine engine = new Engine(cfg => {
 				cfg.AllowClr(assemblies.ToArray());
-				cfg.Constraint(new RuntimeConstraint());
+				cfg.Constraint(new RuntimeConstraint(stopwatch));
 			});
 			engine.SetValue("log", new Action<object>(Console.WriteLine));
 			engine.SetValue("ShowMessage", new Action<string>(ShowMessage));
-			//engine.SetValue("QueryParameters", new Func<object, Dictionary<string, object>>(QueryParameters));
-			engine.SetValue("QueryParameters", new QueryParametersForm());
+			engine.SetValue("QueryParameters", new QueryParameters(stopwatch));
 			engine.SetValue("ScriptOptions", BuilderPlug.Me.GetScriptOptions());
 
 			// We'll always need to import the UDB namespace anyway, so do it here instead in every single script
@@ -167,7 +149,9 @@ namespace CodeImp.DoomBuilder.UDBScript
 			try
 			{
 				General.Map.UndoRedo.CreateUndo("Run script " + BuilderPlug.GetScriptName(scriptfile));
+				stopwatch.Start();
 				engine.Execute(script);
+				stopwatch.Stop();
 			}
 			catch (UserScriptAbortException e)
 			{
