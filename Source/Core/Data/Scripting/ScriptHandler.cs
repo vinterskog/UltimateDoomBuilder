@@ -18,7 +18,7 @@ using CodeImp.DoomBuilder.IO;
 namespace CodeImp.DoomBuilder.Data.Scripting
 {
 	[ScriptHandler(ScriptType.UNKNOWN)]
-	internal class ScriptHandler
+	public class ScriptHandler
 	{
 		public virtual void Initialize(ScriptEditorControl scriptcontrol, ScriptConfiguration scriptconfig)
 		{
