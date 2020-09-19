@@ -188,7 +188,13 @@ namespace CodeImp.DoomBuilder.Windows
 			
 			// Front side and back side checkboxes
 			frontside.Checked = (fl.Front != null);
+			#if MONO_WINFORMS
+			frontgroup.Enabled = (fl.Front != null);
+			#endif
 			backside.Checked = (fl.Back != null);
+			#if MONO_WINFORMS
+			backgroup.Enabled = (fl.Back != null);
+			#endif
 
 			// Front settings
 			if(fl.Front != null)
