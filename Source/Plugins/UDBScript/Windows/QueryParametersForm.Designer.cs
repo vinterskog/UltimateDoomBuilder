@@ -28,46 +28,10 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.parametersview = new System.Windows.Forms.DataGridView();
-			this.Description = new System.Windows.Forms.DataGridViewTextBoxColumn();
-			this.Value = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.btnOK = new System.Windows.Forms.Button();
 			this.btnCancel = new System.Windows.Forms.Button();
-			((System.ComponentModel.ISupportInitialize)(this.parametersview)).BeginInit();
+			this.parametersview = new CodeImp.DoomBuilder.UDBScript.ScriptOptionsControl();
 			this.SuspendLayout();
-			// 
-			// parametersview
-			// 
-			this.parametersview.AllowUserToAddRows = false;
-			this.parametersview.AllowUserToDeleteRows = false;
-			this.parametersview.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-			this.parametersview.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-			this.parametersview.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.Description,
-            this.Value});
-			this.parametersview.Location = new System.Drawing.Point(12, 12);
-			this.parametersview.MultiSelect = false;
-			this.parametersview.Name = "parametersview";
-			this.parametersview.RowHeadersVisible = false;
-			this.parametersview.Size = new System.Drawing.Size(408, 266);
-			this.parametersview.TabIndex = 0;
-			// 
-			// Description
-			// 
-			this.Description.FillWeight = 50F;
-			this.Description.HeaderText = "Description";
-			this.Description.Name = "Description";
-			this.Description.ReadOnly = true;
-			this.Description.Width = 200;
-			// 
-			// Value
-			// 
-			this.Value.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-			this.Value.FillWeight = 50F;
-			this.Value.HeaderText = "Value";
-			this.Value.Name = "Value";
 			// 
 			// btnOK
 			// 
@@ -90,6 +54,13 @@
 			this.btnCancel.UseVisualStyleBackColor = true;
 			this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
 			// 
+			// parametersview
+			// 
+			this.parametersview.Location = new System.Drawing.Point(12, 12);
+			this.parametersview.Name = "parametersview";
+			this.parametersview.Size = new System.Drawing.Size(408, 268);
+			this.parametersview.TabIndex = 3;
+			// 
 			// QueryParametersForm
 			// 
 			this.AcceptButton = this.btnOK;
@@ -97,25 +68,21 @@
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.CancelButton = this.btnCancel;
 			this.ClientSize = new System.Drawing.Size(432, 321);
+			this.Controls.Add(this.parametersview);
 			this.Controls.Add(this.btnCancel);
 			this.Controls.Add(this.btnOK);
-			this.Controls.Add(this.parametersview);
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
 			this.Name = "QueryParametersForm";
 			this.Text = "QueryParametersForm";
-			((System.ComponentModel.ISupportInitialize)(this.parametersview)).EndInit();
 			this.ResumeLayout(false);
 
 		}
 
 		#endregion
-
-		private System.Windows.Forms.DataGridView parametersview;
 		private System.Windows.Forms.Button btnOK;
 		private System.Windows.Forms.Button btnCancel;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Description;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Value;
+		private ScriptOptionsControl parametersview;
 	}
 }

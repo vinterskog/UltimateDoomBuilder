@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Dynamic;
 using System.Drawing;
 using System.Data;
 using System.Linq;
@@ -21,6 +22,28 @@ namespace CodeImp.DoomBuilder.UDBScript
 
 			enumscombo.Visible = false;
 			browsebutton.Visible = false;
+		}
+
+		/// <summary>
+		/// Gets an object with all script options with their values. This can then be easily used to access script options by name in the script
+		/// </summary>
+		/// <returns>Object containing all script options with their values</returns>
+		public ExpandoObject GetScriptOptions()
+		{
+			// We have to jump through some hoops here to be able to access the elements by name
+			ExpandoObject eo = new ExpandoObject();
+			var options = eo as IDictionary<string, object>;
+
+			foreach (DataGridViewRow row in parametersview.Rows)
+			{
+				if (row.Tag is ScriptOption)
+				{
+					ScriptOption so = (ScriptOption)row.Tag;
+					options[so.name] = so.typehandler.GetValue();
+				}
+			}
+
+			return eo;
 		}
 
 		private void parametersview_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)

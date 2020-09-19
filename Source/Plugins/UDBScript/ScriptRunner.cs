@@ -68,7 +68,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 			{
 				object[] setting = parameters[i] as object[];
 
-				qpf.AddParameter(setting[0].ToString(), setting[1].ToString(), setting[2]);
+				//qpf.AddParameter(setting[0].ToString(), setting[1].ToString(), setting[2]);
 			}
 
 			if (qpf.ShowDialog() == DialogResult.OK)
@@ -146,7 +146,8 @@ namespace CodeImp.DoomBuilder.UDBScript
 			});
 			engine.SetValue("log", new Action<object>(Console.WriteLine));
 			engine.SetValue("ShowMessage", new Action<string>(ShowMessage));
-			engine.SetValue("QueryParameters", new Func<object, Dictionary<string, object>>(QueryParameters));
+			//engine.SetValue("QueryParameters", new Func<object, Dictionary<string, object>>(QueryParameters));
+			engine.SetValue("QueryParameters", new QueryParametersForm());
 			engine.SetValue("ScriptOptions", BuilderPlug.Me.GetScriptOptions());
 
 			// We'll always need to import the UDB namespace anyway, so do it here instead in every single script

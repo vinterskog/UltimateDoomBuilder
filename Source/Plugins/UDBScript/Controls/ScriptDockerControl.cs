@@ -71,6 +71,11 @@ namespace CodeImp.DoomBuilder.UDBScript
 
 		#region ================== Methods
 
+		public ExpandoObject GetScriptOptions()
+		{
+			return scriptoptions.GetScriptOptions();
+		}
+
 		/// <summary>
 		/// Starts adding files to the file tree, starting from the "scripts" subfolders
 		/// </summary>
@@ -126,28 +131,6 @@ namespace CodeImp.DoomBuilder.UDBScript
 		public void EndEdit()
 		{
 			scriptoptions.EndEdit();
-		}
-
-		/// <summary>
-		/// Gets an object with all script options with their values. This can then be easily used to access script options by name in the script
-		/// </summary>
-		/// <returns>Object containing all script options with their values</returns>
-		public ExpandoObject GetScriptOptions()
-		{
-			// We have to jump through some hoops here to be able to access the elements by name
-			ExpandoObject eo = new ExpandoObject();
-			var options = eo as IDictionary<string, object>;
-
-			foreach (DataGridViewRow row in scriptoptions.ParametersView.Rows)
-			{
-				if (row.Tag is ScriptOption)
-				{
-					ScriptOption so = (ScriptOption)row.Tag;
-					options[so.name] = so.typehandler.GetValue();
-				}
-			}
-
-			return eo;
 		}
 
 		#endregion

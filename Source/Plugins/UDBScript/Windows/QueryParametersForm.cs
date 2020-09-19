@@ -40,20 +40,36 @@ namespace CodeImp.DoomBuilder.UDBScript
 			InitializeComponent();
 		}
 
-		public void AddParameter(string description, string name, object defaultvalue)
+		public void AddParameter(string name, string description, int type, object defaultvalue)
 		{
-			int index = parametersview.Rows.Add();
-			Type t = defaultvalue.GetType();
-			parametersview.Rows[index].Cells["Description"].Value = description;
-			parametersview.Rows[index].Cells["Value"].Value = defaultvalue.ToString();
-			parametersview.Rows[index].Tag = name;
+			int index = parametersview.ParametersView.Rows.Add();
+
+			ScriptOption so = new ScriptOption(name, description, type, defaultvalue);
+
+			parametersview.ParametersView.Rows[index].Cells["Description"].Value = description;
+			parametersview.ParametersView.Rows[index].Cells["Value"].Value = so.value;
+			parametersview.ParametersView.Rows[index].Tag = so;
+		}
+
+		public void Clear()
+		{
+			parametersview.ParametersView.Rows.Clear();
+		}
+
+		/// <summary>
+		/// Shadows the Show method to call ShowDialog instead
+		/// </summary>
+		/// <returns>The result of the dialog</returns>
+		public new DialogResult Show()
+		{
+			return ShowDialog();
 		}
 
 		public Dictionary<string, object> GetParameters()
 		{
 			Dictionary<string, object> parameters = new Dictionary<string, object>();
 
-			foreach(DataGridViewRow row in parametersview.Rows)
+			foreach(DataGridViewRow row in parametersview.ParametersView.Rows)
 			{
 				double number;
 
