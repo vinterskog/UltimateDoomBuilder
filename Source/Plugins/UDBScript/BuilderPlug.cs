@@ -33,6 +33,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
 using CodeImp.DoomBuilder.Actions;
+using CodeImp.DoomBuilder.IO;
 using CodeImp.DoomBuilder.Controls;
 using CodeImp.DoomBuilder.Geometry;
 using CodeImp.DoomBuilder.Plugins;
@@ -103,6 +104,27 @@ namespace CodeImp.DoomBuilder.UDBScript
 		public ExpandoObject GetScriptOptions()
 		{
 			return panel.GetScriptOptions();
+		}
+
+		/// <summary>
+		/// Gets the name of the script file. This is either read from the .cfg file of the script or taken from the file name
+		/// </summary>
+		/// <param name="filename">Full path with file name of the script</param>
+		/// <returns></returns>
+		public static string GetScriptName(string filename)
+		{
+			string configfile = Path.Combine(Path.GetDirectoryName(filename), Path.GetFileNameWithoutExtension(filename)) + ".cfg";
+
+			if (File.Exists(configfile))
+			{
+				Configuration cfg = new Configuration(configfile, true);
+				string name = cfg.ReadSetting("name", string.Empty);
+
+				if (!string.IsNullOrEmpty(name))
+					return name;
+			}
+
+			return Path.GetFileNameWithoutExtension(filename);
 		}
 
 		public void EndOptionEdit()

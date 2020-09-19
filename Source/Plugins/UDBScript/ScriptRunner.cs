@@ -165,7 +165,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 			// Run the script file
 			try
 			{
-				General.Map.UndoRedo.CreateUndo("Run script " + Path.GetFileNameWithoutExtension(scriptfile));
+				General.Map.UndoRedo.CreateUndo("Run script " + BuilderPlug.GetScriptName(scriptfile));
 				engine.Execute(script);
 			}
 			catch (UserScriptAbortException e)

@@ -59,6 +59,7 @@
 			this.parametersview.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.parametersview_CellEndEdit);
 			this.parametersview.SelectionChanged += new System.EventHandler(this.parametersview_SelectionChanged);
 			this.parametersview.MouseUp += new System.Windows.Forms.MouseEventHandler(this.parametersview_MouseUp);
+			this.parametersview.Resize += new System.EventHandler(this.parametersview_Resize);
 			// 
 			// enumscombo
 			// 
@@ -82,17 +83,17 @@
 			// 
 			// Description
 			// 
-			this.Description.FillWeight = 50F;
+			this.Description.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+			this.Description.FillWeight = 70F;
 			this.Description.HeaderText = "Description";
 			this.Description.Name = "Description";
 			this.Description.ReadOnly = true;
 			this.Description.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-			this.Description.Width = 200;
 			// 
 			// Value
 			// 
 			this.Value.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-			this.Value.FillWeight = 50F;
+			this.Value.FillWeight = 30F;
 			this.Value.HeaderText = "Value";
 			this.Value.Name = "Value";
 			this.Value.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;

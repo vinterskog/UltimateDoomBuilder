@@ -224,5 +224,11 @@ namespace CodeImp.DoomBuilder.UDBScript
 
 			parametersview.Rows[e.RowIndex].Tag = so;
 		}
+
+		private void parametersview_Resize(object sender, EventArgs e)
+		{
+			// Update the browse button so that it stays at the correct position when the control is resized
+			UpdateBrowseButton();
+		}
 	}
 }

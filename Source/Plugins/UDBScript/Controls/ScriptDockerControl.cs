@@ -108,7 +108,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 				// The file name is stored in the Tag
 				if (Path.GetExtension(filename).ToLowerInvariant() == ".js")
 				{
-					TreeNode tn = new TreeNode(GetScriptName(filename));
+					TreeNode tn = new TreeNode(BuilderPlug.GetScriptName(filename));
 					tn.Tag = filename;
 					tn.SelectedImageKey = tn.ImageKey = "Script";
 
@@ -117,27 +117,6 @@ namespace CodeImp.DoomBuilder.UDBScript
 			}
 
 			return newnodes.ToArray();
-		}
-
-		/// <summary>
-		/// Gets the name of the script file. This is either read from the .cfg file of the script or taken from the file name
-		/// </summary>
-		/// <param name="filename">Full path with file name of the script</param>
-		/// <returns></returns>
-		private string GetScriptName(string filename)
-		{
-			string configfile = Path.Combine(Path.GetDirectoryName(filename), Path.GetFileNameWithoutExtension(filename)) + ".cfg";
-
-			if (File.Exists(configfile))
-			{
-				Configuration cfg = new Configuration(configfile, true);
-				string name = cfg.ReadSetting("name", string.Empty);
-
-				if (!string.IsNullOrEmpty(name))
-					return name;
-			}
-
-			return Path.GetFileNameWithoutExtension(filename);
 		}
 
 		/// <summary>
