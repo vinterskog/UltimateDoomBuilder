@@ -35,7 +35,7 @@ using System.Text;
 
 namespace CodeImp.DoomBuilder.Controls
 {
-	internal abstract class ScriptDocumentTab : TabPage
+	public abstract class ScriptDocumentTab : TabPage
 	{
 		protected readonly ScriptEditorControl editor;
 		protected ScriptConfiguration config;

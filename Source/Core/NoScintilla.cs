@@ -13,7 +13,7 @@ using System.Text;
 #if NO_SCINTILLA
 namespace CodeImp.DoomBuilder.Controls
 {
-    internal class ScriptEditorPanel : UserControl
+    public class ScriptEditorPanel : UserControl
     {
         public ScriptDocumentTab ActiveTab { get { return null; } }
         public bool ShowWhitespace { get { return false; } }
@@ -57,7 +57,7 @@ namespace CodeImp.DoomBuilder.Controls
         public void OnReloadResources() { }
     }
 
-    internal class ScriptEditorControl : UserControl
+    public class ScriptEditorControl : UserControl
     {
         private static Encoding encoding = Encoding.GetEncoding(1251); //mxd. ASCII with cyrillic support...
         internal static Encoding Encoding { get { return encoding; } }
