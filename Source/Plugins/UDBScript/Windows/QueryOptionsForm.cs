@@ -50,7 +50,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 		{
 			int index = parametersview.ParametersView.Rows.Add();
 
-			ScriptOption so = new ScriptOption(name, description, type, defaultvalue);
+			ScriptOption so = new ScriptOption(name, description, type, null, defaultvalue);
 
 			parametersview.ParametersView.Rows[index].Cells["Description"].Value = description;
 			parametersview.ParametersView.Rows[index].Cells["Value"].Value = so.value;

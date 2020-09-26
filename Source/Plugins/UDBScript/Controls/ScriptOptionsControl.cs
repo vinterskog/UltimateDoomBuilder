@@ -53,6 +53,9 @@ namespace CodeImp.DoomBuilder.UDBScript
 			// Enumerable?
 			if (so.typehandler.IsEnumerable)
 			{
+				// Reload type handler so that potentionally changed enums are updated
+				so.ReloadTypeHandler();
+
 				// Fill combo with enums
 				enumscombo.SelectedItem = null;
 				enumscombo.Text = "";
@@ -61,10 +64,10 @@ namespace CodeImp.DoomBuilder.UDBScript
 				enumscombo.Tag = parametersview.Rows[e.RowIndex];
 
 				// Lock combo to enums?
-				if (so.typehandler.IsLimitedToEnums)
+				//if (so.typehandler.IsLimitedToEnums)
 					enumscombo.DropDownStyle = ComboBoxStyle.DropDownList;
-				else
-					enumscombo.DropDownStyle = ComboBoxStyle.DropDown;
+				//else
+				//	enumscombo.DropDownStyle = ComboBoxStyle.DropDown;
 
 				// Position combobox
 				Rectangle cellrect = parametersview.GetCellDisplayRectangle(1, e.RowIndex, false);
@@ -82,6 +85,21 @@ namespace CodeImp.DoomBuilder.UDBScript
 						// Select this item
 						enumscombo.SelectedItem = i;
 						break;
+					}
+				}
+
+				// Nothing found, try the values
+				if (enumscombo.SelectedItem == null)
+				{
+					foreach (EnumItem i in enumscombo.Items)
+					{
+						// Matches?
+						if (string.Compare(i.Value, so.typehandler.GetStringValue(), StringComparison.OrdinalIgnoreCase) == 0)
+						{
+							// Select this item
+							enumscombo.SelectedItem = i;
+							break;
+						}
 					}
 				}
 
@@ -176,7 +194,15 @@ namespace CodeImp.DoomBuilder.UDBScript
 
 				ScriptOption so = (ScriptOption)row.Tag;
 
-				so.typehandler.SetValue(enumscombo.Text);
+				/*if (so.typehandler.IsEnumerable)
+				{
+					EnumList list = so.typehandler.GetEnumList();
+					so.typehandler.SetValue(so.typehandler.GetEnumList().GetByEnumIndex(enumscombo.Text).Value);
+				}
+				else */
+				{
+					so.typehandler.SetValue(enumscombo.Text);
+				}
 
 				row.Tag = so;
 

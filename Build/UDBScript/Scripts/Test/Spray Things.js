@@ -13,7 +13,7 @@ for(var i=0; i < ScriptOptions.amount; i++)
 	var t = Map.CreateThing();
 	t.Type = ScriptOptions.type;
 	
-	if(ScriptOptions.square)
+	if(ScriptOptions.shape == 1) // Square
 	{
 		t.Move(basepos.x + Random(-ScriptOptions.maxradius, ScriptOptions.maxradius), basepos.y + Random(-ScriptOptions.maxradius, ScriptOptions.maxradius), 0);
 	}

@@ -167,8 +167,9 @@ namespace CodeImp.DoomBuilder.UDBScript
 						string description = cfg.ReadSetting(string.Format("options.{0}.description", de.Key), "no description");
 						int type = cfg.ReadSetting(string.Format("options.{0}.type", de.Key), 0);
 						string defaultvaluestr = cfg.ReadSetting(string.Format("options.{0}.default", de.Key), string.Empty);
+						IDictionary enumvalues = cfg.ReadSetting(string.Format("options.{0}.enumvalues", de.Key), new Hashtable());
 
-						ScriptOption so = new ScriptOption((string)de.Key, description, type, defaultvaluestr);
+						ScriptOption so = new ScriptOption((string)de.Key, description, type, enumvalues, defaultvaluestr);
 
 						// Try to read a saved script option value from the config
 						string savedvalue = General.Settings.ReadPluginSetting(BuilderPlug.Me.GetScriptPathHash() + "." + so.name, so.defaultvalue.ToString());
