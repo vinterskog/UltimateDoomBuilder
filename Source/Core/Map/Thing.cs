@@ -60,18 +60,18 @@ namespace CodeImp.DoomBuilder.Map
         private GZGeneral.LightData dynamiclighttype;
 		private Vector3D pos;
 		private int angledoom;		// Angle as entered / stored in file
-		private float anglerad;		// Angle in radians
+		private double anglerad;		// Angle in radians
 		private Dictionary<string, bool> flags;
 		private int tag;
 		private int action;
 		private int[] args;
-		private float scaleX; //mxd
-		private float scaleY; //mxd
+		private double scaleX; //mxd
+		private double scaleY; //mxd
 		private SizeF spritescale; //mxd
 		private int pitch; //mxd. Used in model rendering
 		private int roll; //mxd. Used in model rendering
-		private float pitchrad; //mxd
-		private float rollrad; //mxd
+		private double pitchrad; //mxd
+		private double rollrad; //mxd
 		private bool highlighted; //mxd
 
 		//mxd. GZDoom rendering properties
@@ -97,14 +97,14 @@ namespace CodeImp.DoomBuilder.Map
 		public int Type { get { return type; } set { BeforePropsChange(); type = value; } } //mxd
         public GZGeneral.LightData DynamicLightType { get { return dynamiclighttype; } internal set { BeforePropsChange(); dynamiclighttype = value; } }
 		public Vector3D Position { get { return pos; } }
-		public float ScaleX { get { return scaleX; } } //mxd. This is UDMF property, not actual scale!
-		public float ScaleY { get { return scaleY; } } //mxd. This is UDMF property, not actual scale!
+		public double ScaleX { get { return scaleX; } } //mxd. This is UDMF property, not actual scale!
+		public double ScaleY { get { return scaleY; } } //mxd. This is UDMF property, not actual scale!
 		public int Pitch { get { return pitch; } } //mxd
-		public float PitchRad { get { return pitchrad; } }
+		public double PitchRad { get { return pitchrad; } }
 		public int Roll { get { return roll; } } //mxd
-		public float RollRad { get { return rollrad; } }
+		public double RollRad { get { return rollrad; } }
 		public SizeF ActorScale { get { return spritescale; } } //mxd. Actor scale set in DECORATE
-		public float Angle { get { return anglerad; } }
+		public double Angle { get { return anglerad; } }
 		public int AngleDoom { get { return angledoom; } }
 		internal Dictionary<string, bool> Flags { get { return flags; } }
 		public int Action { get { return action; } set { BeforePropsChange(); action = value; } }
@@ -212,8 +212,8 @@ namespace CodeImp.DoomBuilder.Map
 			s.rwInt(ref angledoom);
 			s.rwInt(ref pitch); //mxd
 			s.rwInt(ref roll); //mxd
-			s.rwFloat(ref scaleX); //mxd
-			s.rwFloat(ref scaleY); //mxd
+			s.rwDouble(ref scaleX); //mxd
+			s.rwDouble(ref scaleY); //mxd
 			s.rwInt(ref tag);
 			s.rwInt(ref action);
 			for(int i = 0; i < NUM_ARGS; i++) s.rwInt(ref args[i]);
@@ -264,6 +264,22 @@ namespace CodeImp.DoomBuilder.Map
 		{
 			//mxd
 			sector = map.GetSectorByCoordinates(pos);
+		}
+
+		/// <summary>
+		/// Determines what sector a thing is in, given a blockmap
+		/// </summary>
+		/// <param name="blockmap">The blockmap to use</param>
+		public void DetermineSector(BlockMap<BlockEntry> blockmap)
+		{
+			BlockEntry be = blockmap.GetBlockAt(pos);
+
+			foreach (Sector s in be.Sectors)
+				if (s.Intersect(pos))
+				{
+					sector = s;
+					return;
+				}
 		}
 
 		// This determines which sector the thing is in and links it
@@ -399,7 +415,7 @@ namespace CodeImp.DoomBuilder.Map
 
 		// This moves the thing
 		// NOTE: This does not update sector! (call DetermineSector)
-		public void Move(float x, float y, float zoffset)
+		public void Move(double x, double y, double zoffset)
 		{
 			BeforePropsChange();
 			
@@ -411,7 +427,7 @@ namespace CodeImp.DoomBuilder.Map
 		}
 		
 		// This rotates the thing
-		public void Rotate(float newangle)
+		public void Rotate(double newangle)
 		{
 			BeforePropsChange();
 			
@@ -446,7 +462,7 @@ namespace CodeImp.DoomBuilder.Map
             switch (rendermode)
 			{
 				case ThingRenderMode.MODEL:
-                    float pmult = General.Map.Config.BuggyModelDefPitch ? 1 : -1;
+					double pmult = General.Map.Config.BuggyModelDefPitch ? 1 : -1;
                     ModelData md = General.Map.Data.ModeldefEntries[type];
                     if (md.InheritActorPitch || md.UseActorPitch)
                         pitchrad = Angle2D.DegToRad(pmult * (md.InheritActorPitch ? -pitch : pitch));
@@ -481,7 +497,7 @@ namespace CodeImp.DoomBuilder.Map
 		}
 
 		//mxd
-		public void SetScale(float scalex, float scaley)
+		public void SetScale(double scalex, double scaley)
 		{
 			BeforePropsChange();
 
@@ -494,7 +510,7 @@ namespace CodeImp.DoomBuilder.Map
 		
 		// This updates all properties
 		// NOTE: This does not update sector! (call DetermineSector)
-		public void Update(int type, float x, float y, float zoffset, int angle, int pitch, int roll, float scaleX, float scaleY,
+		public void Update(int type, double x, double y, double zoffset, int angle, int pitch, int roll, double scaleX, double scaleY,
 						   Dictionary<string, bool> flags, int tag, int action, int[] args)
 		{
 			// Apply changes
@@ -673,20 +689,20 @@ namespace CodeImp.DoomBuilder.Map
 		public void SnapToAccuracy(bool usepreciseposition)
 		{
 			// Round the coordinates
-			Vector3D newpos = new Vector3D((float)Math.Round(pos.x, (usepreciseposition ? General.Map.FormatInterface.VertexDecimals : 0)),
-										   (float)Math.Round(pos.y, (usepreciseposition ? General.Map.FormatInterface.VertexDecimals : 0)),
-										   (float)Math.Round(pos.z, (usepreciseposition ? General.Map.FormatInterface.VertexDecimals : 0)));
+			Vector3D newpos = new Vector3D(Math.Round(pos.x, (usepreciseposition ? General.Map.FormatInterface.VertexDecimals : 0)),
+										   Math.Round(pos.y, (usepreciseposition ? General.Map.FormatInterface.VertexDecimals : 0)),
+										   Math.Round(pos.z, (usepreciseposition ? General.Map.FormatInterface.VertexDecimals : 0)));
 			this.Move(newpos);
 		}
 		
 		// This returns the distance from given coordinates
-		public float DistanceToSq(Vector2D p)
+		public double DistanceToSq(Vector2D p)
 		{
 			return Vector2D.DistanceSq(p, pos);
 		}
 
 		// This returns the distance from given coordinates
-		public float DistanceTo(Vector2D p)
+		public double DistanceTo(Vector2D p)
 		{
 			return Vector2D.Distance(p, pos);
 		}

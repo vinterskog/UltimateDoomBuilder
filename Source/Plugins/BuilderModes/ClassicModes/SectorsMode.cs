@@ -54,7 +54,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 		// Highlighted item
 		private Sector highlighted;
-		private readonly Association highlightasso = new Association();
+		private readonly Association highlightasso;
 
 		// Interface
 		new private bool editpressed;
@@ -69,8 +69,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		//mxd. Cached overlays stuff
 		private FlatVertex[] overlayGeometry;
 		private Dictionary<Sector, string[]> selectedEffectLabels;
-		private Dictionary<Sector, string[]> unselectedEffectLabels; 
-		
+		private Dictionary<Sector, string[]> unselectedEffectLabels;
+
+		// The blockmap makes synchronized editing faster
+		BlockMap<BlockEntry> blockmap;
+
 		#endregion
 
 		#region ================== Properties
@@ -84,6 +87,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		// Constructor
 		public SectorsMode()
 		{
+			highlightasso = new Association(renderer);
+
 			//mxd
 			effects = new Dictionary<int, string[]>();
 			foreach(SectorEffectInfo info in General.Map.Config.SortedSectorEffects) 
@@ -410,12 +415,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// Set highlight association
 			if(s != null && s.Tag != 0) 
 			{
-				Vector2D center = (s.Labels.Count > 0 ? s.Labels[0].position : new Vector2D(s.BBox.X + s.BBox.Width / 2, s.BBox.Y + s.BBox.Height / 2));
-				highlightasso.Set(center, s.Tags, UniversalType.SectorTag);
+				highlightasso.Set(s);
 			} 
 			else 
 			{
-				highlightasso.Set(new Vector2D(), 0, 0);
+				highlightasso.Clear();
 			}
 
 			// New association highlights something?
@@ -542,8 +546,20 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					//mxd. Also (de)select things?
 					if(General.Interface.AltState ^ BuilderPlug.Me.SyncronizeThingEdit)
 					{
-						foreach(Thing t in General.Map.Map.Things) 
-							if(t.Sector == s && t.Selected != s.Selected) t.Selected = s.Selected;
+						List<BlockEntry> belist = blockmap.GetSquareRange(s.BBox);
+
+						foreach(BlockEntry be in belist)
+						{
+							foreach(Thing t in be.Things)
+							{
+								if (t.Sector == null)
+									t.DetermineSector(blockmap);
+
+								if (t.Sector == s && t.Selected != s.Selected) t.Selected = s.Selected;
+							}
+						}
+						//foreach(Thing t in General.Map.Map.Things) 
+						//	if(t.Sector == s && t.Selected != s.Selected) t.Selected = s.Selected;
 					}
 
 					if(update) 
@@ -592,8 +608,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				//check endpoints
 				foreach(Sidedef side in s.Sidedefs) 
 				{
-					if((selectionrect.Contains(side.Line.Start.Position.x, side.Line.Start.Position.y)
-						|| selectionrect.Contains(side.Line.End.Position.x, side.Line.End.Position.y))) 
+					if((selectionrect.Contains((float)side.Line.Start.Position.x, (float)side.Line.Start.Position.y)
+						|| selectionrect.Contains((float)side.Line.End.Position.x, (float)side.Line.End.Position.y))) 
 						return true;
 				}
 
@@ -628,20 +644,20 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if(s1 == s2) return 0;
 
 				// Get closest distance from s1 to selectstart
-				float closest1 = float.MaxValue;
+				double closest1 = double.MaxValue;
 				foreach(Sidedef side in s1.Sidedefs)
 				{
 					Vector2D pos = (side.IsFront ? side.Line.Start : side.Line.End).Position;
-					float curdistance = Vector2D.DistanceSq(pos, targetpoint);
+					double curdistance = Vector2D.DistanceSq(pos, targetpoint);
 					if(curdistance < closest1) closest1 = curdistance;
 				}
 
 				// Get closest distance from s2 to selectstart
-				float closest2 = float.MaxValue;
+				double closest2 = double.MaxValue;
 				foreach(Sidedef side in s2.Sidedefs)
 				{
 					Vector2D pos = (side.IsFront ? side.Line.Start : side.Line.End).Position;
-					float curdistance = Vector2D.DistanceSq(pos, targetpoint);
+					double curdistance = Vector2D.DistanceSq(pos, targetpoint);
 					if(curdistance < closest2) closest2 = curdistance;
 				}
 
@@ -664,6 +680,19 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				UpdateOverlaySurfaces();
 				UpdateSelectionInfo();
 			}
+		}
+
+		/// <summary>
+		/// Create a blockmap containing sectors and things. This is used to speed determining which sector a
+		/// thing is in when synchronized thing editing is enabled
+		/// </summary>
+		private void CreateBlockmap()
+		{
+			RectangleF area = MapSet.CreateArea(General.Map.Map.Vertices);
+			area = MapSet.IncreaseArea(area, General.Map.Map.Things);
+			blockmap = new BlockMap<BlockEntry>(area);
+			blockmap.AddSectorsSet(General.Map.Map.Sectors);
+			blockmap.AddThingsSet(General.Map.Map.Things);
 		}
 
 		#endregion
@@ -710,7 +739,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			General.Interface.AddButton(BuilderPlug.Me.MenusForm.SeparatorSectors3); //mxd
 			General.Interface.AddButton(BuilderPlug.Me.MenusForm.MarqueSelectTouching); //mxd
 			General.Interface.AddButton(BuilderPlug.Me.MenusForm.SyncronizeThingEditButton); //mxd
-			if(General.Map.UDMF) General.Interface.AddButton(BuilderPlug.Me.MenusForm.TextureOffsetLock, ToolbarSection.Geometry); //mxd
+			if (General.Map.UDMF)
+			{
+				General.Interface.AddButton(BuilderPlug.Me.MenusForm.TextureOffsetLock, ToolbarSection.Geometry); //mxd
+				General.Interface.AddButton(BuilderPlug.Me.MenusForm.TextureOffset3DFloorLock, ToolbarSection.Geometry);
+			}
 			General.Interface.EndToolbarUpdate(); //mxd
 			
 			// Convert geometry selection to sectors only
@@ -719,19 +752,27 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			//mxd. Update the tooltip
 			BuilderPlug.Me.MenusForm.SyncronizeThingEditButton.ToolTipText = "Synchronized Things Editing" + Environment.NewLine + BuilderPlug.Me.MenusForm.SyncronizeThingEditSectorsItem.ToolTipText;
 
-			//mxd. Determine thing sectors. Cause SyncronizeThingEdit requires that
-			foreach(Thing t in General.Map.Map.Things) t.DetermineSector();
+			// Create the blockmap
+			CreateBlockmap();
 
-			//mxd. Select things as well?
+			// Select things in the selected sectors if synchronized thing editing is enabled
 			if(BuilderPlug.Me.SyncronizeThingEdit)
 			{
 				ICollection<Sector> sectors = General.Map.Map.GetSelectedSectors(true);
-				if(sectors.Count > 0)
+
+				foreach(Sector s in sectors)
 				{
-					foreach(Thing t in General.Map.Map.Things)
+					List<BlockEntry> belist = blockmap.GetSquareRange(s.BBox);
+
+					foreach (BlockEntry be in belist)
 					{
-						if(!t.Selected && t.Sector != null && sectors.Contains(t.Sector))
-							t.Selected = true;
+						foreach (Thing t in be.Things)
+						{
+							if (t.Sector == null)
+								t.DetermineSector(blockmap);
+
+							if (t.Sector == s && t.Selected != s.Selected) t.Selected = s.Selected;
+						}
 					}
 				}
 			}
@@ -770,6 +811,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			General.Interface.RemoveButton(BuilderPlug.Me.MenusForm.MarqueSelectTouching); //mxd
 			General.Interface.RemoveButton(BuilderPlug.Me.MenusForm.SyncronizeThingEditButton); //mxd
 			General.Interface.RemoveButton(BuilderPlug.Me.MenusForm.TextureOffsetLock); //mxd
+			General.Interface.RemoveButton(BuilderPlug.Me.MenusForm.TextureOffset3DFloorLock);
 			General.Interface.EndToolbarUpdate(); //mxd
 			
 			// Keep only sectors selected
@@ -811,7 +853,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if((highlighted != null) && !highlighted.IsDisposed)
 				{
 					renderer.PlotSector(highlighted, General.Colors.Highlight);
-					BuilderPlug.PlotReverseAssociations(renderer, highlightasso, eventlines);
+					highlightasso.Plot();
 				}
 				renderer.Finish();
 			}
@@ -830,9 +872,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// Render selection
 			if(renderer.StartOverlay(false)) 
 			{
-				if(highlighted != null && !highlighted.IsDisposed) BuilderPlug.RenderReverseAssociations(renderer, highlightasso, eventlines); //mxd
-				if(selecting) RenderMultiSelection();
-				renderer.RenderArrows(eventlines); //mxd
+				if (highlighted != null && !highlighted.IsDisposed) highlightasso.Render();
+				if (selecting) RenderMultiSelection();
+
 				renderer.Finish();
 			}
 			
@@ -1052,7 +1094,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if(l != null) 
 				{
 					// Check on which side of the linedef the mouse is
-					float side = l.SideOfLine(mousemappos);
+					double side = l.SideOfLine(mousemappos);
 					if(side > 0) 
 					{
 						// Is there a sidedef here?
@@ -1100,7 +1142,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if(l != null)
 				{
 					// Check on which side of the linedef the mouse is
-					float side = l.SideOfLine(mousemappos);
+					double side = l.SideOfLine(mousemappos);
 					if(side > 0)
 					{
 						// Is there a sidedef here?
@@ -1375,6 +1417,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		// When undo is performed
 		public override void OnUndoEnd()
 		{
+			// Recreate the blockmap to not include the potentially un-done sectors and things anymore
+			CreateBlockmap();
+
 			// Clear labels
 			SetupLabels();
 			UpdateEffectLabels(); //mxd
@@ -1394,6 +1439,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		// When redo is performed
 		public override void OnRedoEnd()
 		{
+			// Recreate the blockmap to include the potentially re-done sectors and things again
+			CreateBlockmap();
+
 			// Clear labels
 			SetupLabels();
 			UpdateEffectLabels(); //mxd
@@ -1450,7 +1498,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		//mxd
 		private void RenderComment(Sector s, Vector2D center, int iconindex)
 		{
-			RectangleF rect = new RectangleF(center.x - 8 / renderer.Scale, center.y + 8 / renderer.Scale, 16 / renderer.Scale, -16 / renderer.Scale);
+			RectangleF rect = new RectangleF((float)(center.x - 8 / renderer.Scale), (float)(center.y + 8 / renderer.Scale), 16 / renderer.Scale, -16 / renderer.Scale);
 			PixelColor c = (s == highlighted ? General.Colors.Highlight : PixelColor.FromColor(Color.White));
 			renderer.RenderRectangleFilled(rect, c, true, General.Map.Data.CommentTextures[iconindex]);
 		}
@@ -1851,6 +1899,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				}
 
 				General.Map.Map.EndAddRemove(); //mxd
+
+				// Recreate the blockmap since it shouldn't include the deleted sectors anymore
+				CreateBlockmap();
 			}
 
 			if(selectedthings.Count > 0 || selectedsectors.Count > 0)
@@ -2011,8 +2062,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						foreach(Sector s in orderedselection) 
 						{
 							s.Fields.BeforeFieldsChange();
-							float u = index / (float) (orderedselection.Count - 1);
-							float b = (float)Math.Round(InterpolationTools.Interpolate(startbrightness, endbrightness, u, interpolationmode));
+							double u = index / (double)(orderedselection.Count - 1);
+							double b = Math.Round(InterpolationTools.Interpolate(startbrightness, endbrightness, u, interpolationmode));
 
 							//absolute flag set?
 							if(s.Fields.GetValue(lightAbsKey, false)) 
@@ -2051,7 +2102,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					int index = 0;
 					foreach(Sector s in orderedselection) 
 					{
-						float u = index / (float)(orderedselection.Count - 1);
+						double u = index / (double)(orderedselection.Count - 1);
 						s.Brightness = (int)Math.Round(InterpolationTools.Interpolate(start.Brightness, end.Brightness, u, interpolationmode)); //mxd
 						index++;
 					}
@@ -2613,6 +2664,15 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			General.Map.Map.Update();
 			General.Map.IsChanged = true;
 			General.Interface.RefreshInfo();
+			General.Interface.RedrawDisplay();
+		}
+
+		[BeginAction("smartgridtransform", BaseAction = true)]
+		protected void SmartGridTransform()
+		{
+			General.Map.Grid.SetGridRotation(0.0);
+			General.Map.Grid.SetGridOrigin(0, 0);
+			General.Map.GridVisibilityChanged();
 			General.Interface.RedrawDisplay();
 		}
 

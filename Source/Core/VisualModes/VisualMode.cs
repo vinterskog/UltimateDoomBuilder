@@ -43,7 +43,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 	{
 		#region ================== Constants
 
-		private const float MOVE_SPEED_MULTIPLIER = 0.001f;
+		private const double MOVE_SPEED_MULTIPLIER = 0.001;
 		
 		#endregion
 
@@ -72,7 +72,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 		//used in "Play From Here" Action
 		private Thing playerStart;
 		private Vector3D playerStartPosition;
-		private float playerStartAngle;
+		private double playerStartAngle;
 
 		// For picking
 		protected PickingMode pickingmode;
@@ -187,7 +187,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 				if(!General.Interface.CtrlState || General.Map.VisualCamera.Position.GetLengthSq() == 0)
 				{
 					//If initial position is inside or nearby a sector - adjust camera.z accordingly
-					float posz = General.Map.VisualCamera.Position.z;
+					double posz = General.Map.VisualCamera.Position.z;
 					Sector nearestsector = General.Map.Map.GetSectorByCoordinates(initialcameraposition, blockmap);
 
 					if(nearestsector == null)
@@ -195,7 +195,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 						Linedef nearestline = MapSet.NearestLinedef(General.Map.Map.Linedefs, initialcameraposition);
 						if(nearestline != null)
 						{
-							float side = nearestline.SideOfLine(initialcameraposition);
+							double side = nearestline.SideOfLine(initialcameraposition);
 							Sidedef nearestside = (side < 0.0f ? nearestline.Front : nearestline.Back) ?? (side < 0.0f ? nearestline.Back : nearestline.Front);
 							if(nearestside != null) nearestsector = nearestside.Sector;
 						}
@@ -335,7 +335,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 				}
 
 				//check camera Z
-				float pz = camPos.z - s.FloorHeight;
+				double pz = camPos.z - s.FloorHeight;
 				int ceilRel = s.CeilHeight - s.FloorHeight - 41; //relative ceiling height
 				if(pz > ceilRel) pz = ceilRel; //above ceiling?
 				else if(pz < 0) pz = 0; //below floor?
@@ -483,7 +483,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 				return;
 			}
 
-			MoveSelectedThings(new Vector2D((float)Math.Round(hitpos.x), (float)Math.Round(hitpos.y)), true);
+			MoveSelectedThings(new Vector2D(Math.Round(hitpos.x), Math.Round(hitpos.y)), true);
 		}
 
 		//mxd. 
@@ -494,7 +494,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 			delta = delta.GetFixedLength(General.Settings.ViewDistance * 0.98f);
 			VisualPickResult target = PickObject(start, start + delta);
 
-			if(target.picked == null) return new Vector2D(float.NaN, float.NaN);
+			if(target.picked == null) return new Vector2D(double.NaN, double.NaN);
 
 			// Now find where exactly did we hit
 			VisualGeometry vg = target.picked as VisualGeometry;
@@ -504,7 +504,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 			VisualThing vt = target.picked as VisualThing;
 			if(vt != null) return GetIntersection(start, start + delta, vt.CenterV3D, RenderDevice.V3D(vt.Center - vt.PositionV3));
 
-			return new Vector2D(float.NaN, float.NaN);
+			return new Vector2D(double.NaN, double.NaN);
 		}
 
 		//mxd. This checks intersection between line and plane 
@@ -632,7 +632,7 @@ namespace CodeImp.DoomBuilder.VisualModes
                             {
                                 foreach (Sidedef sd in General.Map.VisualCamera.Sector.Sidedefs)
                                 {
-                                    float side = sd.Line.SideOfLine(campos2d);
+									double side = sd.Line.SideOfLine(campos2d);
                                     if (((side < 0) && sd.IsFront) ||
                                        ((side > 0) && !sd.IsFront))
                                         ProcessSidedefCulling(sd);
@@ -749,13 +749,13 @@ namespace CodeImp.DoomBuilder.VisualModes
 					if(!lines.ContainsKey(ld))
 					{
 						lines.Add(ld, ld);
-						
+
 						// Intersecting?
-						float u;
+						double u;
 						if(ld.Line.GetIntersection(ray2d, out u))
 						{
 							// Check on which side we are
-							float side = ld.SideOfLine(ray2d.v1);
+							double side = ld.SideOfLine(ray2d.v1);
 							
 							// Calculate intersection point
 							Vector3D intersect = from + delta * u;
@@ -874,7 +874,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 			// We keep only the closest hit!
 			foreach(IVisualPickable p in potentialpicks)
 			{
-				float u = result.u_ray;
+				double u = result.u_ray;
 				if(p.PickAccurate(from, to, direction, ref u))
 				{
 					// Closer than previous find?
@@ -1164,10 +1164,10 @@ namespace CodeImp.DoomBuilder.VisualModes
 			Vector3D camvecstrafe = Vector3D.FromAngleXY(General.Map.VisualCamera.AngleXY + Angle2D.PIHALF);
 			Vector3D cammovemul = General.Map.VisualCamera.MoveMultiplier;
 			Vector3D camdeltapos = new Vector3D();
-			Vector3D upvec = new Vector3D(0.0f, 0.0f, 1.0f);
+			Vector3D upvec = new Vector3D(0.0, 0.0, 1.0);
 
 			// Move the camera
-			float multiplier;
+			double multiplier;
 			if(General.Interface.ShiftState) multiplier = MOVE_SPEED_MULTIPLIER * 2.0f; else multiplier = MOVE_SPEED_MULTIPLIER;
 			if(keyforward) camdeltapos += camvec * cammovemul * General.Settings.MoveSpeed * multiplier * deltatime;
 			if(keybackward) camdeltapos -= camvec * cammovemul * General.Settings.MoveSpeed * multiplier * deltatime;

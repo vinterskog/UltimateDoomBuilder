@@ -98,6 +98,8 @@ namespace CodeImp.DoomBuilder.Editing
 		public bool IsMouseInside { get { return mouseinside; } }
 		public MouseButtons MouseDragging { get { return mousedragging; } }
 
+		public bool Cancelled { get { return cancelled; } }
+
 		// Selection
 		public bool IsSelecting { get { return selecting; } }
 		public Vector2D SelectionStart { get { return selectstart; } }
@@ -207,13 +209,13 @@ namespace CodeImp.DoomBuilder.Editing
 		}
 
 		// This scrolls anywhere
-		private void ScrollBy(float deltax, float deltay)
+		private void ScrollBy(double deltax, double deltay)
 		{
 			//mxd. Don't stroll too far from map boundaries
 			Vector2D offset = ClampViewOffset(renderer2d.OffsetX + deltax, renderer2d.OffsetY + deltay);
 
 			// Scroll now
-			renderer2d.PositionView(offset.x, offset.y);
+			renderer2d.PositionView((float)offset.x, (float)offset.y);
 			this.OnViewChanged();
 			
 			// Redraw
@@ -272,7 +274,7 @@ namespace CodeImp.DoomBuilder.Editing
 			Vector2D offset = ClampViewOffset(renderer2d.OffsetX - diff.x, renderer2d.OffsetY + diff.y); //mxd
 
 			// Zoom now
-			renderer2d.PositionView(offset.x, offset.y);
+			renderer2d.PositionView((float)offset.x, (float)offset.y);
 			renderer2d.ScaleView(newscale);
 			this.OnViewChanged();
 
@@ -287,7 +289,7 @@ namespace CodeImp.DoomBuilder.Editing
 		}
 
 		//mxd. Makes sure given offset stays within map boundaries
-		private static Vector2D ClampViewOffset(float x, float y)
+		private static Vector2D ClampViewOffset(double x, double y)
 		{
 			Vector2D diff = new Vector2D(x, y);
 			Vector2D safediff = new Vector2D(General.Clamp(diff.x, General.Map.Config.LeftBoundary, General.Map.Config.RightBoundary),
@@ -344,10 +346,10 @@ namespace CodeImp.DoomBuilder.Editing
 		[BeginAction("centerinscreen", BaseAction = true)]
 		public void CenterInScreen()
 		{
-			float left = float.MaxValue;
-			float top = float.MaxValue;
-			float right = float.MinValue;
-			float bottom = float.MinValue;
+			double left = double.MaxValue;
+			double top = double.MaxValue;
+			double right = double.MinValue;
+			double bottom = double.MinValue;
 			bool anything = false;
 			
 			// Go for all vertices
@@ -383,7 +385,7 @@ namespace CodeImp.DoomBuilder.Editing
 			// Anything found to center in view?
 			if(anything)
 			{
-				RectangleF area = new RectangleF(left, top, (right - left), (bottom - top));
+				RectangleF area = new RectangleF((float)left, (float)top, (float)(right - left), (float)(bottom - top));
 				CenterOnArea(area, CENTER_VIEW_PADDING);
 			}
 			else
@@ -413,7 +415,7 @@ namespace CodeImp.DoomBuilder.Editing
 		{
 			// Change the view
 			renderer2d.ScaleView(scale);
-			renderer2d.PositionView(offset.x, offset.y);
+			renderer2d.PositionView((float)offset.x, (float)offset.y);
 			this.OnViewChanged();
 
 			//mxd. Change grid size?
@@ -676,7 +678,7 @@ namespace CodeImp.DoomBuilder.Editing
 					&& General.Editing.PreviousMode != null && General.Editing.PreviousMode.IsSubclassOf(typeof(VisualMode)))
 				{
 					Vector2D campos = ClampViewOffset(General.Map.VisualCamera.Position.x, General.Map.VisualCamera.Position.y);
-					renderer2d.PositionView(campos.x, campos.y);
+					renderer2d.PositionView((float)campos.x, (float)campos.y);
 				}
 
 				renderer.Finish();
@@ -851,7 +853,7 @@ namespace CodeImp.DoomBuilder.Editing
 		{
 			selecting = true;
 			selectstart = mousedownmappos;
-			selectionrect = new RectangleF(selectstart.x, selectstart.y, 0, 0);
+			selectionrect = new RectangleF((float)selectstart.x, (float)selectstart.y, 0, 0);
 
 			//mxd
 			General.Hints.ShowHints(this.GetType(), HintsManager.MULTISELECTION);
@@ -864,10 +866,10 @@ namespace CodeImp.DoomBuilder.Editing
 		{
 			marqueSelectionMode = GetMultiSelectionMode(); //mxd
 			
-			selectionrect.X = selectstart.x;
-			selectionrect.Y = selectstart.y;
-			selectionrect.Width = mousemappos.x - selectstart.x;
-			selectionrect.Height = mousemappos.y - selectstart.y;
+			selectionrect.X = (float)selectstart.x;
+			selectionrect.Y = (float)selectstart.y;
+			selectionrect.Width = (float)(mousemappos.x - selectstart.x);
+			selectionrect.Height = (float)(mousemappos.y - selectstart.y);
 			
 			if(selectionrect.Width < 0f)
 			{
@@ -926,7 +928,7 @@ namespace CodeImp.DoomBuilder.Editing
 		{
 			// We can only drag the map when the mouse pointer is inside
 			// otherwise we don't have coordinates where to drag the map to
-			if(mouseinside && !float.IsNaN(mouselastpos.x) && !float.IsNaN(mouselastpos.y))
+			if(mouseinside && !double.IsNaN(mouselastpos.x) && !double.IsNaN(mouselastpos.y))
 			{
 				// Get the map coordinates of the last mouse posision (before it moved)
 				Vector2D lastmappos = renderer2d.DisplayToMap(mouselastpos);
@@ -1021,7 +1023,7 @@ namespace CodeImp.DoomBuilder.Editing
 			if(form.ShowDialog() == DialogResult.OK) 
 			{
 				//center view
-				renderer2d.PositionView(form.Coordinates.x, form.Coordinates.y);
+				renderer2d.PositionView((float)form.Coordinates.x, (float)form.Coordinates.y);
 				General.Interface.RedrawDisplay();
 			}
 		}

@@ -110,11 +110,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		{
 			if(!sidedef.HighRequired() || sidedef.LongHighTexture == MapSet.EmptyLongName) return;
 			
-			float scaleX = sidedef.Fields.GetValue("scalex_top", 1.0f);
-			float scaleY = sidedef.Fields.GetValue("scaley_top", 1.0f);
-			int localY = (int)Math.Round(sidedef.Fields.GetValue("offsety_top", 0.0f));
+			double scaleX = sidedef.Fields.GetValue("scalex_top", 1.0);
+			double scaleY = sidedef.Fields.GetValue("scaley_top", 1.0);
+			int localY = (int)Math.Round(sidedef.Fields.GetValue("offsety_top", 0.0));
 
-			int x = sidedef.OffsetX + (int)Math.Round(sidedef.Fields.GetValue("offsetx_top", 0.0f));
+			int x = sidedef.OffsetX + (int)Math.Round(sidedef.Fields.GetValue("offsetx_top", 0.0));
 			int y = (int)Tools.GetSidedefTopOffsetY(sidedef, sidedef.OffsetY + localY, scaleY, false);
 			CheckAlignment(sidedef, x, y, scaleX, scaleY, VisualGeometryType.WALL_UPPER, sidedef.HighTexture);
 		}
@@ -123,11 +123,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		{
 			if(!sidedef.MiddleRequired() || sidedef.LongMiddleTexture == MapSet.EmptyLongName) return;
 			
-			float scaleX = sidedef.Fields.GetValue("scalex_mid", 1.0f);
-			float scaleY = sidedef.Fields.GetValue("scaley_mid", 1.0f);
-			int localY = (int)Math.Round(sidedef.Fields.GetValue("offsety_mid", 0.0f));
+			double scaleX = sidedef.Fields.GetValue("scalex_mid", 1.0);
+			double scaleY = sidedef.Fields.GetValue("scaley_mid", 1.0);
+			int localY = (int)Math.Round(sidedef.Fields.GetValue("offsety_mid", 0.0));
 
-			int x = sidedef.OffsetX + (int)Math.Round(sidedef.Fields.GetValue("offsetx_mid", 0.0f));
+			int x = sidedef.OffsetX + (int)Math.Round(sidedef.Fields.GetValue("offsetx_mid", 0.0));
 			int y = (int)Tools.GetSidedefMiddleOffsetY(sidedef, sidedef.OffsetY + localY, scaleY, false);
 			CheckAlignment(sidedef, x, y, scaleX, scaleY, VisualGeometryType.WALL_MIDDLE, sidedef.MiddleTexture);
 		}
@@ -136,11 +136,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		{
 			if(!sidedef.LowRequired() || sidedef.LongLowTexture == MapSet.EmptyLongName) return;
 
-			float scaleX = sidedef.Fields.GetValue("scalex_bottom", 1.0f);
-			float scaleY = sidedef.Fields.GetValue("scaley_bottom", 1.0f);
-			int localY = (int)Math.Round(sidedef.Fields.GetValue("offsety_bottom", 0.0f));
+			double scaleX = sidedef.Fields.GetValue("scalex_bottom", 1.0);
+			double scaleY = sidedef.Fields.GetValue("scaley_bottom", 1.0);
+			int localY = (int)Math.Round(sidedef.Fields.GetValue("offsety_bottom", 0.0));
 
-			int x = sidedef.OffsetX + (int)Math.Round(sidedef.Fields.GetValue("offsetx_bottom", 0.0f));
+			int x = sidedef.OffsetX + (int)Math.Round(sidedef.Fields.GetValue("offsetx_bottom", 0.0));
 			int y = (int)Tools.GetSidedefBottomOffsetY(sidedef, sidedef.OffsetY + localY, scaleY, false);
 			CheckAlignment(sidedef, x, y, scaleX, scaleY, VisualGeometryType.WALL_LOWER, sidedef.LowTexture);
 		}
@@ -149,14 +149,14 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 		#region ================== Methods
 
-		private void CheckAlignment(Sidedef sidedef, int offsetx, int offsety, float linescalex, float linescaley, VisualGeometryType parttype, string texturename) 
+		private void CheckAlignment(Sidedef sidedef, int offsetx, int offsety, double linescalex, double linescaley, VisualGeometryType parttype, string texturename) 
 		{
 			ImageData texture = General.Map.Data.GetTextureImage(texturename);
 			if(!texture.IsImageLoaded) return;
 			Rectangle partsize = BuilderModesTools.GetSidedefPartSize(sidedef, parttype);
 
-			float scalex = ((General.Map.Config.ScaledTextureOffsets && !texture.WorldPanning) ? texture.Scale.x : 1.0f);
-			float scaley = ((General.Map.Config.ScaledTextureOffsets && !texture.WorldPanning) ? texture.Scale.y : 1.0f);
+			double scalex = ((General.Map.Config.ScaledTextureOffsets && !texture.WorldPanning) ? texture.Scale.x : 1.0f);
+			double scaley = ((General.Map.Config.ScaledTextureOffsets && !texture.WorldPanning) ? texture.Scale.y : 1.0f);
 
 			// Move offsets to proper range
 			offsetx %= texture.Width;
@@ -189,13 +189,13 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					continue;
 
 				// Not aligned if scaley is not equal
-				float targetscaley = GetSidedefValue(target, targetparttype, "scaley", 1.0f);
+				double targetscaley = GetSidedefValue(target, targetparttype, "scaley", 1.0);
 				if(targetscaley != linescaley) 
 				{
 					SubmitResult(new ResultTexturesMisaligned(sidedef, target, texturename));
 				}
 
-				float targetscalex = GetSidedefValue(target, targetparttype, "scalex", 1.0f);
+				double targetscalex = GetSidedefValue(target, targetparttype, "scalex", 1.0);
 
 				alignedY %= texture.Height;
 				if(alignedY < 0) alignedY += texture.Height;
@@ -238,7 +238,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					continue;
 
 				// Not aligned if scaley is not equal
-				float targetscaley = GetSidedefValue(target, targetparttype, "scaley", 1.0f);
+				double targetscaley = GetSidedefValue(target, targetparttype, "scaley", 1.0);
 				if(targetscaley != linescaley)
 				{
 					SubmitResult(new ResultTexturesMisaligned(sidedef, target, texturename));
@@ -247,7 +247,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				alignedY %= texture.Height;
 				if(alignedY < 0) alignedY += texture.Height;
 
-				int alignedX = (target.OffsetX + (int)GetSidedefValue(target, targetparttype, "offsetx", 0f) - (int)Math.Round(sidedef.Line.Length / scalex * linescalex)) % texture.Width;
+				int alignedX = (target.OffsetX + (int)GetSidedefValue(target, targetparttype, "offsetx", 0.0) - (int)Math.Round(sidedef.Line.Length / scalex * linescalex)) % texture.Width;
 				if(alignedX < 0) alignedX += texture.Width;
 
 				// Submit result if target offsets don't match expected ones
@@ -261,18 +261,18 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			}
 		}
 
-		private static float GetSidedefValue(Sidedef target, VisualGeometryType targetparttype, string key, float defaultvalue) 
+		private static double GetSidedefValue(Sidedef target, VisualGeometryType targetparttype, string key, double defaultvalue) 
 		{
 			switch(targetparttype)
 			{
 				case VisualGeometryType.WALL_UPPER:
-					return (float)Math.Round(UniFields.GetFloat(target.Fields, key + "_top", defaultvalue), 3);
+					return Math.Round(UniFields.GetFloat(target.Fields, key + "_top", defaultvalue), 3);
 
 				case VisualGeometryType.WALL_MIDDLE:
-					return (float)Math.Round(UniFields.GetFloat(target.Fields, key + "_mid", defaultvalue), 3);
+					return Math.Round(UniFields.GetFloat(target.Fields, key + "_mid", defaultvalue), 3);
 
 				case VisualGeometryType.WALL_LOWER:
-					return (float)Math.Round(UniFields.GetFloat(target.Fields, key + "_bottom", defaultvalue), 3);
+					return Math.Round(UniFields.GetFloat(target.Fields, key + "_bottom", defaultvalue), 3);
 			}
 
 			return 0;
@@ -300,7 +300,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			donesides[type2][s2.Index][type1].Add(s1.Index, false);
 		}
 
-		private static int GetExpectedOffsetY(Sidedef source, Sidedef target, string texturename, int textureheight, float texturescaley, float linescaley, Rectangle partsize, out VisualGeometryType matchingparttype) 
+		private static int GetExpectedOffsetY(Sidedef source, Sidedef target, string texturename, int textureheight, double texturescaley, double linescaley, Rectangle partsize, out VisualGeometryType matchingparttype) 
 		{
 			if(target.MiddleTexture == texturename
 					&& partsize.IntersectsWith(BuilderModesTools.GetSidedefPartSize(target, VisualGeometryType.WALL_MIDDLE)))

@@ -56,8 +56,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 		// Highlighted item
 		private Linedef highlighted;
-		private readonly Association[] association = new Association[Linedef.NUM_ARGS];
-		private readonly Association highlightasso = new Association();
+		private readonly Association highlightasso;
 		private Vector2D insertpreview = new Vector2D(float.NaN, float.NaN); //mxd
 
 		//mxd. Text labels
@@ -82,7 +81,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		public LinedefsMode()
 		{
 			//mxd. Associations now requre initializing...
-			for(int i = 0; i < association.Length; i++) association[i] = new Association();
+			highlightasso = new Association(renderer);
 		}
 
 		//mxd
@@ -125,9 +124,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					labels[highlighted].Color = General.Colors.Highlight;
 					completeredraw = true;
 				}
-				
+
 				// Previous association highlights something?
-				if(highlighted.Tag != 0) completeredraw = true;
+				if (!highlightasso.IsEmpty) completeredraw = true;
 			}
 			
 			// Set highlight association
@@ -141,57 +140,18 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				}
 
 				// New association highlights something?
-				if(l.Tag != 0)
-				{
-					highlightasso.Set(new Vector2D((l.Start.Position + l.End.Position) / 2), l.Tags, UniversalType.LinedefTag);
-					completeredraw = true; 
-				}
+				highlightasso.Set(l);
+
+				// Only need a complete redraw if the association contains elements
+				if (!highlightasso.IsEmpty) completeredraw = true;
 			}
 			else
 			{
-				highlightasso.Set(new Vector2D(), 0, 0);
+				// Only need a complete redraw if the old association wasn't empty
+				if (!highlightasso.IsEmpty) completeredraw = true;
+				highlightasso.Clear();
 			}
 
-			// Use the line tag to highlight sectors (Doom style)
-			if(General.Map.Config.LineTagIndicatesSectors)
-			{
-				if(l != null)
-					association[0].Set(new Vector2D((l.Start.Position  + l.End.Position)/2), l.Tags, UniversalType.SectorTag);
-				else
-					association[0].Set(new Vector2D(), 0, 0);
-			}
-			else
-			{
-				LinedefActionInfo action = null;
-
-				if(l != null)
-				{
-					// Check if we can find the linedefs action
-					if((l.Action > 0) && General.Map.Config.LinedefActions.ContainsKey(l.Action))
-						action = General.Map.Config.LinedefActions[l.Action];
-				}
-				
-				// Determine linedef associations
-				for(int i = 0; i < Linedef.NUM_ARGS; i++)
-				{
-					// Previous association highlights something?
-					if((association[i].Type == UniversalType.SectorTag) ||
-					   (association[i].Type == UniversalType.LinedefTag) ||
-					   (association[i].Type == UniversalType.ThingTag)) completeredraw = true;
-
-					// Make new association
-					if(action != null)
-						association[i].Set(new Vector2D((l.Start.Position  + l.End.Position)/2), l.Args[i], action.Args[i].Type);
-					else
-						association[i].Set(new Vector2D(), 0, 0);
-
-					// New association highlights something?
-					if((association[i].Type == UniversalType.SectorTag) ||
-					   (association[i].Type == UniversalType.LinedefTag) ||
-					   (association[i].Type == UniversalType.ThingTag)) completeredraw = true;
-				}
-			}
-			
 			// If we're changing associations, then we
 			// need to redraw the entire display
 			if(completeredraw)
@@ -290,11 +250,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 				s.Fields.BeforeFieldsChange();
 
-				float sourceAngle = (float)Math.Round(General.ClampAngle(alignToFrontSide ? -Angle2D.RadToDeg(l.Angle) + 90 : -Angle2D.RadToDeg(l.Angle) - 90), 1);
+				double sourceAngle = Math.Round(General.ClampAngle(alignToFrontSide ? -Angle2D.RadToDeg(l.Angle) + 90 : -Angle2D.RadToDeg(l.Angle) - 90), 1);
 				if(!alignToFrontSide) sourceAngle = General.ClampAngle(sourceAngle + 180);
 
 				//update angle
-				UniFields.SetFloat(s.Fields, (alignFloors ? "rotationfloor" : "rotationceiling"), sourceAngle, 0f);
+				UniFields.SetFloat(s.Fields, (alignFloors ? "rotationfloor" : "rotationceiling"), sourceAngle, 0.0);
 
 				//update offset
 				Vector2D offset = (alignToFrontSide ? l.Start.Position : l.End.Position).GetRotated(Angle2D.DegToRad(sourceAngle));
@@ -307,12 +267,12 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				}
 				else
 				{
-					offset.x %= texture.Width / s.Fields.GetValue((alignFloors ? "xscalefloor" : "xscaleceiling"), 1.0f);
-					offset.y %= texture.Height / s.Fields.GetValue((alignFloors ? "yscalefloor" : "yscaleceiling"), 1.0f);
+					offset.x %= texture.Width / s.Fields.GetValue((alignFloors ? "xscalefloor" : "xscaleceiling"), 1.0);
+					offset.y %= texture.Height / s.Fields.GetValue((alignFloors ? "yscalefloor" : "yscaleceiling"), 1.0);
 				}
 
-				UniFields.SetFloat(s.Fields, (alignFloors ? "xpanningfloor" : "xpanningceiling"), (float)Math.Round(-offset.x), 0f);
-				UniFields.SetFloat(s.Fields, (alignFloors ? "ypanningfloor" : "ypanningceiling"), (float)Math.Round(offset.y), 0f);
+				UniFields.SetFloat(s.Fields, (alignFloors ? "xpanningfloor" : "xpanningceiling"), Math.Round(-offset.x), 0.0);
+				UniFields.SetFloat(s.Fields, (alignFloors ? "ypanningfloor" : "ypanningceiling"), Math.Round(offset.y), 0.0);
 
 				//update
 				s.UpdateNeeded = true;
@@ -333,7 +293,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		{
 			if(BuilderPlug.Me.MarqueSelectTouching) 
 			{
-				bool selected = selectionrect.Contains(l.Start.Position.x, l.Start.Position.y) || selectionrect.Contains(l.End.Position.x, l.End.Position.y);
+				bool selected = selectionrect.Contains((float)l.Start.Position.x, (float)l.Start.Position.y) || selectionrect.Contains((float)l.End.Position.x, (float)l.End.Position.y);
 
 				//check intersections with outline
 				if(!selected) 
@@ -346,7 +306,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				return selected;
 			}
 
-			return selectionrect.Contains(l.Start.Position.x, l.Start.Position.y) && selectionrect.Contains(l.End.Position.x, l.End.Position.y);
+			return selectionrect.Contains((float)l.Start.Position.x, (float)l.Start.Position.y) && selectionrect.Contains((float)l.End.Position.x, (float)l.End.Position.y);
 		}
 
 		//mxd. Gets map elements inside of selectionoutline and sorts them by distance to targetpoint
@@ -367,10 +327,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if(l1 == l2) return 0;
 
 				// Get closest distance from l1 to selectstart
-				float closest1 = float.MaxValue;
+				double closest1 = double.MaxValue;
 				
 				Vector2D pos = l1.Start.Position;
-				float curdistance = Vector2D.DistanceSq(pos, targetpoint);
+				double curdistance = Vector2D.DistanceSq(pos, targetpoint);
 				if(curdistance < closest1) closest1 = curdistance;
 
 				pos = l1.End.Position;
@@ -378,7 +338,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if(curdistance < closest1) closest1 = curdistance;
 
 				// Get closest distance from l2 to selectstart
-				float closest2 = float.MaxValue;
+				double closest2 = double.MaxValue;
 
 				pos = l2.Start.Position;
 				curdistance = Vector2D.DistanceSq(pos, targetpoint);
@@ -529,8 +489,12 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			General.Interface.AddButton(BuilderPlug.Me.MenusForm.CurveLinedefs);
 			General.Interface.AddButton(BuilderPlug.Me.MenusForm.MarqueSelectTouching); //mxd
 			General.Interface.AddButton(BuilderPlug.Me.MenusForm.SyncronizeThingEditButton); //mxd
-			if(General.Map.UDMF) General.Interface.AddButton(BuilderPlug.Me.MenusForm.TextureOffsetLock, ToolbarSection.Geometry); //mxd
-			
+			if (General.Map.UDMF)
+			{
+				General.Interface.AddButton(BuilderPlug.Me.MenusForm.TextureOffsetLock, ToolbarSection.Geometry); //mxd
+				General.Interface.AddButton(BuilderPlug.Me.MenusForm.TextureOffset3DFloorLock, ToolbarSection.Geometry);
+			}
+
 			//mxd. Update the tooltip
 			BuilderPlug.Me.MenusForm.SyncronizeThingEditButton.ToolTipText = "Synchronized Things Editing" + Environment.NewLine + BuilderPlug.Me.MenusForm.SyncronizeThingEditLinedefsItem.ToolTipText;
 			General.Interface.EndToolbarUpdate(); //mxd
@@ -561,6 +525,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			General.Interface.RemoveButton(BuilderPlug.Me.MenusForm.MarqueSelectTouching); //mxd
 			General.Interface.RemoveButton(BuilderPlug.Me.MenusForm.SyncronizeThingEditButton); //mxd
 			General.Interface.RemoveButton(BuilderPlug.Me.MenusForm.TextureOffsetLock); //mxd
+			General.Interface.RemoveButton(BuilderPlug.Me.MenusForm.TextureOffset3DFloorLock);
 			General.Interface.EndToolbarUpdate(); //mxd
 
 			// Going to EditSelectionMode?
@@ -594,11 +559,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			if(renderer.StartPlotter(true))
 			{
 				renderer.PlotLinedefSet(General.Map.Map.Linedefs);
-				for(int i = 0; i < Linedef.NUM_ARGS; i++) BuilderPlug.PlotAssociations(renderer, association[i], eventlines);
 				
 				if((highlighted != null) && !highlighted.IsDisposed)
 				{
-					BuilderPlug.PlotReverseAssociations(renderer, highlightasso, eventlines);
+					//BuilderPlug.PlotReverseAssociations(renderer, highlightasso, eventlines);
+					highlightasso.Plot();
 					renderer.PlotLinedef(highlighted, General.Colors.Highlight);
 				}
 				renderer.PlotVerticesSet(General.Map.Map.Vertices);
@@ -618,8 +583,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			{
 				if(!selecting) //mxd
 				{ 
-					for(int i = 0; i < Linedef.NUM_ARGS; i++) BuilderPlug.RenderAssociations(renderer, association[i], eventlines);
-					if((highlighted != null) && !highlighted.IsDisposed) BuilderPlug.RenderReverseAssociations(renderer, highlightasso, eventlines); //mxd
+					if ((highlighted != null) && !highlighted.IsDisposed) highlightasso.Render(); //mxd
 				}
 				else
 				{
@@ -629,13 +593,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				//mxd. Render vertex insert preview
 				if(insertpreview.IsFinite())
 				{
-					float dist = Math.Min(Vector2D.Distance(mousemappos, insertpreview), BuilderPlug.Me.HighlightRange);
+					double dist = Math.Min(Vector2D.Distance(mousemappos, insertpreview), BuilderPlug.Me.HighlightRange);
 					byte alpha = (byte)(255 - (dist / BuilderPlug.Me.HighlightRange) * 128);
 					float vsize = (renderer.VertexSize + 1.0f) / renderer.Scale;
-					renderer.RenderRectangleFilled(new RectangleF(insertpreview.x - vsize, insertpreview.y - vsize, vsize * 2.0f, vsize * 2.0f), General.Colors.InfoLine.WithAlpha(alpha), true);
+					renderer.RenderRectangleFilled(new RectangleF((float)(insertpreview.x - vsize), (float)(insertpreview.y - vsize), vsize * 2.0f, vsize * 2.0f), General.Colors.InfoLine.WithAlpha(alpha), true);
 				}
-
-				renderer.RenderArrows(eventlines); //mxd
 
 				//mxd. Render sector tag labels
 				if(BuilderPlug.Me.ViewSelectionEffects)
@@ -1087,7 +1049,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						if(selectthings)
 						{
 							foreach(Thing t in General.Map.ThingsFilter.VisibleThings)
-								t.Selected = selectionrect.Contains(t.Position.x, t.Position.y);
+								t.Selected = selectionrect.Contains((float)t.Position.x, (float)t.Position.y);
 						}
 						break;
 
@@ -1104,7 +1066,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						if(selectthings)
 						{
 							foreach(Thing t in General.Map.ThingsFilter.VisibleThings)
-								t.Selected |= selectionrect.Contains(t.Position.x, t.Position.y);
+								t.Selected |= selectionrect.Contains((float)t.Position.x, (float)t.Position.y);
 						}
 						break;
 
@@ -1115,7 +1077,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						if(selectthings)
 						{
 							foreach(Thing t in General.Map.ThingsFilter.VisibleThings)
-								if(selectionrect.Contains(t.Position.x, t.Position.y)) t.Selected = false;
+								if(selectionrect.Contains((float)t.Position.x, (float)t.Position.y)) t.Selected = false;
 						}
 						break;
 
@@ -1127,7 +1089,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						if(selectthings)
 						{
 							foreach(Thing t in General.Map.ThingsFilter.VisibleThings)
-								if(!selectionrect.Contains(t.Position.x, t.Position.y)) t.Selected = false;
+								if(!selectionrect.Contains((float)t.Position.x, (float)t.Position.y)) t.Selected = false;
 						}
 						break;
 				}
@@ -1192,7 +1154,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				}
 
 				Vector2D center = l.GetCenterPoint();
-				RectangleF rect = new RectangleF(center.x - 8 / renderer.Scale, center.y + 18 / renderer.Scale, 16 / renderer.Scale, -16 / renderer.Scale);
+				RectangleF rect = new RectangleF((float)(center.x - 8 / renderer.Scale), (float)(center.y + 18 / renderer.Scale), 16 / renderer.Scale, -16 / renderer.Scale);
 				PixelColor c = (l == highlighted ? General.Colors.Highlight : (l.Selected ? General.Colors.Selection : PixelColor.FromColor(Color.White)));
 				renderer.RenderRectangleFilled(rect, c, true, General.Map.Data.CommentTextures[iconindex]);
 			}

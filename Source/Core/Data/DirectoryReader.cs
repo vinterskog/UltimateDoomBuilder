@@ -467,12 +467,19 @@ namespace CodeImp.DoomBuilder.Data
 		internal override MemoryStream LoadFile(string filename)
 		{
 			MemoryStream s = null;
+			string casecorrectfilename = GetCorrectCaseForFile(filename);
 
-			try 
+			if(casecorrectfilename == null)
+			{
+				General.ErrorLogger.Add(ErrorType.Error, "Unable to load file " + filename + ": file doesn't exist");
+				return null;
+			}
+
+			try
 			{
 				lock(this)
 				{
-					s = new MemoryStream(File.ReadAllBytes(Path.Combine(location.location, filename)));
+					s = new MemoryStream(File.ReadAllBytes(Path.Combine(location.location, casecorrectfilename)));
 				}
 			} 
 			catch(Exception e) 
@@ -512,6 +519,23 @@ namespace CodeImp.DoomBuilder.Data
 			string tempfile = General.MakeTempFilename(General.Map.TempPath, "wad");
 			File.Copy(Path.Combine(location.location, filename), tempfile);
 			return tempfile;
+		}
+
+		/// <summary>
+		/// Returns the correctly cased file from a path/file. This is required for case sensitive file systems.
+		/// </summary>
+		/// <param name="filepathname">File name get the the correctly cased name from</param>
+		/// <returns></returns>
+		protected override string GetCorrectCaseForFile(string filepathname)
+		{
+			try
+			{
+				return files.GetFileInfo(filepathname).filepathname;
+			}
+			catch(KeyNotFoundException e)
+			{
+				return null;
+			}
 		}
 
 		#endregion

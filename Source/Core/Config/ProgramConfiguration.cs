@@ -93,6 +93,7 @@ namespace CodeImp.DoomBuilder.Config
 		private bool splitjoinedsectors; //mxd
 		private bool usehighlight; //mxd
 		private bool switchviewmodes; //mxd
+		private bool showfps;
 
 		//mxd. Script editor settings
 		private string scriptfontname;
@@ -146,7 +147,7 @@ namespace CodeImp.DoomBuilder.Config
 		private int defaultfloorheight;
 		private int defaultceilheight;
 		private int defaultthingtype = 1;
-		private float defaultthingangle;
+		private double defaultthingangle;
 		private List<string> defaultthingflags;
 		
 		#endregion
@@ -201,6 +202,7 @@ namespace CodeImp.DoomBuilder.Config
 		public SplitLineBehavior SplitLineBehavior { get { return splitlinebehavior; } set { splitlinebehavior = value; } } //mxd
 		public MergeGeometryMode MergeGeometryMode { get { return mergegeomode; } internal set { mergegeomode = value; } } //mxd
 		public bool SplitJoinedSectors { get { return splitjoinedsectors; } internal set { splitjoinedsectors = value; } } //mxd
+		public bool ShowFPS { get { return showfps; } internal set { showfps = value; } }
 
 		//mxd. Highlight mode
 		public bool UseHighlight
@@ -272,7 +274,7 @@ namespace CodeImp.DoomBuilder.Config
 		public int DefaultCeilingHeight { get { return defaultceilheight; } set { defaultceilheight = value; } }
 
 		public int DefaultThingType { get { return defaultthingtype; } set { defaultthingtype = value; } }
-		public float DefaultThingAngle { get { return defaultthingangle; } set { defaultthingangle = value; } }
+		public double DefaultThingAngle { get { return defaultthingangle; } set { defaultthingangle = value; } }
 
 		#endregion
 
@@ -292,10 +294,10 @@ namespace CodeImp.DoomBuilder.Config
 		#region ================== Loading / Saving
 
 		// This loads the program configuration
-		internal bool Load(string cfgfilepathname, string defaultfilepathname)
+		internal bool Load(string cfgfilepathname, string defaultfilepathname, string legacyfilepathname)
 		{
 			// First parse it
-			if(Read(cfgfilepathname, defaultfilepathname))
+			if(Read(cfgfilepathname, defaultfilepathname, legacyfilepathname))
 			{
 				// Read the cache variables
 				blackbrowsers = cfg.ReadSetting("blackbrowsers", true);
@@ -347,6 +349,7 @@ namespace CodeImp.DoomBuilder.Config
 				splitjoinedsectors = cfg.ReadSetting("splitjoinedsectors", true); //mxd
 				usehighlight = cfg.ReadSetting("usehighlight", true); //mxd
 				switchviewmodes = cfg.ReadSetting("switchviewmodes", false); //mxd
+				showfps = cfg.ReadSetting("showfps", false);
 
 				//mxd. Script editor
 				scriptfontname = cfg.ReadSetting("scriptfontname", "Courier New");
@@ -460,6 +463,7 @@ namespace CodeImp.DoomBuilder.Config
 			cfg.WriteSetting("splitjoinedsectors", splitjoinedsectors); //mxd
 			cfg.WriteSetting("usehighlight", usehighlight); //mxd
 			cfg.WriteSetting("switchviewmodes", switchviewmodes); //mxd
+			cfg.WriteSetting("showfps", showfps);
 
 			//mxd. Script editor
 			cfg.WriteSetting("scriptfontname", scriptfontname);
@@ -520,15 +524,25 @@ namespace CodeImp.DoomBuilder.Config
 		}
 		
 		// This reads the configuration
-		private bool Read(string cfgfilepathname, string defaultfilepathname)
+		private bool Read(string cfgfilepathname, string defaultfilepathname, string legacyfilepathname)
 		{
 			// Check if no config for this user exists yet
 			if(!File.Exists(cfgfilepathname))
 			{
-				// Copy new configuration
-				General.WriteLogLine("Local user program configuration is missing!");
-				File.Copy(defaultfilepathname, cfgfilepathname);
-				General.WriteLogLine("New program configuration copied for local user");
+				// Does an legacy configuration exist?
+				if (File.Exists(legacyfilepathname))
+				{
+					General.WriteLogLine("Local user program configuration is missing!");
+					File.Copy(legacyfilepathname, cfgfilepathname);
+					General.WriteLogLine("Copied legacy configuration \"" + legacyfilepathname + "\" for local user");
+				}
+				else
+				{
+					// Copy new configuration
+					General.WriteLogLine("Local user program configuration is missing!");
+					File.Copy(defaultfilepathname, cfgfilepathname);
+					General.WriteLogLine("New program configuration copied for local user");
+				}
 			}
 
 			// Load it

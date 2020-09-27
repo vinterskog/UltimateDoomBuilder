@@ -81,13 +81,13 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			bool lightabsolute;
 			GetLightValue(out lightvalue, out lightabsolute);
 
-			Vector2D tscale = new Vector2D(sourceside.Fields.GetValue("scalex_mid", 1.0f),
-										   sourceside.Fields.GetValue("scaley_mid", 1.0f));
+			Vector2D tscale = new Vector2D(sourceside.Fields.GetValue("scalex_mid", 1.0),
+										   sourceside.Fields.GetValue("scaley_mid", 1.0));
             Vector2D tscaleAbs = new Vector2D(Math.Abs(tscale.x), Math.Abs(tscale.y));
-            Vector2D toffset1 = new Vector2D(Sidedef.Fields.GetValue("offsetx_mid", 0.0f),
-											 Sidedef.Fields.GetValue("offsety_mid", 0.0f));
-			Vector2D toffset2 = new Vector2D(sourceside.Fields.GetValue("offsetx_mid", 0.0f),
-											 sourceside.Fields.GetValue("offsety_mid", 0.0f));
+            Vector2D toffset1 = new Vector2D(Sidedef.Fields.GetValue("offsetx_mid", 0.0),
+											 Sidedef.Fields.GetValue("offsety_mid", 0.0));
+			Vector2D toffset2 = new Vector2D(sourceside.Fields.GetValue("offsetx_mid", 0.0),
+											 sourceside.Fields.GetValue("offsety_mid", 0.0));
 			
 			// Left and right vertices for this sidedef
 			if(Sidedef.IsFront)
@@ -142,10 +142,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				base.Texture = General.Map.Data.MissingTexture3D;
 				setuponloadedtexture = 0;
 			}
-			
-			// Get texture scaled size
-			Vector2D tsz = new Vector2D(base.Texture.ScaledWidth, base.Texture.ScaledHeight);
-			tsz = tsz / tscale;
+
+			// Get texture scaled size. Round up, because that's apparently what GZDoom does
+			Vector2D tsz = new Vector2D(Math.Ceiling(base.Texture.ScaledWidth / tscale.x), Math.Ceiling(base.Texture.ScaledHeight / tscale.y));
 			
 			// Get texture offsets
 			Vector2D tof = new Vector2D(Sidedef.OffsetX, Sidedef.OffsetY) + new Vector2D(sourceside.OffsetX, sourceside.OffsetY);
@@ -161,12 +160,15 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				// If the texture gets replaced with a "hires" texture it adds more fuckery
 				if (base.Texture is HiResImage)
 					tof *= tscaleAbs;
+
+				// Round up, since that's apparently what GZDoom does. Not sure if this is the right place or if it also has to be done earlier
+				tof = new Vector2D(Math.Ceiling(tof.x), Math.Ceiling(tof.y));
 			}
 
 			// For Vavoom type 3D floors the ceiling is lower than floor and they are reversed.
 			// We choose here.
-			float sourcetopheight = extrafloor.VavoomType ? sourceside.Sector.FloorHeight : sourceside.Sector.CeilHeight;
-			float sourcebottomheight = extrafloor.VavoomType ? sourceside.Sector.CeilHeight : sourceside.Sector.FloorHeight;
+			double sourcetopheight = extrafloor.VavoomType ? sourceside.Sector.FloorHeight : sourceside.Sector.CeilHeight;
+			double sourcebottomheight = extrafloor.VavoomType ? sourceside.Sector.CeilHeight : sourceside.Sector.FloorHeight;
 			
 			// Determine texture coordinates plane as they would be in normal circumstances.
 			// We can then use this plane to find any texture coordinate we need.
@@ -175,9 +177,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// NOTE: I use a small bias for the floor height, because if the difference in
 			// height is 0 then the TexturePlane doesn't work!
 			TexturePlane tp = new TexturePlane();
-			float floorbias = (sourcetopheight == sourcebottomheight) ? 1.0f : 0.0f;
+			double floorbias = (sourcetopheight == sourcebottomheight) ? 1.0f : 0.0f;
 
-			tp.trb.x = tp.tlt.x + (float)Math.Round(Sidedef.Line.Length); //mxd. (G)ZDoom snaps texture coordinates to integral linedef length
+			tp.trb.x = tp.tlt.x + Math.Round(Sidedef.Line.Length); //mxd. (G)ZDoom snaps texture coordinates to integral linedef length
 			tp.trb.y = tp.tlt.y + (sourcetopheight - sourcebottomheight) + floorbias;
 			
 			// Apply texture offset
@@ -197,22 +199,22 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			tp.vrt = new Vector3D(tp.vrb.x, tp.vrb.y, tp.vlt.z);
 			
 			//mxd. Get ceiling and floor heights. Use our and neighbour sector's data
-			SectorData sdo = mode.GetSectorData(Sidedef.Other.Sector); 
+			SectorData sdo = mode.GetSectorData(Sidedef.Other.Sector);
 
-			float flo = sdo.Floor.plane.GetZ(vl);
-			float fro = sdo.Floor.plane.GetZ(vr);
-			float clo = sdo.Ceiling.plane.GetZ(vl);
-			float cro = sdo.Ceiling.plane.GetZ(vr);
+			double flo = sdo.Floor.plane.GetZ(vl);
+			double fro = sdo.Floor.plane.GetZ(vr);
+			double clo = sdo.Ceiling.plane.GetZ(vl);
+			double cro = sdo.Ceiling.plane.GetZ(vr);
 
-			float fle = sd.Floor.plane.GetZ(vl);
-			float fre = sd.Floor.plane.GetZ(vr);
-			float cle = sd.Ceiling.plane.GetZ(vl);
-			float cre = sd.Ceiling.plane.GetZ(vr);
+			double fle = sd.Floor.plane.GetZ(vl);
+			double fre = sd.Floor.plane.GetZ(vr);
+			double cle = sd.Ceiling.plane.GetZ(vl);
+			double cre = sd.Ceiling.plane.GetZ(vr);
 
-			float fl = flo > fle ? flo : fle;
-			float fr = fro > fre ? fro : fre;
-			float cl = clo < cle ? clo : cle;
-			float cr = cro < cre ? cro : cre;
+			double fl = flo > fle ? flo : fle;
+			double fr = fro > fre ? fro : fre;
+			double cl = clo < cle ? clo : cle;
+			double cr = cro < cre ? cro : cre;
 			
 			// Anything to see?
 			if(((cl - fl) > 0.01f) || ((cr - fr) > 0.01f))
@@ -338,11 +340,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		}
 
 		//mxd. Alpha based picking
-		public override bool PickAccurate(Vector3D from, Vector3D to, Vector3D dir, ref float u_ray)
+		public override bool PickAccurate(Vector3D from, Vector3D to, Vector3D dir, ref double u_ray)
 		{
 			if(!BuilderPlug.Me.AlphaBasedTextureHighlighting || !Texture.IsImageLoaded || (!Texture.IsTranslucent && !Texture.IsMasked)) return base.PickAccurate(from, to, dir, ref u_ray);
 
-			float u;
+			double u;
 			Sidedef sourceside = extrafloor.Linedef.Front;
 			new Line2D(from, to).GetIntersection(Sidedef.Line.Line, out u);
 			if(Sidedef != Sidedef.Line.Front) u = 1.0f - u;
@@ -355,11 +357,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
             Vector2D imgscale = new Vector2D((float)Texture.Width / imageWidth, (float)Texture.Height / imageHeight);
             Vector2D texscale = (Texture is HiResImage) ? imgscale * Texture.Scale : Texture.Scale;
 
-            // Get correct offset to texture space...
-            float texoffsetx = Sidedef.OffsetX + sourceside.OffsetX + UniFields.GetFloat(Sidedef.Fields, "offsetx_mid") + UniFields.GetFloat(sourceside.Fields, "offsetx_mid");
+			// Get correct offset to texture space...
+			double texoffsetx = Sidedef.OffsetX + sourceside.OffsetX + UniFields.GetFloat(Sidedef.Fields, "offsetx_mid") + UniFields.GetFloat(sourceside.Fields, "offsetx_mid");
             int ox = (int)Math.Floor((u * Sidedef.Line.Length * UniFields.GetFloat(sourceside.Fields, "scalex_mid", 1.0f) / texscale.x + (texoffsetx / imgscale.x)) % imageWidth);
 
-            float texoffsety = Sidedef.OffsetY + sourceside.OffsetY + UniFields.GetFloat(Sidedef.Fields, "offsety_mid") + UniFields.GetFloat(sourceside.Fields, "offsety_mid");
+			double texoffsety = Sidedef.OffsetY + sourceside.OffsetY + UniFields.GetFloat(Sidedef.Fields, "offsety_mid") + UniFields.GetFloat(sourceside.Fields, "offsety_mid");
             int oy = (int)Math.Ceiling(((pickintersect.z - sourceside.Sector.CeilHeight) * UniFields.GetFloat(sourceside.Fields, "scaley_mid", 1.0f) / texscale.y - (texoffsety / imgscale.y)) % imageHeight);
 
             // Make sure offsets are inside of texture dimensions...
@@ -402,26 +404,26 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		protected override void SetTextureOffsetX(int x)
 		{
 			Sidedef.Fields.BeforeFieldsChange();
-			Sidedef.Fields["offsetx_mid"] = new UniValue(UniversalType.Float, (float)x);
+			Sidedef.Fields["offsetx_mid"] = new UniValue(UniversalType.Float, (double)x);
 		}
 
 		protected override void SetTextureOffsetY(int y)
 		{
 			Sidedef.Fields.BeforeFieldsChange();
-			Sidedef.Fields["offsety_mid"] = new UniValue(UniversalType.Float, (float)y);
+			Sidedef.Fields["offsety_mid"] = new UniValue(UniversalType.Float, (double)y);
 		}
 
 		protected override void MoveTextureOffset(int offsetx, int offsety)
 		{
 			Sidedef.Fields.BeforeFieldsChange();
 			bool worldpanning = this.Texture.WorldPanning || General.Map.Data.MapInfo.ForceWorldPanning;
-			float oldx = Sidedef.Fields.GetValue("offsetx_mid", 0.0f);
-			float oldy = Sidedef.Fields.GetValue("offsety_mid", 0.0f);
-			float scalex = extrafloor.Linedef.Front.Fields.GetValue("scalex_mid", 1.0f);
-			float scaley = extrafloor.Linedef.Front.Fields.GetValue("scaley_mid", 1.0f);
+			double oldx = Sidedef.Fields.GetValue("offsetx_mid", 0.0);
+			double oldy = Sidedef.Fields.GetValue("offsety_mid", 0.0);
+			double scalex = extrafloor.Linedef.Front.Fields.GetValue("scalex_mid", 1.0);
+			double scaley = extrafloor.Linedef.Front.Fields.GetValue("scaley_mid", 1.0);
 			bool textureloaded = (Texture != null && Texture.IsImageLoaded); //mxd
-			float width = textureloaded ? (worldpanning ? this.Texture.ScaledWidth / scalex : this.Texture.Width) : -1; // biwa
-			float height = textureloaded ? (worldpanning ? this.Texture.ScaledHeight / scaley : this.Texture.Height) : -1; // biwa
+			double width = textureloaded ? (worldpanning ? this.Texture.ScaledWidth / scalex : this.Texture.Width) : -1; // biwa
+			double height = textureloaded ? (worldpanning ? this.Texture.ScaledHeight / scaley : this.Texture.Height) : -1; // biwa
 
 			Sidedef.Fields["offsetx_mid"] = new UniValue(UniversalType.Float, GetNewTexutreOffset(oldx, offsetx, width)); //mxd // biwa
 			Sidedef.Fields["offsety_mid"] = new UniValue(UniversalType.Float, GetNewTexutreOffset(oldy, offsety, height)); //mxd // biwa
@@ -429,8 +431,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 		protected override Point GetTextureOffset()
 		{
-			float oldx = Sidedef.Fields.GetValue("offsetx_mid", 0.0f);
-			float oldy = Sidedef.Fields.GetValue("offsety_mid", 0.0f);
+			double oldx = Sidedef.Fields.GetValue("offsetx_mid", 0.0);
+			double oldy = Sidedef.Fields.GetValue("offsety_mid", 0.0);
 			return new Point((int)oldx, (int)oldy);
 		}
 
@@ -462,25 +464,25 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			Sidedef target = extrafloor.Linedef.Front;
 			if(target == null) return;
 
-			float scaleX = target.Fields.GetValue("scalex_mid", 1.0f);
-			float scaleY = target.Fields.GetValue("scaley_mid", 1.0f);
+			double scaleX = target.Fields.GetValue("scalex_mid", 1.0);
+			double scaleY = target.Fields.GetValue("scaley_mid", 1.0);
 
 			target.Fields.BeforeFieldsChange();
 
 			if(incrementX != 0)
 			{
-				float pix = (int)Math.Round(Texture.Width * scaleX) - incrementX;
-				float newscaleX = (float)Math.Round(pix / Texture.Width, 3);
+				double pix = (int)Math.Round(Texture.Width * scaleX) - incrementX;
+				double newscaleX = Math.Round(pix / Texture.Width, 3);
 				scaleX = (newscaleX == 0 ? scaleX * -1 : newscaleX);
-				UniFields.SetFloat(target.Fields, "scalex_mid", scaleX, 1.0f);
+				UniFields.SetFloat(target.Fields, "scalex_mid", scaleX, 1.0);
 			}
 
 			if(incrementY != 0)
 			{
-				float pix = (int)Math.Round(Texture.Height * scaleY) - incrementY;
-				float newscaleY = (float)Math.Round(pix / Texture.Height, 3);
+				double pix = (int)Math.Round(Texture.Height * scaleY) - incrementY;
+				double newscaleY = Math.Round(pix / Texture.Height, 3);
 				scaleY = (newscaleY == 0 ? scaleY * -1 : newscaleY);
-				UniFields.SetFloat(target.Fields, "scaley_mid", scaleY, 1.0f);
+				UniFields.SetFloat(target.Fields, "scaley_mid", scaleY, 1.0);
 			}
 			
 			// Update the model sector to update all 3d floors

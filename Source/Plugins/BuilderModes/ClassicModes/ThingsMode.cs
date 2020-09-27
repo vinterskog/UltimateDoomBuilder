@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using CodeImp.DoomBuilder.Actions;
 using CodeImp.DoomBuilder.BuilderModes.Interface;
@@ -55,9 +56,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 		// Highlighted item
 		private Thing highlighted;
-		private readonly Association[] association = new Association[Thing.NUM_ARGS];
-		private readonly Association directasso = new Association();
-		private readonly Association highlightasso = new Association();
+		private readonly Association highlightasso;
 
 		// Interface
 		new private bool editpressed;
@@ -88,8 +87,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		public ThingsMode()
 		{
 			//mxd. Associations now requre initializing...
-			for(int i = 0; i < association.Length; i++) association[i] = new Association();
-			directasso = new Association();
+			highlightasso = new Association(renderer);
 		}
 
 		//mxd
@@ -233,8 +231,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				renderer.PlotLinedefSet(General.Map.Map.Linedefs);
 				renderer.PlotVerticesSet(General.Map.Map.Vertices);
 
-				for(int i = 0; i < Thing.NUM_ARGS; i++) BuilderPlug.PlotAssociations(renderer, association[i], eventlines);
-				if(highlighted != null && !highlighted.IsDisposed) BuilderPlug.PlotReverseAssociations(renderer, highlightasso, eventlines);
+				if (highlighted != null && !highlighted.IsDisposed) highlightasso.Plot();
 				
 				renderer.Finish();
 			}
@@ -245,13 +242,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				float alpha = (General.Settings.FixedThingsScale ? Presentation.THINGS_ALPHA : General.Settings.ActiveThingsAlpha); //mxd
 				renderer.RenderThingSet(General.Map.ThingsFilter.HiddenThings, General.Settings.HiddenThingsAlpha);
 				renderer.RenderThingSet(General.Map.ThingsFilter.VisibleThings, alpha);
-				for(int i = 0; i < Thing.NUM_ARGS; i++) BuilderPlug.RenderAssociations(renderer, association[i], eventlines);
-				BuilderPlug.RenderAssociations(renderer, directasso, eventlines);
 				
 				if(highlighted != null && !highlighted.IsDisposed)
 				{
 					renderer.RenderThing(highlighted, General.Colors.Highlight, alpha);
-					BuilderPlug.RenderReverseAssociations(renderer, highlightasso, eventlines); //mxd
+					highlightasso.Render();
 				}
 
 				//mxd. Event lines
@@ -363,11 +358,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					linktype = ti.ThingLink;
 
 				// New association highlights something?
-				if(t.Tag != 0) highlightasso.Set(t.Position, t.Tag, UniversalType.ThingTag, linktype);
+				highlightasso.Set(t);
 			}
 			else
 			{
-				highlightasso.Set(new Vector2D(), 0, 0);
+				highlightasso.Clear();
 			}
 
 			if(highlighted != null) //mxd
@@ -378,46 +373,6 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				highlighted.Highlighted = false;
 			}
 
-			//mxd. Determine thing associations
-			bool clearassociations = true; //mxd
-			if(t != null)
-			{
-				t.Highlighted = true; //mxd
-				
-				// Check if we can find the linedefs action
-				if((t.Action > 0) && General.Map.Config.LinedefActions.ContainsKey(t.Action))
-				{
-					clearassociations = false;
-					LinedefActionInfo action = General.Map.Config.LinedefActions[t.Action];
-					for(int i = 0; i < Thing.NUM_ARGS; i++)
-						association[i].Set(t.Position, t.Args[i], action.Args[i].Type);
-
-					//Some things, such as Patrol and Interpolation specials, are associated via a shared tag rather than an argument
-					ThingTypeInfo ti = General.Map.Data.GetThingInfoEx(t.Type);
-					if (ti != null && ti.ThingLink < 0) 
-						directasso.Set(t.Position, t.Tag, (int)UniversalType.ThingTag);
-				}
-				//mxd. Check if we can use thing arguments
-				else if(t.Action == 0)
-				{
-					ThingTypeInfo ti = General.Map.Data.GetThingInfoEx(t.Type);
-					if(ti != null)
-					{
-						clearassociations = false;
-						for(int i = 0; i < Thing.NUM_ARGS; i++)
-							association[i].Set(t.Position, t.Args[i], ti.Args[i].Type);
-					}
-				}
-			}
-
-			// mxd. Clear associations?
-			if(clearassociations)
-			{
-				for (int i = 0; i < Thing.NUM_ARGS; i++)
-					association[i].Set(new Vector2D(), 0, 0);
-				directasso.Set(new Vector2D(), 0, 0);
-			}
-			
 			// Set new highlight and redraw display
 			highlighted = t;
 			General.Interface.RedrawDisplay();
@@ -874,14 +829,14 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					case MarqueSelectionMode.SUBTRACT:
 						// Selection order doesn't matter here
 						foreach(Thing t in General.Map.ThingsFilter.VisibleThings)
-							if(selectionrect.Contains(t.Position.x, t.Position.y)) t.Selected = false;
+							if(selectionrect.Contains((float)t.Position.x, (float)t.Position.y)) t.Selected = false;
 						break;
 
 					// Should be Intersect selection mode
 					default:
 						// Selection order doesn't matter here
 						foreach(Thing t in General.Map.ThingsFilter.VisibleThings)
-							if(!selectionrect.Contains(t.Position.x, t.Position.y)) t.Selected = false;
+							if(!selectionrect.Contains((float)t.Position.x, (float)t.Position.y)) t.Selected = false;
 						break;
 				}
 
@@ -946,7 +901,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					if(index != -1) iconindex = index;
 				}
 
-				RectangleF rect = new RectangleF(t.Position.x + size - 10 / renderer.Scale, t.Position.y + size + 18 / renderer.Scale, 16 / renderer.Scale, -16 / renderer.Scale);
+				RectangleF rect = new RectangleF((float)(t.Position.x + size - 10 / renderer.Scale), (float)(t.Position.y + size + 18 / renderer.Scale), 16 / renderer.Scale, -16 / renderer.Scale);
 				PixelColor c = (t == highlighted ? General.Colors.Highlight : (t.Selected ? General.Colors.Selection : PixelColor.FromColor(Color.White)));
 				renderer.RenderRectangleFilled(rect, c, true, General.Map.Data.CommentTextures[iconindex]);
 			}
@@ -959,7 +914,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			List<Thing> result = new List<Thing>();
 			foreach(Thing t in General.Map.ThingsFilter.VisibleThings)
 			{
-				if(selection.Contains(t.Position.x, t.Position.y)) result.Add(t);
+				if(selection.Contains((float)t.Position.x, (float)t.Position.y)) result.Add(t);
 			}
 
 			if(result.Count == 0) return result;
@@ -970,8 +925,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if(t1 == t2) return 0;
 
 				// Get closest distance from thing to selectstart
-				float closest1 = Vector2D.DistanceSq(t1.Position, targetpoint);
-				float closest2 = Vector2D.DistanceSq(t2.Position, targetpoint);
+				double closest1 = Vector2D.DistanceSq(t1.Position, targetpoint);
+				double closest2 = Vector2D.DistanceSq(t2.Position, targetpoint);
 
 				// Return closer one
 				return (int)(closest1 - closest2);
@@ -1571,6 +1526,38 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 			var form = new SelectSimilarElementOptionsPanel();
 			if(form.Setup(this)) form.ShowDialog(General.Interface);
+		}
+
+		[BeginAction("smartgridtransform", BaseAction = true)]
+		protected void SmartGridTransform()
+		{
+			if(General.Map.Map.SelectedThingsCount > 1)
+			{
+				General.Interface.DisplayStatus(StatusType.Warning, "Either nothing or exactly one thing must be selected");
+				General.Interface.MessageBeep(MessageBeepType.Warning);
+				return;
+			}
+
+			Thing thing = null;
+
+			if (General.Map.Map.SelectedThingsCount == 1)
+				thing = General.Map.Map.GetSelectedThings(true).First();
+			else if (highlighted != null)
+				thing = highlighted;
+
+			if(thing != null)
+			{
+				General.Map.Grid.SetGridOrigin(thing.Position.x, thing.Position.y);
+				General.Map.GridVisibilityChanged();
+				General.Interface.RedrawDisplay();
+			}
+			else
+			{
+				General.Map.Grid.SetGridRotation(0.0);
+				General.Map.Grid.SetGridOrigin(0, 0);
+				General.Map.GridVisibilityChanged();
+				General.Interface.RedrawDisplay();
+			}
 		}
 
 		#endregion

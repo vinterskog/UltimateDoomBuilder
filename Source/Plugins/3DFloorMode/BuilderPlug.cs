@@ -648,7 +648,7 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 
 					foreach (Sidedef sd in s.Sidedefs)
 					{
-						float u = 0.0f;
+						double u = 0.0f;
 						Plane ldplane = new Plane(sd.Line.Start.Position, sd.Line.End.Position, new Vector3D(sd.Line.Start.Position.x, sd.Line.Start.Position.y, 128), true);
 
 						foreach(Line3D l in splinelines)
@@ -724,7 +724,7 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 
 					if (svg.Vertices.Count == 2)
 					{
-						float z = sp[0].z;
+						double z = sp[0].z;
 						Line2D line = new Line2D(sp[0], sp[1]);
 						Vector3D perpendicular = line.GetPerpendicular();
 
@@ -758,21 +758,51 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 		public static List<ThreeDFloor> GetThreeDFloors(List<Sector> sectors)
 		{
 			List<ThreeDFloor> tdf = new List<ThreeDFloor>();
-			List<Sector> tmpsectors = new List<Sector>();
+			HashSet<Sector> tmpsectors = new HashSet<Sector>();
+			HashSet<Sector> potentialsectors = new HashSet<Sector>();
+			Dictionary<int, List<Sector>> tags = new Dictionary<int, List<Sector>>();
 
 			// Immediately return if the list is empty
 			if (sectors.Count == 0)
 				return tdf;
 
+			// Build a dictionary of tags used by 3D floor action and which control sector they belong to
 			foreach (Linedef ld in General.Map.Map.Linedefs)
-				if (ld.Action == 160)
-					foreach (Sector s in sectors)
-						if (s != null && s.Tags.Contains(ld.Args[0]) && !tmpsectors.Contains(ld.Front.Sector))
-							tmpsectors.Add(ld.Front.Sector);
-				
+			{
+				if (ld.Action == 160 && ld.Args[0] != 0)
+				{
+					if (!tags.ContainsKey(ld.Args[0]))
+						tags.Add(ld.Args[0], new List<Sector>() { ld.Front.Sector });
+					else
+						tags[ld.Args[0]].Add(ld.Front.Sector);
+				}
+			}
+
+			// Create a list of 3D floor control sectors that reference the given sectors
+			foreach (Sector s in sectors)
+			{
+				if (s == null || s.IsDisposed)
+					continue;
+
+				IEnumerable<int> intersecttags = tags.Keys.Intersect(s.Tags);
+
+				if (intersecttags.Count() == 0)
+					continue;
+
+				// This sector is tagged to contain a 3D floor. Using this will speed up creating the 3D floors later
+				potentialsectors.Add(s);
+
+				foreach(int it in intersecttags)
+				{
+					foreach (Sector its in tags[it])
+						tmpsectors.Add(its);
+				}
+			}
+
+			// Create 3D floors from the found sectors
 			foreach(Sector s in tmpsectors)
 				if(s != null)
-					tdf.Add(new ThreeDFloor(s));
+					tdf.Add(new ThreeDFloor(s, potentialsectors));
 
 			return tdf;
 		}
@@ -789,6 +819,7 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 			var sectorsToThreeDFloors = new Dictionary<Sector, List<ThreeDFloor>>();
 			var sectorGroups = new List<List<Sector>>();
 			List<int> tagblacklist = new List<int>();
+			int numnewcontrolsectors = 0;
 
 			if(selectedSectors == null)
 				selectedSectors = new List<Sector>(General.Map.Map.GetSelectedSectors(true));
@@ -818,22 +849,30 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 
 			General.Map.UndoRedo.CreateUndo("Modify 3D floors");
 
-			// Create a list of all tags used by the control sectors. This is necessary so that
-			// tags that will be assigned to not yet existing geometry will not be used
 			foreach (ThreeDFloor tdf in threedfloors)
+			{
+				// Create a list of all tags used by the control sectors. This is necessary so that
+				// tags that will be assigned to not yet existing geometry will not be used
 				foreach (int tag in tdf.Tags)
 					if (!tagblacklist.Contains(tag))
 						tagblacklist.Add(tag);
 
+				// Collect the number of control sectors that have to be created
+				if (tdf.IsNew)
+					numnewcontrolsectors++;
+			}
+
 			try
 			{
+				List<DrawnVertex> drawnvertices = new List<DrawnVertex>();
+
+				if (numnewcontrolsectors > 0)
+					drawnvertices = Me.ControlSectorArea.GetNewControlSectorVertices(numnewcontrolsectors);
+
 				foreach (ThreeDFloor tdf in threedfloors)
 				{
-					if (tdf.Rebuild)
-						tdf.DeleteControlSector();
-
-					if (tdf.IsNew || tdf.Rebuild)
-						tdf.CreateGeometry(tagblacklist);
+					if (tdf.IsNew)
+						tdf.CreateGeometry(tagblacklist, drawnvertices);
 
 					tdf.UpdateGeometry();
 				}
@@ -929,6 +968,7 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 						try
 						{
 							newtag = BuilderPlug.Me.ControlSectorArea.GetNewSectorTag(tagblacklist);
+							tagblacklist.Add(newtag);
 						}
 						catch (Exception e)
 						{
@@ -944,7 +984,7 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 					try
 					{
 						foreach (ThreeDFloor tdf in sectorsToThreeDFloors[sectors.First()])
-							tdf.BindTag(newtag);
+							tdf.BindTag(newtag, null);
 					}
 					catch (Exception e)
 					{
@@ -958,6 +998,17 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 			// Remove unused tags from the 3D floors
 			foreach (ThreeDFloor tdf in threedfloors)
 				tdf.Cleanup();
+
+			// Snap to map format accuracy
+			General.Map.Map.SnapAllToAccuracy();
+
+			// Update textures
+			General.Map.Data.UpdateUsedTextures();
+
+			// Update caches
+			General.Map.Map.Update();
+			General.Interface.RedrawDisplay();
+			General.Map.IsChanged = true;
 		}
 
 		public SlopeVertexGroup AddSlopeVertexGroup(List<SlopeVertex> vertices, out int id)
@@ -1012,22 +1063,27 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 			return null;
 		}
 
+		public static List<Sector> GetSectorsByTag(int tag)
+		{
+			return GetSectorsByTag(General.Map.Map.Sectors, tag);
+		}
+
+		public static List<Sector> GetSectorsByTag(IEnumerable sectors, int tag)
+		{
+			List<Sector> taggedsectors = new List<Sector>();
+
+			foreach (Sector s in sectors)
+				if (s.Tags.Contains(tag))
+					taggedsectors.Add(s);
+
+			return taggedsectors;
+		}
+
 		#endregion
 	}
 
 	public static class ThreeDFloorHelpers
 	{
-		public static List<Sector> GetSectorsByTag(this MapSet ms, int tag)
-		{
-			List<Sector> sectors = new List<Sector>();
-
-			foreach (Sector s in ms.Sectors)
-				if (s.Tags.Contains(tag))
-					sectors.Add(s);
-
-			return sectors;
-		}
-
 		public static bool ContainsAllElements<T>(this List<T> list1, List<T> list2)
 		{
 			if (list1.Count != list2.Count)

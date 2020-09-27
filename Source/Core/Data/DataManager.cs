@@ -2537,7 +2537,7 @@ namespace CodeImp.DoomBuilder.Data
 				// Store results in "ambient_sounds" enum
 				EnumList newenums = new EnumList();
 				newenums.AddRange(configenums.Values);
-				newenums.Sort((a, b) => a.Title.CompareTo(b.Title)); // Sort by title
+				newenums.Sort(); // Sort by ambient sound index
 				newenums.Insert(0, new EnumItem("0", "None")); // Add "None" value
 				General.Map.Config.Enums["ambient_sounds"] = newenums;
 
@@ -3267,7 +3267,7 @@ namespace CodeImp.DoomBuilder.Data
 			// Setup matrices
 			Vector3f offset = new Vector3f(0f, 0f, -1.8f); // Sphere size is 10 mu
 			Matrix mworld = Matrix.Translation(offset) * Matrix.Scaling(1.0f, 1.0f, yscale);
-			Matrix mprojection = Matrix.PerspectiveFov(Angle2D.PIHALF, 1.0f, 0.5f, 100.0f);
+			Matrix mprojection = Matrix.PerspectiveFov((float)Angle2D.PIHALF, 1.0f, 0.5f, 100.0f);
 
             // Place camera at origin
             General.Map.Graphics.SetUniform(UniformName.campos, new Vector4f());

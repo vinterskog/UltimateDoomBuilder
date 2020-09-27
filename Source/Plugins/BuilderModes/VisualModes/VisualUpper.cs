@@ -80,8 +80,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			if(!osd.Updated) osd.Update();
 
 			//mxd
-			float vlzc = sd.Ceiling.plane.GetZ(vl);
-			float vrzc = sd.Ceiling.plane.GetZ(vr);
+			double vlzc = sd.Ceiling.plane.GetZ(vl);
+			double vrzc = sd.Ceiling.plane.GetZ(vr);
 
 			//mxd. Side is visible when our sector's ceiling is higher than the other's at any vertex
 			if(!(vlzc > osd.Ceiling.plane.GetZ(vl) || vrzc > osd.Ceiling.plane.GetZ(vr)))
@@ -98,11 +98,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			bool lightabsolute;
 			GetLightValue(out lightvalue, out lightabsolute);
 
-			Vector2D tscale = new Vector2D(Sidedef.Fields.GetValue("scalex_top", 1.0f),
-										   Sidedef.Fields.GetValue("scaley_top", 1.0f));
+			Vector2D tscale = new Vector2D(Sidedef.Fields.GetValue("scalex_top", 1.0),
+										   Sidedef.Fields.GetValue("scaley_top", 1.0));
             Vector2D tscaleAbs = new Vector2D(Math.Abs(tscale.x), Math.Abs(tscale.y));
-            Vector2D toffset = new Vector2D(Sidedef.Fields.GetValue("offsetx_top", 0.0f),
-											Sidedef.Fields.GetValue("offsety_top", 0.0f));
+            Vector2D toffset = new Vector2D(Sidedef.Fields.GetValue("offsetx_top", 0.0),
+											Sidedef.Fields.GetValue("offsety_top", 0.0));
 			
 			// Texture given?
 			if((Sidedef.LongHighTexture != MapSet.EmptyLongName))
@@ -126,10 +126,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				setuponloadedtexture = 0;
 			}
 
-			// Get texture scaled size
-			Vector2D tsz = new Vector2D(base.Texture.ScaledWidth, base.Texture.ScaledHeight);
-			tsz = tsz / tscale;
-			
+			// Get texture scaled size. Round up, because that's apparently what GZDoom does
+			Vector2D tsz = new Vector2D(Math.Ceiling(base.Texture.ScaledWidth / tscale.x), Math.Ceiling(base.Texture.ScaledHeight / tscale.y));
+
 			// Get texture offsets
 			Vector2D tof = new Vector2D(Sidedef.OffsetX, Sidedef.OffsetY);
 
@@ -144,6 +143,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				// If the texture gets replaced with a "hires" texture it adds more fuckery
 				if (base.Texture is HiResImage)
 					tof *= tscaleAbs;
+
+				// Round up, since that's apparently what GZDoom does. Not sure if this is the right place or if it also has to be done earlier
+				tof = new Vector2D(Math.Ceiling(tof.x), Math.Ceiling(tof.y));
 			}
 
 			// Determine texture coordinates plane as they would be in normal circumstances.
@@ -153,13 +155,13 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// NOTE: I use a small bias for the floor height, because if the difference in
 			// height is 0 then the TexturePlane doesn't work!
 			TexturePlane tp = new TexturePlane();
-			float ceilbias = (Sidedef.Other.Sector.CeilHeight == Sidedef.Sector.CeilHeight) ? 1.0f : 0.0f;
+			double ceilbias = (Sidedef.Other.Sector.CeilHeight == Sidedef.Sector.CeilHeight) ? 1.0 : 0.0;
 			if(!Sidedef.Line.IsFlagSet(General.Map.Config.UpperUnpeggedFlag))
 			{
 				// When lower unpegged is set, the lower texture is bound to the bottom
-				tp.tlt.y = tsz.y - ((float)Sidedef.Sector.CeilHeight - Sidedef.Other.Sector.CeilHeight);
+				tp.tlt.y = tsz.y - (Sidedef.Sector.CeilHeight - Sidedef.Other.Sector.CeilHeight);
 			}
-			tp.trb.x = tp.tlt.x + (float)Math.Round(Sidedef.Line.Length); //mxd. (G)ZDoom snaps texture coordinates to integral linedef length
+			tp.trb.x = tp.tlt.x + Math.Round(Sidedef.Line.Length); //mxd. (G)ZDoom snaps texture coordinates to integral linedef length
 			tp.trb.y = tp.tlt.y + (Sidedef.Sector.CeilHeight - (Sidedef.Other.Sector.CeilHeight + ceilbias));
 			
 			// Apply texture offset
@@ -255,26 +257,26 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		protected override void SetTextureOffsetX(int x)
 		{
 			Sidedef.Fields.BeforeFieldsChange();
-			Sidedef.Fields["offsetx_top"] = new UniValue(UniversalType.Float, (float)x);
+			Sidedef.Fields["offsetx_top"] = new UniValue(UniversalType.Float, (double)x);
 		}
 
 		protected override void SetTextureOffsetY(int y)
 		{
 			Sidedef.Fields.BeforeFieldsChange();
-			Sidedef.Fields["offsety_top"] = new UniValue(UniversalType.Float, (float)y);
+			Sidedef.Fields["offsety_top"] = new UniValue(UniversalType.Float, (double)y);
 		}
 
 		protected override void MoveTextureOffset(int offsetx, int offsety)
 		{
 			Sidedef.Fields.BeforeFieldsChange();
 			bool worldpanning = this.Texture.WorldPanning || General.Map.Data.MapInfo.ForceWorldPanning;
-			float oldx = Sidedef.Fields.GetValue("offsetx_top", 0.0f);
-			float oldy = Sidedef.Fields.GetValue("offsety_top", 0.0f);
-			float scalex = Sidedef.Fields.GetValue("scalex_top", 1.0f);
-			float scaley = Sidedef.Fields.GetValue("scaley_top", 1.0f);
+			double oldx = Sidedef.Fields.GetValue("offsetx_top", 0.0);
+			double oldy = Sidedef.Fields.GetValue("offsety_top", 0.0);
+			double scalex = Sidedef.Fields.GetValue("scalex_top", 1.0);
+			double scaley = Sidedef.Fields.GetValue("scaley_top", 1.0);
 			bool textureloaded = (Texture != null && Texture.IsImageLoaded); //mxd
-			float width = textureloaded ? (worldpanning ? this.Texture.ScaledWidth / scalex : this.Texture.Width) : -1; // biwa
-			float height = textureloaded ? (worldpanning ? this.Texture.ScaledHeight / scaley : this.Texture.Height) : -1; // biwa
+			double width = textureloaded ? (worldpanning ? this.Texture.ScaledWidth / scalex : this.Texture.Width) : -1; // biwa
+			double height = textureloaded ? (worldpanning ? this.Texture.ScaledHeight / scaley : this.Texture.Height) : -1; // biwa
 
 			Sidedef.Fields["offsetx_top"] = new UniValue(UniversalType.Float, GetNewTexutreOffset(oldx, offsetx, width)); //mxd // biwa
 			Sidedef.Fields["offsety_top"] = new UniValue(UniversalType.Float, GetNewTexutreOffset(oldy, offsety, height)); //mxd // biwa
@@ -282,8 +284,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 		protected override Point GetTextureOffset()
 		{
-			float oldx = Sidedef.Fields.GetValue("offsetx_top", 0.0f);
-			float oldy = Sidedef.Fields.GetValue("offsety_top", 0.0f);
+			double oldx = Sidedef.Fields.GetValue("offsetx_top", 0.0);
+			double oldy = Sidedef.Fields.GetValue("offsety_top", 0.0);
 			return new Point((int)oldx, (int)oldy);
 		}
 

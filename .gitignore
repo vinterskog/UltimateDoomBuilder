@@ -30,3 +30,5 @@ bin
 /Source/Core/*.user
 /Build/libBuilderNative.so
 /Build/OpenGLDebug.log
+/Source/Native/*.log
+/Build/builder

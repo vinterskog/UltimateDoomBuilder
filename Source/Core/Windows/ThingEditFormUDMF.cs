@@ -61,12 +61,12 @@ namespace CodeImp.DoomBuilder.Windows
 			public readonly int AngleDoom;
 			public readonly int Pitch;
 			public readonly int Roll;
-			public readonly float ScaleX;
-			public readonly float ScaleY;
-			public readonly float Alpha;
-			public readonly float X;
-			public readonly float Y;
-			public readonly float Z;
+			public readonly double ScaleX;
+			public readonly double ScaleY;
+			public readonly double Alpha;
+			public readonly double X;
+			public readonly double Y;
+			public readonly double Z;
 			public readonly Dictionary<string, bool> Flags;
 
 			public ThingProperties(Thing t) 
@@ -195,10 +195,10 @@ namespace CodeImp.DoomBuilder.Windows
 
 			//mxd
 			ft.DetermineSector();
-			float floorheight = (ft.Sector != null ? Sector.GetFloorPlane(ft.Sector).GetZ(ft.Position) : 0);
+			double floorheight = (ft.Sector != null ? Sector.GetFloorPlane(ft.Sector).GetZ(ft.Position) : 0);
 			posX.Text = (ft.Position.x).ToString();
 			posY.Text = (ft.Position.y).ToString();
-			posZ.Text = (useabsoluteheight ? ((float)Math.Round(ft.Position.z + floorheight, General.Map.FormatInterface.VertexDecimals)).ToString() : (ft.Position.z).ToString());
+			posZ.Text = (useabsoluteheight ? (Math.Round(ft.Position.z + floorheight, General.Map.FormatInterface.VertexDecimals)).ToString() : (ft.Position.z).ToString());
 			posX.ButtonStep = General.Map.Grid.GridSize;
 			posY.ButtonStep = General.Map.Grid.GridSize;
 			posZ.ButtonStep = General.Map.Grid.GridSize;
@@ -214,10 +214,10 @@ namespace CodeImp.DoomBuilder.Windows
 			commenteditor.SetValues(ft.Fields, true);
 			conversationID.Text = ft.Fields.GetValue("conversation", 0).ToString();
 			floatbobphase.Text = ft.Fields.GetValue("floatbobphase", -1).ToString();
-			gravity.Text = ft.Fields.GetValue("gravity", 1.0f).ToString();
+			gravity.Text = ft.Fields.GetValue("gravity", 1.0).ToString();
 			score.Text = ft.Fields.GetValue("score", 0).ToString();
 			health.Text = ft.Fields.GetValue("health", 1).ToString();
-			alpha.Text = ft.Fields.GetValue("alpha", 1.0f).ToString();
+			alpha.Text = ft.Fields.GetValue("alpha", 1.0).ToString();
 			color.SetValueFrom(ft.Fields, true);
 			scale.SetValues(ft.ScaleX, ft.ScaleY, true);
 			pitch.Text = ft.Pitch.ToString();
@@ -271,7 +271,7 @@ namespace CodeImp.DoomBuilder.Windows
 				if((t.Position.y).ToString() != posY.Text) posY.Text = "";
 				if(useabsoluteheight && t.Sector != null) 
 				{
-					if(((float)Math.Round(Sector.GetFloorPlane(t.Sector).GetZ(t.Position) + t.Position.z, General.Map.FormatInterface.VertexDecimals)).ToString() != posZ.Text)
+					if((Math.Round(Sector.GetFloorPlane(t.Sector).GetZ(t.Position) + t.Position.z, General.Map.FormatInterface.VertexDecimals)).ToString() != posZ.Text)
 						posZ.Text = "";
 				} 
 				else if((t.Position.z).ToString() != posZ.Text) 
@@ -296,10 +296,10 @@ namespace CodeImp.DoomBuilder.Windows
 				commenteditor.SetValues(t.Fields, false); //mxd. Comments
 				if(t.Fields.GetValue("conversation", 0).ToString() != conversationID.Text) conversationID.Text = "";
 				if(t.Fields.GetValue("floatbobphase", -1).ToString() != floatbobphase.Text) floatbobphase.Text = "";
-				if(t.Fields.GetValue("gravity", 1.0f).ToString() != gravity.Text) gravity.Text = "";
+				if(t.Fields.GetValue("gravity", 1.0).ToString() != gravity.Text) gravity.Text = "";
 				if(t.Fields.GetValue("score", 0).ToString() != score.Text) score.Text = "";
 				if(t.Fields.GetValue("health", 1).ToString() != health.Text) health.Text = "";
-				if(t.Fields.GetValue("alpha", 1.0f).ToString() != alpha.Text) alpha.Text = "";
+				if(t.Fields.GetValue("alpha", 1.0).ToString() != alpha.Text) alpha.Text = "";
 
 				scale.SetValues(t.ScaleX, t.ScaleY, false);
 				color.SetValueFrom(t.Fields, false);
@@ -528,8 +528,8 @@ namespace CodeImp.DoomBuilder.Windows
 				if(cbrandomroll.Checked) t.SetRoll(General.Random(0, 359));
 
 				//mxd. Check position
-				float px = General.Clamp(t.Position.x, General.Map.Config.LeftBoundary, General.Map.Config.RightBoundary);
-				float py = General.Clamp(t.Position.y, General.Map.Config.BottomBoundary, General.Map.Config.TopBoundary);
+				double px = General.Clamp(t.Position.x, General.Map.Config.LeftBoundary, General.Map.Config.RightBoundary);
+				double py = General.Clamp(t.Position.y, General.Map.Config.BottomBoundary, General.Map.Config.TopBoundary);
 				if(t.Position.x != px || t.Position.y != py) t.Move(new Vector2D(px, py));
 
 				// Action/tags
@@ -546,7 +546,7 @@ namespace CodeImp.DoomBuilder.Windows
 				if(!string.IsNullOrEmpty(floatbobphase.Text))
 					UniFields.SetInteger(t.Fields, "floatbobphase", General.Clamp(floatbobphase.GetResult(t.Fields.GetValue("floatbobphase", -1)), -1, 63), -1);
 				if(!string.IsNullOrEmpty(gravity.Text))
-					UniFields.SetFloat(t.Fields, "gravity", gravity.GetResultFloat(t.Fields.GetValue("gravity", 1.0f)), 1.0f);
+					UniFields.SetFloat(t.Fields, "gravity", gravity.GetResultFloat(t.Fields.GetValue("gravity", 1.0)), 1.0);
 				if(!string.IsNullOrEmpty(health.Text))
 					UniFields.SetInteger(t.Fields, "health", health.GetResult(t.Fields.GetValue("health", 1)), 1);
 				if(!string.IsNullOrEmpty(score.Text))
@@ -608,15 +608,15 @@ namespace CodeImp.DoomBuilder.Windows
 
 			//update label text
 			Thing ft = General.GetByIndex(things, 0);
-			float z = ft.Position.z;
+			double z = ft.Position.z;
 			if(useabsoluteheight && ft.Sector != null) z += Sector.GetFloorPlane(ft.Sector).GetZ(ft.Position);
-			posZ.Text = ((float)Math.Round(z, General.Map.FormatInterface.VertexDecimals)).ToString();
+			posZ.Text = Math.Round(z, General.Map.FormatInterface.VertexDecimals).ToString();
 
 			foreach(Thing t in things) 
 			{
 				z = t.Position.z;
 				if(useabsoluteheight && t.Sector != null) z += Sector.GetFloorPlane(t.Sector).GetZ(t.Position);
-				string ztext = ((float)Math.Round(z, General.Map.FormatInterface.VertexDecimals)).ToString();
+				string ztext = Math.Round(z, General.Map.FormatInterface.VertexDecimals).ToString();
 				if(posZ.Text != ztext) 
 				{
 					posZ.Text = "";
@@ -718,9 +718,9 @@ namespace CodeImp.DoomBuilder.Windows
 				// Update values
 				foreach(Thing t in things) 
 				{
-					float z = posZ.GetResultFloat(thingprops[i++].Z);
+					double z = posZ.GetResultFloat(thingprops[i++].Z);
 					if(useabsoluteheight && !posZ.CheckIsRelative() && t.Sector != null)
-						z -= (float)Math.Round(Sector.GetFloorPlane(t.Sector).GetZ(t.Position.x, t.Position.y), General.Map.FormatInterface.VertexDecimals);
+						z -= Math.Round(Sector.GetFloorPlane(t.Sector).GetZ(t.Position.x, t.Position.y), General.Map.FormatInterface.VertexDecimals);
 					t.Move(new Vector3D(t.Position.x, t.Position.y, z));
 				}
 			}
@@ -737,8 +737,8 @@ namespace CodeImp.DoomBuilder.Windows
 
 			foreach (Thing t in things)
 			{
-				float sx = scale.GetValue1(thingprops[i].ScaleX);
-				float sy = scale.GetValue2(thingprops[i].ScaleY);
+				double sx = scale.GetValue1(thingprops[i].ScaleX);
+				double sy = scale.GetValue2(thingprops[i].ScaleY);
 				t.SetScale((sx == 0 ? 1.0f : sx), (sy == 0 ? 1.0f : sy));
 				i++;
 			}
@@ -948,18 +948,18 @@ namespace CodeImp.DoomBuilder.Windows
 			//restore values
 			if(string.IsNullOrEmpty(alpha.Text))
 			{
-				foreach(Thing t in things) UniFields.SetFloat(t.Fields, "alpha", thingprops[i++].Alpha, 1.0f);
+				foreach(Thing t in things) UniFields.SetFloat(t.Fields, "alpha", thingprops[i++].Alpha, 1.0);
 			}
 			else //update values
 			{
 				foreach(Thing t in things)
 				{
-					float value = General.Clamp(alpha.GetResultFloat(t.Fields.GetValue("alpha", 1.0f)), 0f, 1.0f);
-					UniFields.SetFloat(t.Fields, "alpha", value, 1.0f);
+					double value = General.Clamp(alpha.GetResultFloat(t.Fields.GetValue("alpha", 1.0)), 0.0, 1.0);
+					UniFields.SetFloat(t.Fields, "alpha", value, 1.0);
 				}
 			}
 
-			resetalpha.Visible = (alpha.GetResultFloat(1.0f) != 1.0f);
+			resetalpha.Visible = (alpha.GetResultFloat(1.0) != 1.0);
 
 			General.Map.IsChanged = true;
 			if(OnValuesChanged != null) OnValuesChanged(this, EventArgs.Empty);

@@ -59,8 +59,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private int undoticket;
 		
 		// UV dragging
-		private float dragstartanglexy;
-		private float dragstartanglez;
+		private double dragstartanglexy;
+		private double dragstartanglez;
 		private Vector3D dragorigin;
 		private int startoffsetx;
 		private int startoffsety;
@@ -129,7 +129,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		// This is called to update UV dragging
 		protected virtual void UpdateDragUV()
 		{
-			float u_ray = 1.0f;
+			double u_ray = 1.0f;
 
 			// Calculate intersection position
 			this.Level.plane.GetIntersection(General.Map.VisualCamera.Position, General.Map.VisualCamera.Target, ref u_ray);
@@ -137,15 +137,15 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 			// Calculate offsets
 			Vector3D dragdelta = intersect - dragorigin;
-			float offsetx = dragdelta.x;
-			float offsety = dragdelta.y;
+			double offsetx = dragdelta.x;
+			double offsety = dragdelta.y;
 
 			bool lockX = General.Interface.CtrlState && !General.Interface.ShiftState;
 			bool lockY = !General.Interface.CtrlState && General.Interface.ShiftState;
 
 			if(lockX || lockY) 
 			{
-				float camAngle = Angle2D.RadToDeg(General.Map.VisualCamera.AngleXY);
+				double camAngle = Angle2D.RadToDeg(General.Map.VisualCamera.AngleXY);
 				
 				if(camAngle > 315 || camAngle < 46) 
 				{
@@ -170,12 +170,12 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			}
 
 			//mxd. Modify offsets based on surface and camera angles
-			float angle;
+			double angle;
 
 			if(GeometryType == VisualGeometryType.CEILING)
-				angle = Angle2D.DegToRad(level.sector.Fields.GetValue("rotationceiling", 0f));
+				angle = Angle2D.DegToRad(level.sector.Fields.GetValue("rotationceiling", 0.0));
 			else
-				angle = Angle2D.DegToRad(level.sector.Fields.GetValue("rotationfloor", 0f));
+				angle = Angle2D.DegToRad(level.sector.Fields.GetValue("rotationfloor", 0.0));
 
 			Vector2D v = new Vector2D(offsetx, offsety).GetRotated(angle);
 
@@ -236,9 +236,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		protected void AlignTextureToClosestLine(bool alignx, bool aligny) 
 		{
 			if(!(mode.HighlightedObject is BaseVisualSector)) return;
-			
+
 			// Do we need to align this? (and also grab texture scale while we are at it)
-			float scaleX, scaleY;
+			double scaleX, scaleY;
 			bool isFloor = (geometrytype == VisualGeometryType.FLOOR);
 
 			if(mode.HighlightedTarget is VisualFloor) 
@@ -255,8 +255,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				// Check texture
 				if(target.FloorTexture != (isFloor ? Sector.Sector.FloorTexture : Sector.Sector.CeilTexture))	return;
 
-				scaleX = target.Fields.GetValue("xscalefloor", 1.0f);
-				scaleY = target.Fields.GetValue("yscalefloor", 1.0f);
+				scaleX = target.Fields.GetValue("xscalefloor", 1.0);
+				scaleY = target.Fields.GetValue("yscalefloor", 1.0);
 			} 
 			else 
 			{
@@ -272,8 +272,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				// Check texture
 				if(target.CeilTexture != (isFloor ? Sector.Sector.FloorTexture : Sector.Sector.CeilTexture)) return;
 
-				scaleX = target.Fields.GetValue("xscaleceiling", 1.0f);
-				scaleY = target.Fields.GetValue("yscaleceiling", 1.0f);
+				scaleX = target.Fields.GetValue("xscaleceiling", 1.0);
+				scaleY = target.Fields.GetValue("yscaleceiling", 1.0);
 			}
 
 			//find a linedef to align to
@@ -292,16 +292,16 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			Sector.Sector.Fields.BeforeFieldsChange();
 
 			//find an angle to rotate texture
-			float sourceAngle = (float)Math.Round(General.ClampAngle(isFront ? -Angle2D.RadToDeg(targetLine.Angle) + 90 : -Angle2D.RadToDeg(targetLine.Angle) - 90), 1);
+			double sourceAngle = Math.Round(General.ClampAngle(isFront ? -Angle2D.RadToDeg(targetLine.Angle) + 90 : -Angle2D.RadToDeg(targetLine.Angle) - 90), 1);
 			if(!isFront) sourceAngle = General.ClampAngle(sourceAngle + 180);
 
 			//update angle
-			UniFields.SetFloat(Sector.Sector.Fields, (isFloor ? "rotationfloor" : "rotationceiling"), sourceAngle, 0f);
+			UniFields.SetFloat(Sector.Sector.Fields, (isFloor ? "rotationfloor" : "rotationceiling"), sourceAngle, 0.0);
 
 			// Scale texture if it's a slope and the appropriate option is set
-			if (level.plane.Normal.z != 1.0f && BuilderPlug.Me.ScaleTexturesOnSlopes != 2)
+			if (level.plane.Normal.z != 1.0 && BuilderPlug.Me.ScaleTexturesOnSlopes != 2)
 			{
-				Vector2D basescale = new Vector2D(1.0f, 1.0f);
+				Vector2D basescale = new Vector2D(1.0, 1.0);
 
 				// User wants to use the current scale as a base?
 				if(BuilderPlug.Me.ScaleTexturesOnSlopes == 1)
@@ -317,32 +317,32 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				Vector3D targetlineperpendicular = Vector3D.CrossProduct(targetlinevector, level.plane.Normal);
 
 				if (alignx)
-					scaleX = Math.Abs(basescale.x * (1.0f / (float)Math.Cos(targetlinevector.GetAngleZ())));
+					scaleX = Math.Abs(basescale.x * (1.0 / Math.Cos(targetlinevector.GetAngleZ())));
 
 				if (aligny)
-					scaleY = Math.Abs(basescale.y * (1.0f / (float)Math.Cos(targetlineperpendicular.GetAngleZ())));
+					scaleY = Math.Abs(basescale.y * (1.0 / Math.Cos(targetlineperpendicular.GetAngleZ())));
 
 			}
 
 			//set scale
-			UniFields.SetFloat(Sector.Sector.Fields, (isFloor ? "xscalefloor" : "xscaleceiling"), scaleX, 1.0f);
-			UniFields.SetFloat(Sector.Sector.Fields, (isFloor ? "yscalefloor" : "yscaleceiling"), scaleY, 1.0f);
+			UniFields.SetFloat(Sector.Sector.Fields, (isFloor ? "xscalefloor" : "xscaleceiling"), scaleX, 1.0);
+			UniFields.SetFloat(Sector.Sector.Fields, (isFloor ? "yscalefloor" : "yscaleceiling"), scaleY, 1.0);
 
 			//update offset
-			float distToStart = Vector2D.Distance(hitpos, targetLine.Start.Position);
-			float distToEnd = Vector2D.Distance(hitpos, targetLine.End.Position);
+			double distToStart = Vector2D.Distance(hitpos, targetLine.Start.Position);
+			double distToEnd = Vector2D.Distance(hitpos, targetLine.End.Position);
 			Vector2D offset = (distToStart < distToEnd ? targetLine.Start.Position : targetLine.End.Position).GetRotated(Angle2D.DegToRad(sourceAngle));
 
 			if(alignx) 
 			{
 				if(Texture != null && Texture.IsImageLoaded) offset.x %= Texture.Width / scaleX;
-				UniFields.SetFloat(Sector.Sector.Fields, (isFloor ? "xpanningfloor" : "xpanningceiling"), (float)Math.Round(-offset.x), 0f);
+				UniFields.SetFloat(Sector.Sector.Fields, (isFloor ? "xpanningfloor" : "xpanningceiling"), Math.Round(-offset.x, 6), 0.0);
 			}
 
 			if(aligny) 
 			{
 				if(Texture != null && Texture.IsImageLoaded) offset.y %= Texture.Height / scaleY;
-				UniFields.SetFloat(Sector.Sector.Fields, (isFloor ? "ypanningfloor" : "ypanningceiling"), (float)Math.Round(offset.y), 0f);
+				UniFields.SetFloat(Sector.Sector.Fields, (isFloor ? "ypanningfloor" : "ypanningceiling"), Math.Round(offset.y, 6), 0.0);
 			}
 
 			//update geometry
@@ -497,8 +497,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if(General.Actions.CheckActionActive(General.ThisAssembly, "visualselect"))
 				{
 					// Check if tolerance is exceeded to start UV dragging
-					float deltaxy = General.Map.VisualCamera.AngleXY - dragstartanglexy;
-					float deltaz = General.Map.VisualCamera.AngleZ - dragstartanglez;
+					double deltaxy = General.Map.VisualCamera.AngleXY - dragstartanglexy;
+					double deltaz = General.Map.VisualCamera.AngleZ - dragstartanglez;
 					if((Math.Abs(deltaxy) + Math.Abs(deltaz)) > DRAG_ANGLE_TOLERANCE)
 					{
 						mode.PreAction(UndoGroup.TextureOffsetChange);
@@ -864,11 +864,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			if(doSurfaceAngleCorrection)
 			{
 				Point p = new Point(horizontal, vertical);
-				float angle = Angle2D.RadToDeg(General.Map.VisualCamera.AngleXY);
+				double angle = Angle2D.RadToDeg(General.Map.VisualCamera.AngleXY);
 				if(GeometryType == VisualGeometryType.CEILING) 
-					angle += level.sector.Fields.GetValue("rotationceiling", 0f);
+					angle += level.sector.Fields.GetValue("rotationceiling", 0.0);
 				else
-					angle += level.sector.Fields.GetValue("rotationfloor", 0f);
+					angle += level.sector.Fields.GetValue("rotationfloor", 0.0);
 
 				angle = General.ClampAngle(angle);
 
@@ -912,7 +912,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		}
 
 		//mxd
-		public virtual void OnChangeTextureRotation(float angle) 
+		public virtual void OnChangeTextureRotation(double angle) 
 		{
 			if(!General.Map.UDMF) return;
 
@@ -925,7 +925,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// Set new angle
 			Sector s = GetControlSector();
 			s.Fields.BeforeFieldsChange();
-			UniFields.SetFloat(s.Fields, key, angle, 0.0f);
+			UniFields.SetFloat(s.Fields, key, angle, 0.0);
 
 			// Mark as changed
 			changed = true;
@@ -956,9 +956,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				undoticket = mode.CreateUndo("Change texture scale");
 
 			// Adjust to camera view
-			float angle = Angle2D.RadToDeg(General.Map.VisualCamera.AngleXY);
-			if(GeometryType == VisualGeometryType.CEILING) angle += level.sector.Fields.GetValue("rotationceiling", 0f);
-			else angle += level.sector.Fields.GetValue("rotationfloor", 0f);
+			double angle = Angle2D.RadToDeg(General.Map.VisualCamera.AngleXY);
+			if(GeometryType == VisualGeometryType.CEILING) angle += level.sector.Fields.GetValue("rotationceiling", 0.0);
+			else angle += level.sector.Fields.GetValue("rotationfloor", 0.0);
 			angle = General.ClampAngle(angle);
 
 			if(angle > 315 || angle < 46)

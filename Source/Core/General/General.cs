@@ -47,60 +47,92 @@ namespace CodeImp.DoomBuilder
 {
 	public static class General
 	{
-        #region ================== API Declarations
+		#region ================== API Declarations and Mono compatibility
+
+#if MONO_WINFORMS
+		public static void ApplyMonoListViewFix(System.Windows.Forms.ListView listview)
+		{
+			if (listview.View == System.Windows.Forms.View.List)
+			{
+				listview.View = System.Windows.Forms.View.SmallIcon;
+			}
+		}
+		
+		public static void ApplyDataGridViewFix(System.Windows.Forms.DataGridView gridview)
+		{
+			if (gridview.RowsDefaultCellStyle != null && gridview.RowsDefaultCellStyle.Padding != new System.Windows.Forms.Padding(0,0,0,0))
+			{
+				gridview.RowsDefaultCellStyle.Padding = new System.Windows.Forms.Padding(0,0,0,0);
+			}
+		}
+#else
+		public static void ApplyMonoListViewFix(System.Windows.Forms.ListView listview) {}
+		public static void ApplyDataGridViewFix(System.Windows.Forms.DataGridView gridview) {}
+#endif
 
 #if NO_WIN32
 
-	internal static bool LockWindowUpdate(IntPtr hwnd) { return true; }
-	internal static bool MessageBeep(MessageBeepType type) { return true; }
-	internal static void ZeroMemory(IntPtr dest, int size) { }
-	internal static int SendMessage(IntPtr hwnd, uint Msg, IntPtr wParam, IntPtr lParam) { return 0; }
-    internal static int PostMessage(IntPtr hwnd, uint Msg, IntPtr wParam, IntPtr lParam) { return 0; }
+	internal static void InvokeUIActions(MainForm mainform)
+    {
+		// This implementation really should work universally, but it seemed to hang sometimes on Windows.
+		// Let's hope the mono implementation of Winforms works better.
+		mainform.Invoke(new System.Action(() => { mainform.ProcessQueuedUIActions(); }));
+	}
+
+	internal static bool MessageBeep(MessageBeepType type)
+	{
+		System.Media.SystemSounds.Beep.Play();
+		return true;
+	}
+
+	internal static bool LockWindowUpdate(IntPtr hwnd)
+	{
+		// This can be safely ignored. It is a performance/flicker optimization. It might not even be needed on Windows anymore.
+		return true;
+	}
+
+	internal unsafe static void ZeroPixels(PixelColor* pixels, int size)
+	{
+		var transparent = new PixelColor(0,0,0,0);
+		for (int i = 0; i < size; i++)
+			pixels[i] = transparent;
+	}
+
+	internal static void SetComboBoxItemHeight(ComboBox combobox, int height)
+	{
+		// Only used by FieldsEditorControl. Not sure what its purpose is, might only be visual adjustment that isn't strictly needed?
+	}
 
 #else
-        [DllImport("user32.dll")]
+		[DllImport("user32.dll")]
 		internal static extern bool LockWindowUpdate(IntPtr hwnd);
 
 		[DllImport("kernel32.dll", EntryPoint = "RtlZeroMemory", SetLastError = false)]
-		internal static extern void ZeroMemory(IntPtr dest, int size);
+		static extern void ZeroMemory(IntPtr dest, int size);
 
-		//[DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory", SetLastError = false)]
-		//internal static extern unsafe void CopyMemory(void* dst, void* src, uint length);
+		internal unsafe static void ZeroPixels(PixelColor* pixels, int size) { ZeroMemory(new IntPtr(pixels), size * sizeof(PixelColor)); }
 
 		[DllImport("user32.dll", EntryPoint = "SendMessage", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
-		internal static extern int SendMessage(IntPtr hwnd, uint Msg, IntPtr wParam, IntPtr lParam);
+		static extern int SendMessage(IntPtr hwnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
-        [DllImport("user32.dll", EntryPoint = "PostMessage", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
-        internal static extern int PostMessage(IntPtr hwnd, uint Msg, IntPtr wParam, IntPtr lParam);
+		internal static void SetComboBoxItemHeight(ComboBox combobox, int height)
+		{
+			SendMessage(combobox.Handle, General.CB_SETITEMHEIGHT, new IntPtr(-1), new IntPtr(height));
+		}
 
-        [DllImport("user32.dll", SetLastError = true)]
+		[DllImport("user32.dll", EntryPoint = "PostMessage", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
+        static extern int PostMessage(IntPtr hwnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+		internal static void InvokeUIActions(MainForm mainform)
+        {
+			PostMessage(mainform.Handle, General.WM_UIACTION, IntPtr.Zero, IntPtr.Zero);
+		}
+
+		[DllImport("user32.dll", SetLastError = true)]
 		internal static extern bool MessageBeep(MessageBeepType type);
 
-		//[DllImport("kernel32.dll")]
-		//internal extern static IntPtr LoadLibrary(string filename);
-
-		//[DllImport("kernel32.dll")]
-		//internal extern static bool FreeLibrary(IntPtr moduleptr);
-
-		//[DllImport("user32.dll")]
-		/*internal static extern IntPtr CreateWindowEx(uint exstyle, string classname, string windowname, uint style,
-												   int x, int y, int width, int height, IntPtr parentptr, int menu,
-												   IntPtr instanceptr, string param);*/
-
-		//[DllImport("user32.dll")]
-		//internal static extern bool DestroyWindow(IntPtr windowptr);
-
-		//[DllImport("user32.dll")]
-		//internal static extern int SetWindowPos(IntPtr windowptr, int insertafterptr, int x, int y, int cx, int cy, int flags);
-		
 		[DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
 		private static extern uint GetShortPathName([MarshalAs(UnmanagedType.LPTStr)] string longpath, [MarshalAs(UnmanagedType.LPTStr)]StringBuilder shortpath, uint buffersize);
-
-		//[DllImport("user32.dll")]
-		//internal static extern int SetScrollInfo(IntPtr windowptr, int bar, IntPtr scrollinfo, bool redraw);
-
-		//[DllImport("user32.dll")]
-		//internal static extern int GetScrollInfo(IntPtr windowptr, int bar, IntPtr scrollinfo);
 #endif
 
 		#endregion
@@ -128,10 +160,11 @@ namespace CodeImp.DoomBuilder
 		//internal const int SIF_ALL = SIF_RANGE + SIF_PAGE + SIF_POS + SIF_TRACKPOS;
 		
 		// Files and Folders
-		private const string SETTINGS_FILE = "GZBuilder.cfg";
-		private const string DEFAULT_SETTINGS_FILE = "GZBuilder.default.cfg"; //mxd
+		private const string LEGACY_SETTINGS_FILE = "GZBuilder.cfg"; // To make transision from GZDB* easier
+		private const string SETTINGS_FILE = "UDBuilder.cfg";
+		private const string DEFAULT_SETTINGS_FILE = "UDBuilder.default.cfg"; //mxd
 		private const string SETTINGS_DIR = "Doom Builder";
-		private const string LOG_FILE = "GZBuilder.log";
+		private const string LOG_FILE = "UDBuilder.log";
 		private const string GAME_CONFIGS_DIR = "Configurations";
 		private const string COMPILERS_DIR = "Compilers";
 		private const string PLUGINS_DIR = "Plugins";
@@ -612,7 +645,9 @@ namespace CodeImp.DoomBuilder
 			settings = new ProgramConfiguration();
 			string defaultsettingsfile = Path.Combine(apppath, DEFAULT_SETTINGS_FILE);
 			string usersettingsfile = nosettings ? defaultsettingsfile : Path.Combine(settingspath, SETTINGS_FILE);
-			if(settings.Load(usersettingsfile, defaultsettingsfile))
+			string legacysettingsfile = nosettings ? String.Empty : Path.Combine(settingspath, LEGACY_SETTINGS_FILE);
+
+			if(settings.Load(usersettingsfile, defaultsettingsfile, legacysettingsfile))
 			{
 				// Create error logger
 				errorlogger = new ErrorLogger();
@@ -1722,6 +1757,12 @@ namespace CodeImp.DoomBuilder
 		}
 
 		// This clamps a value
+		public static double Clamp(double value, double min, double max)
+		{
+			return Math.Min(Math.Max(min, value), max);
+		}
+
+		// This clamps a value
 		public static int Clamp(int value, int min, int max)
 		{
 			return Math.Min(Math.Max(min, value), max);
@@ -1749,6 +1790,14 @@ namespace CodeImp.DoomBuilder
 			return angle;
 		}
 
+		// This clamps angle between 0 and 359
+		public static double ClampAngle(double angle)
+		{
+			angle %= 360;
+			if (angle < 0) angle += 360;
+			return angle;
+		}
+
 		//mxd
 		public static int Random(int min, int max) 
 		{
@@ -1760,7 +1809,12 @@ namespace CodeImp.DoomBuilder
 		{
 			return (float)Math.Round(min + (max - min) * random.NextDouble(), 2);
 		}
-		
+
+		public static double Random(double min, double max)
+		{
+			return Math.Round(min + (max - min) * random.NextDouble(), 2);
+		}
+
 		// This returns an element from a collection by index
 		public static T GetByIndex<T>(ICollection<T> collection, int index)
 		{

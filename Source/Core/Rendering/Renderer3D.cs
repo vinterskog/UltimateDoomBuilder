@@ -152,7 +152,7 @@ namespace CodeImp.DoomBuilder.Rendering
 			
 			// Dummy frustum
 			frustum = new ProjectedFrustum2D(new Vector2D(), 0.0f, 0.0f, PROJ_NEAR_PLANE,
-				General.Settings.ViewDistance, Angle2D.DegToRad(General.Settings.VisualFOV));
+				General.Settings.ViewDistance, (float)Angle2D.DegToRad(General.Settings.VisualFOV));
 
             fpsLabel = new TextLabel();
             fpsLabel.AlignX = TextAlignmentX.Left;
@@ -264,7 +264,7 @@ namespace CodeImp.DoomBuilder.Rendering
 			// xscale = yscale / aspect
 			// The fov specified in the method is the FOV over Y, but we want the user to specify the FOV
 			// over X, so calculate what it would be over Y first;
-			float fov = Angle2D.DegToRad(General.Settings.VisualFOV);
+			float fov = (float)Angle2D.DegToRad(General.Settings.VisualFOV);
 			float reversefov = 1.0f / (float)Math.Tan(fov / 2.0f);
 			float reversefovy = reversefov * aspect;
 			float fovy = (float)Math.Atan(1.0f / reversefovy);
@@ -280,18 +280,18 @@ namespace CodeImp.DoomBuilder.Rendering
 			cameraposition = pos;
             Vector3D delta = lookat - pos;
             cameravector = delta.GetNormal();
-            float anglexy = delta.GetAngleXY();
-			float anglez = delta.GetAngleZ();
+			double anglexy = delta.GetAngleXY();
+			double anglez = delta.GetAngleZ();
 
 			// Create frustum
-			frustum = new ProjectedFrustum2D(pos, anglexy, anglez, PROJ_NEAR_PLANE,
-				General.Settings.ViewDistance, Angle2D.DegToRad(General.Settings.VisualFOV));
+			frustum = new ProjectedFrustum2D(pos, (float)anglexy, (float)anglez, PROJ_NEAR_PLANE,
+				General.Settings.ViewDistance, (float)Angle2D.DegToRad(General.Settings.VisualFOV));
 
             // Make the view matrix
             view3d = Matrix.LookAt(RenderDevice.V3(pos), RenderDevice.V3(lookat), new Vector3f(0f, 0f, 1f));
 			
 			// Make the billboard matrix
-			billboard = Matrix.RotationZ(anglexy + Angle2D.PI);
+			billboard = Matrix.RotationZ((float)(anglexy + Angle2D.PI));
 		}
 		
 		// This creates 2D view matrix
@@ -310,7 +310,7 @@ namespace CodeImp.DoomBuilder.Rendering
 		// This starts rendering
 		public bool Start()
 		{
-            if (!fpsWatch.IsRunning)
+            if (General.Settings.ShowFPS && !fpsWatch.IsRunning)
                 fpsWatch.Start();
 
             // Start drawing
@@ -493,14 +493,16 @@ namespace CodeImp.DoomBuilder.Rendering
 
 			visualvertices = null;
 
-            //
-            fps++;
-            if (fpsWatch.ElapsedMilliseconds > 1000)
-            {
-                fpsLabel.Text = string.Format("{0} FPS", fps);
-                fps = 0;
-                fpsWatch.Restart();
-            }
+			if (General.Settings.ShowFPS)
+			{
+				fps++;
+				if (fpsWatch.ElapsedMilliseconds > 1000)
+				{
+					fpsLabel.Text = string.Format("{0} FPS", fps);
+					fps = 0;
+					fpsWatch.Restart();
+				}
+			}
         }
 
         // [ZZ] black renderer magic here.
@@ -665,7 +667,7 @@ namespace CodeImp.DoomBuilder.Rendering
 
 				world = handle.Position;
 				graphics.SetUniform(UniformName.world, ref world);
-				graphics.SetUniform(UniformName.slopeHandleLength, handle.Length);
+				graphics.SetUniform(UniformName.slopeHandleLength, (float)handle.Length);
 				graphics.SetUniform(UniformName.vertexColor, color.ToColorValue());
 
 				graphics.SetVertexBuffer(visualslopehandle.Geometry);
@@ -696,36 +698,36 @@ namespace CodeImp.DoomBuilder.Rendering
 				int color = line.Color.ToInt();
 
 				// Add regular points
-				verts[pointscount].x = line.Start.x;
-				verts[pointscount].y = line.Start.y;
-				verts[pointscount].z = line.Start.z;
+				verts[pointscount].x = (float)line.Start.x;
+				verts[pointscount].y = (float)line.Start.y;
+				verts[pointscount].z = (float)line.Start.z;
 				verts[pointscount].c = color;
 				pointscount++;
 
-				verts[pointscount].x = line.End.x;
-				verts[pointscount].y = line.End.y;
-				verts[pointscount].z = line.End.z;
+				verts[pointscount].x = (float)line.End.x;
+				verts[pointscount].y = (float)line.End.y;
+				verts[pointscount].z = (float)line.End.z;
 				verts[pointscount].c = color;
 				pointscount++;
 
 				// Add arrowhead
 				if(line.RenderArrowhead)
 				{
-					float nz = line.GetDelta().GetNormal().z * scaler;
-					float angle = line.GetAngle();
-					Vector3D a1 = new Vector3D(line.End.x - scaler * (float)Math.Sin(angle - 0.46f), line.End.y + scaler * (float)Math.Cos(angle - 0.46f), line.End.z - nz);
-					Vector3D a2 = new Vector3D(line.End.x - scaler * (float)Math.Sin(angle + 0.46f), line.End.y + scaler * (float)Math.Cos(angle + 0.46f), line.End.z - nz);
+					double nz = line.GetDelta().GetNormal().z * scaler;
+					double angle = line.GetAngle();
+					Vector3D a1 = new Vector3D(line.End.x - scaler * Math.Sin(angle - 0.46f), line.End.y + scaler * Math.Cos(angle - 0.46f), line.End.z - nz);
+					Vector3D a2 = new Vector3D(line.End.x - scaler * Math.Sin(angle + 0.46f), line.End.y + scaler * Math.Cos(angle + 0.46f), line.End.z - nz);
 
 					verts[pointscount] = verts[pointscount - 1];
-					verts[pointscount + 1].x = a1.x;
-					verts[pointscount + 1].y = a1.y;
-					verts[pointscount + 1].z = a1.z;
+					verts[pointscount + 1].x = (float)a1.x;
+					verts[pointscount + 1].y = (float)a1.y;
+					verts[pointscount + 1].z = (float)a1.z;
 					verts[pointscount + 1].c = color;
 
 					verts[pointscount + 2] = verts[pointscount - 1];
-					verts[pointscount + 3].x = a2.x;
-					verts[pointscount + 3].y = a2.y;
-					verts[pointscount + 3].z = a2.z;
+					verts[pointscount + 3].x = (float)a2.x;
+					verts[pointscount + 3].y = (float)a2.y;
+					verts[pointscount + 3].z = (float)a2.z;
 					verts[pointscount + 3].c = color;
 
 					pointscount += 4;
@@ -889,7 +891,7 @@ namespace CodeImp.DoomBuilder.Rendering
 						//mxd. Set variables for fog rendering?
 						if(wantedshaderpass > ShaderName.world3d_p7)
 						{
-							graphics.SetUniform(UniformName.campos, new Vector4f(cameraposition.x, cameraposition.y, cameraposition.z, g.FogFactor));
+							graphics.SetUniform(UniformName.campos, new Vector4f((float)cameraposition.x, (float)cameraposition.y, (float)cameraposition.z, g.FogFactor));
 							graphics.SetUniform(UniformName.sectorfogcolor, sector.Sector.FogColor);
 						}
                         
@@ -897,7 +899,7 @@ namespace CodeImp.DoomBuilder.Rendering
 						graphics.SetUniform(UniformName.highlightcolor, CalculateHighlightColor((g == highlighted) && showhighlight, (g.Selected && showselection)));
 
                         // [ZZ] include desaturation factor
-                        graphics.SetUniform(UniformName.desaturation, sector.Sector.Desaturation);
+                        graphics.SetUniform(UniformName.desaturation, (float)sector.Sector.Desaturation);
 
 						// Render!
 						graphics.Draw(PrimitiveType.TriangleList, g.VertexOffset, g.Triangles);
@@ -981,7 +983,7 @@ namespace CodeImp.DoomBuilder.Rendering
 							if(wantedshaderpass > ShaderName.world3d_p7)
 							{
                                 graphics.SetUniform(UniformName.modelnormal, Matrix.Identity);
-                                graphics.SetUniform(UniformName.campos, new Vector4f(cameraposition.x, cameraposition.y, cameraposition.z, t.FogFactor));
+                                graphics.SetUniform(UniformName.campos, new Vector4f((float)cameraposition.x, (float)cameraposition.y, (float)cameraposition.z, t.FogFactor));
 							}
 
 							// Set the colors to use
@@ -994,7 +996,7 @@ namespace CodeImp.DoomBuilder.Rendering
 
                             // [ZZ] apply desaturation
                             if (t.Thing.Sector != null)
-                                graphics.SetUniform(UniformName.desaturation, t.Thing.Sector.Desaturation);
+                                graphics.SetUniform(UniformName.desaturation, (float)t.Thing.Sector.Desaturation);
                             else graphics.SetUniform(UniformName.desaturation, 0.0f);
 
                             // Apply changes
@@ -1199,12 +1201,12 @@ namespace CodeImp.DoomBuilder.Rendering
                     // Set variables for fog rendering?
                     if (wantedshaderpass > ShaderName.world3d_p7 && g.FogFactor != fogfactor)
                     {
-                        graphics.SetUniform(UniformName.campos, new Vector4f(cameraposition.x, cameraposition.y, cameraposition.z, g.FogFactor));
+                        graphics.SetUniform(UniformName.campos, new Vector4f((float)cameraposition.x, (float)cameraposition.y, (float)cameraposition.z, g.FogFactor));
                         fogfactor = g.FogFactor;
                     }
 
                     //
-                    graphics.SetUniform(UniformName.desaturation, sector.Sector.Desaturation);
+                    graphics.SetUniform(UniformName.desaturation, (float)sector.Sector.Desaturation);
 
                     // Set the colors to use
                     graphics.SetUniform(UniformName.sectorfogcolor, sector.Sector.FogColor);
@@ -1326,7 +1328,7 @@ namespace CodeImp.DoomBuilder.Rendering
                             graphics.SetUniform(UniformName.modelnormal, Matrix.Identity);
                             if (t.FogFactor != fogfactor)
 							{
-                                graphics.SetUniform(UniformName.campos, new Vector4f(cameraposition.x, cameraposition.y, cameraposition.z, t.FogFactor));
+                                graphics.SetUniform(UniformName.campos, new Vector4f((float)cameraposition.x, (float)cameraposition.y, (float)cameraposition.z, t.FogFactor));
 								fogfactor = t.FogFactor;
 							}
 						}
@@ -1340,7 +1342,7 @@ namespace CodeImp.DoomBuilder.Rendering
                         graphics.SetUniform(UniformName.stencilColor, t.StencilColor.ToColorValue());
 
                         //
-                        graphics.SetUniform(UniformName.desaturation, t.Thing.Sector.Desaturation);
+                        graphics.SetUniform(UniformName.desaturation, (float)t.Thing.Sector.Desaturation);
 
                         // Apply changes
                         graphics.SetUniform(UniformName.world, world);
@@ -1381,7 +1383,7 @@ namespace CodeImp.DoomBuilder.Rendering
 					if(t.Info.XYBillboard) // Apply billboarding?
 					{
 						return Matrix.Translation(0f, 0f, -t.LocalCenterZ)
-							* Matrix.RotationX(Angle2D.PI - General.Map.VisualCamera.AngleZ)
+							* Matrix.RotationX((float)(Angle2D.PI - General.Map.VisualCamera.AngleZ))
 							* Matrix.Translation(0f, 0f, t.LocalCenterZ)
 							* billboard
 							* t.Position;
@@ -1495,11 +1497,11 @@ namespace CodeImp.DoomBuilder.Rendering
                 graphics.SetUniform(UniformName.highlightcolor, CalculateHighlightColor((t == highlighted) && showhighlight, (t.Selected && showselection)));
 
 				// Create the matrix for positioning / rotation
-				float sx = t.Thing.ScaleX * t.Thing.ActorScale.Width;
-				float sy = t.Thing.ScaleY * t.Thing.ActorScale.Height;
+				double sx = t.Thing.ScaleX * t.Thing.ActorScale.Width;
+				double sy = t.Thing.ScaleY * t.Thing.ActorScale.Height;
                 
-				Matrix modelscale = Matrix.Scaling(sx, sx, sy);
-				Matrix modelrotation = Matrix.RotationY(-t.Thing.RollRad) * Matrix.RotationX(-t.Thing.PitchRad) * Matrix.RotationZ(t.Thing.Angle);
+				Matrix modelscale = Matrix.Scaling((float)sx, (float)sx, (float)sy);
+				Matrix modelrotation = Matrix.RotationY((float)-t.Thing.RollRad) * Matrix.RotationX((float)-t.Thing.PitchRad) * Matrix.RotationZ((float)t.Thing.Angle);
 
 				world = General.Map.Data.ModeldefEntries[t.Thing.Type].Transform * modelscale * modelrotation * t.Position;
                 graphics.SetUniform(UniformName.world, world);
@@ -1510,11 +1512,11 @@ namespace CodeImp.DoomBuilder.Rendering
                     // this is not right...
                     graphics.SetUniform(UniformName.modelnormal, General.Map.Data.ModeldefEntries[t.Thing.Type].TransformRotation * modelrotation);
                     if (t.Thing.Sector != null) graphics.SetUniform(UniformName.sectorfogcolor, t.Thing.Sector.FogColor);
-                    graphics.SetUniform(UniformName.campos, new Vector4f(cameraposition.x, cameraposition.y, cameraposition.z, t.FogFactor));
+                    graphics.SetUniform(UniformName.campos, new Vector4f((float)cameraposition.x, (float)cameraposition.y, (float)cameraposition.z, t.FogFactor));
 				}
 
                 if (t.Thing.Sector != null)
-                    graphics.SetUniform(UniformName.desaturation, t.Thing.Sector.Desaturation);
+                    graphics.SetUniform(UniformName.desaturation, (float)t.Thing.Sector.Desaturation);
                 else graphics.SetUniform(UniformName.desaturation, 0.0f);
 
                 int lightIndex = 0;
@@ -1586,7 +1588,7 @@ namespace CodeImp.DoomBuilder.Rendering
 			// Set render settings
 			graphics.SetShader(ShaderName.world3d_skybox);
             graphics.SetTexture(General.Map.Data.SkyBox);
-			graphics.SetUniform(UniformName.campos, new Vector4f(cameraposition.x, cameraposition.y, cameraposition.z, 0f));
+			graphics.SetUniform(UniformName.campos, new Vector4f((float)cameraposition.x, (float)cameraposition.y, (float)cameraposition.z, 0f));
 
 			foreach(VisualGeometry g in geo)
 			{
@@ -1866,7 +1868,8 @@ namespace CodeImp.DoomBuilder.Rendering
 			// Draw
             graphics.Draw(PrimitiveType.TriangleStrip, 0, 2, crosshairverts);
 
-            General.Map.Renderer2D.RenderText(fpsLabel);
+			if (General.Settings.ShowFPS)
+				General.Map.Renderer2D.RenderText(fpsLabel);
         }
 
         // This switches fog on and off

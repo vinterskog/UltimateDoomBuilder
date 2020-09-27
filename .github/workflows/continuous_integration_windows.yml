@@ -22,13 +22,13 @@ jobs:
         $options = @( `
           '-property:Configuration=${{ matrix.configuration }}', `
           '-property:Platform=${{ matrix.platform }}', `
-          '-property:WindowsTargetPlatformVersion=10.0', `
-          '-property:PlatformToolset=v142', `
           '-maxcpucount', `
           '-verbosity:minimal' `
         )
         & $msbuild Builder.sln $options
+        if (-not $?) { throw "Build failed" }
         & $msbuild Source\Tools\Updater\Updater.csproj $options
+        if (-not $?) { throw "Build failed" }
 
     - name: Test Files Presence
       run: |

@@ -51,7 +51,7 @@ namespace CodeImp.DoomBuilder.Windows
 		private struct LinedefProperties //mxd
 		{
 			public readonly Dictionary<string, bool> Flags;
-			public readonly float Alpha;
+			public readonly double Alpha;
 
 			public readonly SidedefProperties Front;
 			public readonly SidedefProperties Back;
@@ -69,22 +69,22 @@ namespace CodeImp.DoomBuilder.Windows
 		{
 			public readonly Dictionary<string, bool> Flags;
 
-			public readonly float ScaleTopX;
-			public readonly float ScaleTopY;
-			public readonly float ScaleMidX;
-			public readonly float ScaleMidY;
-			public readonly float ScaleBottomX;
-			public readonly float ScaleBottomY;
+			public readonly double ScaleTopX;
+			public readonly double ScaleTopY;
+			public readonly double ScaleMidX;
+			public readonly double ScaleMidY;
+			public readonly double ScaleBottomX;
+			public readonly double ScaleBottomY;
 
 			public readonly int OffsetX;
 			public readonly int OffsetY;
 
-			public readonly float OffsetTopX;
-			public readonly float OffsetTopY;
-			public readonly float OffsetMidX;
-			public readonly float OffsetMidY;
-			public readonly float OffsetBottomX;
-			public readonly float OffsetBottomY;
+			public readonly double OffsetTopX;
+			public readonly double OffsetTopY;
+			public readonly double OffsetMidX;
+			public readonly double OffsetMidY;
+			public readonly double OffsetBottomX;
+			public readonly double OffsetBottomY;
 
 			public readonly int Brightness;
 			public readonly bool AbsoluteBrightness;
@@ -289,7 +289,7 @@ namespace CodeImp.DoomBuilder.Windows
 			fieldslist.SetValues(fl.Fields, true); // Custom fields
 			commenteditor.SetValues(fl.Fields, true); //mxd. Comments
 			renderStyle.SelectedIndex = Array.IndexOf(renderstyles, fl.Fields.GetValue("renderstyle", "translucent"));
-			alpha.Text = General.Clamp(fl.Fields.GetValue("alpha", 1.0f), 0f, 1f).ToString();
+			alpha.Text = General.Clamp(fl.Fields.GetValue("alpha", 1.0), 0.0, 1.0).ToString();
 
 			// Locknumber
 			int locknumber = fl.Fields.GetValue("locknumber", 0);
@@ -304,7 +304,13 @@ namespace CodeImp.DoomBuilder.Windows
 			
 			// Front side and back side checkboxes
 			frontside.Checked = (fl.Front != null);
+			#if MONO_WINFORMS
+			frontgroup.Enabled = (fl.Front != null);
+			#endif
 			backside.Checked = (fl.Back != null);
+			#if MONO_WINFORMS
+			backgroup.Enabled = (fl.Back != null);
+			#endif
 
 			// Front settings
 			if(fl.Front != null)
@@ -394,7 +400,7 @@ namespace CodeImp.DoomBuilder.Windows
 					renderStyle.SelectedIndex = -1;
 
 				// Alpha
-				if(!string.IsNullOrEmpty(alpha.Text) && General.Clamp(alpha.GetResultFloat(1.0f), 0f, 1f) != l.Fields.GetValue("alpha", 1.0f))
+				if(!string.IsNullOrEmpty(alpha.Text) && General.Clamp(alpha.GetResultFloat(1.0), 0.0, 1.0) != l.Fields.GetValue("alpha", 1.0))
 					alpha.Text = string.Empty;
 
 				// Locknumber
@@ -861,18 +867,18 @@ namespace CodeImp.DoomBuilder.Windows
 			if(string.IsNullOrEmpty(alpha.Text)) 
 			{
 				foreach(Linedef l in lines) 
-					UniFields.SetFloat(l.Fields, "alpha", linedefprops[i++].Alpha, 1.0f);
+					UniFields.SetFloat(l.Fields, "alpha", linedefprops[i++].Alpha, 1.0);
 			} 
 			else //update values
 			{
 				foreach(Linedef l in lines) 
 				{
-					float value = General.Clamp(alpha.GetResultFloat(l.Fields.GetValue("alpha", 1.0f)), 0f, 1.0f);
-					UniFields.SetFloat(l.Fields, "alpha", value, 1.0f);
+					double value = General.Clamp(alpha.GetResultFloat(l.Fields.GetValue("alpha", 1.0)), 0.0, 1.0);
+					UniFields.SetFloat(l.Fields, "alpha", value, 1.0);
 				}
 			}
 
-			resetalpha.Visible = (alpha.GetResultFloat(1.0f) != 1.0f);
+			resetalpha.Visible = (alpha.GetResultFloat(1.0) != 1.0);
 
 			General.Map.IsChanged = true;
 			if(OnValuesChanged != null)	OnValuesChanged(this, EventArgs.Empty);
@@ -1561,8 +1567,8 @@ namespace CodeImp.DoomBuilder.Windows
 			{
 				if(l.Front != null) 
 				{
-					float oldX = linedefprops[i].Front != null ? linedefprops[i].Front.OffsetTopX : 0f;
-					float oldY = linedefprops[i].Front != null ? linedefprops[i].Front.OffsetTopY : 0f;
+					double oldX = linedefprops[i].Front != null ? linedefprops[i].Front.OffsetTopX : 0f;
+					double oldY = linedefprops[i].Front != null ? linedefprops[i].Front.OffsetTopY : 0f;
 					pfcFrontOffsetTop.ApplyTo(l.Front.Fields, General.Map.FormatInterface.MinTextureOffset, General.Map.FormatInterface.MaxTextureOffset, oldX, oldY);
 				}
 				i++;
@@ -1585,8 +1591,8 @@ namespace CodeImp.DoomBuilder.Windows
 			{
 				if(l.Front != null) 
 				{
-					float oldX = linedefprops[i].Front != null ? linedefprops[i].Front.OffsetMidX : 0f;
-					float oldY = linedefprops[i].Front != null ? linedefprops[i].Front.OffsetMidY : 0f;
+					double oldX = linedefprops[i].Front != null ? linedefprops[i].Front.OffsetMidX : 0f;
+					double oldY = linedefprops[i].Front != null ? linedefprops[i].Front.OffsetMidY : 0f;
 					pfcFrontOffsetMid.ApplyTo(l.Front.Fields, General.Map.FormatInterface.MinTextureOffset, General.Map.FormatInterface.MaxTextureOffset, oldX, oldY);
 				}
 
@@ -1610,8 +1616,8 @@ namespace CodeImp.DoomBuilder.Windows
 			{
 				if(l.Front != null) 
 				{
-					float oldX = linedefprops[i].Front != null ? linedefprops[i].Front.OffsetBottomX : 0f;
-					float oldY = linedefprops[i].Front != null ? linedefprops[i].Front.OffsetBottomY : 0f;
+					double oldX = linedefprops[i].Front != null ? linedefprops[i].Front.OffsetBottomX : 0f;
+					double oldY = linedefprops[i].Front != null ? linedefprops[i].Front.OffsetBottomY : 0f;
 					pfcFrontOffsetBottom.ApplyTo(l.Front.Fields, General.Map.FormatInterface.MinTextureOffset, General.Map.FormatInterface.MaxTextureOffset, oldX, oldY);
 				}
 
@@ -1635,8 +1641,8 @@ namespace CodeImp.DoomBuilder.Windows
 			{
 				if(l.Back != null) 
 				{
-					float oldX = linedefprops[i].Back != null ? linedefprops[i].Back.OffsetTopX : 0f;
-					float oldY = linedefprops[i].Back != null ? linedefprops[i].Back.OffsetTopY : 0f;
+					double oldX = linedefprops[i].Back != null ? linedefprops[i].Back.OffsetTopX : 0f;
+					double oldY = linedefprops[i].Back != null ? linedefprops[i].Back.OffsetTopY : 0f;
 					pfcBackOffsetTop.ApplyTo(l.Back.Fields, General.Map.FormatInterface.MinTextureOffset, General.Map.FormatInterface.MaxTextureOffset, oldX, oldY);
 				}
 
@@ -1660,8 +1666,8 @@ namespace CodeImp.DoomBuilder.Windows
 			{
 				if(l.Back != null) 
 				{
-					float oldX = linedefprops[i].Back != null ? linedefprops[i].Back.OffsetMidX : 0f;
-					float oldY = linedefprops[i].Back != null ? linedefprops[i].Back.OffsetMidY : 0f;
+					double oldX = linedefprops[i].Back != null ? linedefprops[i].Back.OffsetMidX : 0f;
+					double oldY = linedefprops[i].Back != null ? linedefprops[i].Back.OffsetMidY : 0f;
 					pfcBackOffsetMid.ApplyTo(l.Back.Fields, General.Map.FormatInterface.MinTextureOffset, General.Map.FormatInterface.MaxTextureOffset, oldX, oldY);
 				}
 
@@ -1685,8 +1691,8 @@ namespace CodeImp.DoomBuilder.Windows
 			{
 				if(l.Back != null) 
 				{
-					float oldX = linedefprops[i].Back != null ? linedefprops[i].Back.OffsetBottomX : 0f;
-					float oldY = linedefprops[i].Back != null ? linedefprops[i].Back.OffsetBottomY : 0f;
+					double oldX = linedefprops[i].Back != null ? linedefprops[i].Back.OffsetBottomX : 0f;
+					double oldY = linedefprops[i].Back != null ? linedefprops[i].Back.OffsetBottomY : 0f;
 					pfcBackOffsetBottom.ApplyTo(l.Back.Fields, General.Map.FormatInterface.MinTextureOffset, General.Map.FormatInterface.MaxTextureOffset, oldX, oldY);
 				}
 
@@ -1714,8 +1720,8 @@ namespace CodeImp.DoomBuilder.Windows
 			{
 				if(l.Front != null) 
 				{
-					float oldX = linedefprops[i].Front != null ? linedefprops[i].Front.ScaleTopX : 1.0f;
-					float oldY = linedefprops[i].Front != null ? linedefprops[i].Front.ScaleTopY : 1.0f;
+					double oldX = linedefprops[i].Front != null ? linedefprops[i].Front.ScaleTopX : 1.0f;
+					double oldY = linedefprops[i].Front != null ? linedefprops[i].Front.ScaleTopY : 1.0f;
 					pfcFrontScaleTop.ApplyTo(l.Front.Fields, General.Map.FormatInterface.MinTextureOffset, General.Map.FormatInterface.MaxTextureOffset, oldX, oldY);
 				}
 
@@ -1739,8 +1745,8 @@ namespace CodeImp.DoomBuilder.Windows
 			{
 				if(l.Front != null) 
 				{
-					float oldX = linedefprops[i].Front != null ? linedefprops[i].Front.ScaleMidX : 1.0f;
-					float oldY = linedefprops[i].Front != null ? linedefprops[i].Front.ScaleMidY : 1.0f;
+					double oldX = linedefprops[i].Front != null ? linedefprops[i].Front.ScaleMidX : 1.0f;
+					double oldY = linedefprops[i].Front != null ? linedefprops[i].Front.ScaleMidY : 1.0f;
 					pfcFrontScaleMid.ApplyTo(l.Front.Fields, General.Map.FormatInterface.MinTextureOffset, General.Map.FormatInterface.MaxTextureOffset, oldX, oldY);
 				}
 
@@ -1764,8 +1770,8 @@ namespace CodeImp.DoomBuilder.Windows
 			{
 				if(l.Front != null) 
 				{
-					float oldX = linedefprops[i].Front != null ? linedefprops[i].Front.ScaleBottomX : 1.0f;
-					float oldY = linedefprops[i].Front != null ? linedefprops[i].Front.ScaleBottomY : 1.0f;
+					double oldX = linedefprops[i].Front != null ? linedefprops[i].Front.ScaleBottomX : 1.0f;
+					double oldY = linedefprops[i].Front != null ? linedefprops[i].Front.ScaleBottomY : 1.0f;
 					pfcFrontScaleBottom.ApplyTo(l.Front.Fields, General.Map.FormatInterface.MinTextureOffset, General.Map.FormatInterface.MaxTextureOffset, oldX, oldY);
 				}
 
@@ -1789,8 +1795,8 @@ namespace CodeImp.DoomBuilder.Windows
 			{
 				if(l.Back != null) 
 				{
-					float oldX = linedefprops[i].Back != null ? linedefprops[i].Back.ScaleTopX : 1.0f;
-					float oldY = linedefprops[i].Back != null ? linedefprops[i].Back.ScaleTopY : 1.0f;
+					double oldX = linedefprops[i].Back != null ? linedefprops[i].Back.ScaleTopX : 1.0f;
+					double oldY = linedefprops[i].Back != null ? linedefprops[i].Back.ScaleTopY : 1.0f;
 					pfcBackScaleTop.ApplyTo(l.Back.Fields, General.Map.FormatInterface.MinTextureOffset, General.Map.FormatInterface.MaxTextureOffset, oldX, oldY);
 				}
 
@@ -1814,8 +1820,8 @@ namespace CodeImp.DoomBuilder.Windows
 			{
 				if(l.Back != null) 
 				{
-					float oldX = linedefprops[i].Back != null ? linedefprops[i].Back.ScaleMidX : 1.0f;
-					float oldY = linedefprops[i].Back != null ? linedefprops[i].Back.ScaleMidY : 1.0f;
+					double oldX = linedefprops[i].Back != null ? linedefprops[i].Back.ScaleMidX : 1.0f;
+					double oldY = linedefprops[i].Back != null ? linedefprops[i].Back.ScaleMidY : 1.0f;
 					pfcBackScaleMid.ApplyTo(l.Back.Fields, General.Map.FormatInterface.MinTextureOffset, General.Map.FormatInterface.MaxTextureOffset, oldX, oldY);
 				}
 
@@ -1839,8 +1845,8 @@ namespace CodeImp.DoomBuilder.Windows
 			{
 				if(l.Back != null) 
 				{
-					float oldX = linedefprops[i].Back != null ? linedefprops[i].Back.ScaleBottomX : 1.0f;
-					float oldY = linedefprops[i].Back != null ? linedefprops[i].Back.ScaleBottomY : 1.0f;
+					double oldX = linedefprops[i].Back != null ? linedefprops[i].Back.ScaleBottomX : 1.0f;
+					double oldY = linedefprops[i].Back != null ? linedefprops[i].Back.ScaleBottomY : 1.0f;
 					pfcBackScaleBottom.ApplyTo(l.Back.Fields, General.Map.FormatInterface.MinTextureOffset, General.Map.FormatInterface.MaxTextureOffset, oldX, oldY);
 				}
 
