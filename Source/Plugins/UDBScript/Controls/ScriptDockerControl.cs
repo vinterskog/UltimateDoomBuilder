@@ -158,6 +158,18 @@ namespace CodeImp.DoomBuilder.UDBScript
 				{
 					Configuration cfg = new Configuration(configfile, true);
 
+					if(cfg.ErrorResult)
+					{
+						string errordesc = "Error in script configuration file " + configfile + " on line " + cfg.ErrorLine + ": " + cfg.ErrorDescription;
+						General.ErrorLogger.Add(ErrorType.Error, errordesc);
+						General.WriteLogLine(errordesc);
+
+						scriptoptions.ParametersView.Rows.Clear();
+						scriptoptions.ParametersView.Refresh();
+
+						return;
+					}
+
 					IDictionary options = cfg.ReadSetting("options", new Hashtable());
 
 					scriptoptions.ParametersView.Rows.Clear();
@@ -168,6 +180,14 @@ namespace CodeImp.DoomBuilder.UDBScript
 						int type = cfg.ReadSetting(string.Format("options.{0}.type", de.Key), 0);
 						string defaultvaluestr = cfg.ReadSetting(string.Format("options.{0}.default", de.Key), string.Empty);
 						IDictionary enumvalues = cfg.ReadSetting(string.Format("options.{0}.enumvalues", de.Key), new Hashtable());
+
+						if(Array.FindIndex(ScriptOption.ValidTypes, t => (int)t == type) == -1)
+						{
+							string errordesc = "Error in script configuration file " + configfile + ": option " + de.Key + " has invalid type " + type;
+							General.ErrorLogger.Add(ErrorType.Error, errordesc);
+							General.WriteLogLine(errordesc);
+							continue;
+						}
 
 						ScriptOption so = new ScriptOption((string)de.Key, description, type, enumvalues, defaultvaluestr);
 
@@ -196,49 +216,6 @@ namespace CodeImp.DoomBuilder.UDBScript
 					scriptoptions.ParametersView.Refresh();
 				}
 			}
-		}
-
-		/// <summary>
-		/// Makes sure the edited cell value is valid. Also stores the value in the editor's configuration file so that it is remembered
-		/// </summary>
-		/// <param name="sender">the sender</param>
-		/// <param name="e">the event</param>
-		private void parametersview_CellValueChanged(object sender, DataGridViewCellEventArgs e)
-		{
-			if (e.RowIndex < 0 || e.ColumnIndex == 0 || scriptoptions.ParametersView.Rows[e.RowIndex].Tag == null)
-				return;
-
-			object newvalue = scriptoptions.ParametersView.Rows[e.RowIndex].Cells["Value"].Value;
-
-			ScriptOption so = (ScriptOption)scriptoptions.ParametersView.Rows[e.RowIndex].Tag;
-
-			// If the new value is empty reset it to the default value. Don't fire this event again, though
-			if (newvalue == null || string.IsNullOrWhiteSpace(newvalue.ToString()))
-			{
-				newvalue = so.defaultvalue;
-				scriptoptions.ParametersView.CellValueChanged -= parametersview_CellValueChanged;
-				scriptoptions.ParametersView.Rows[e.RowIndex].Cells["Value"].Value = newvalue.ToString();
-				scriptoptions.ParametersView.CellValueChanged += parametersview_CellValueChanged;
-			}
-
-			so.typehandler.SetValue(newvalue);
-
-			so.value = newvalue;
-			scriptoptions.ParametersView.Rows[e.RowIndex].Tag = so;
-
-			// Make the text lighter if it's the default value, and store the setting in the config file if it's not the default
-			if (so.value.ToString() == so.defaultvalue.ToString())
-			{
-				scriptoptions.ParametersView.Rows[e.RowIndex].Cells["Value"].Style.ForeColor = SystemColors.GrayText;
-				General.Settings.DeletePluginSetting(BuilderPlug.Me.GetScriptPathHash() + "." + so.name);
-			}
-			else
-			{
-				scriptoptions.ParametersView.Rows[e.RowIndex].Cells["Value"].Style.ForeColor = SystemColors.WindowText;
-				General.Settings.WritePluginSetting(BuilderPlug.Me.GetScriptPathHash() + "." + so.name, so.value);
-
-			}
-
 		}
 
 		/// <summary>

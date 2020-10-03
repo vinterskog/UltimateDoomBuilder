@@ -29,11 +29,17 @@ if(ScriptOptions.looping)
 // Get thew new tags
 var tags = Map.GetMultipleNewTags(numnewtags);
 
+log(numnewtags);
+log(tags);
+
+for(var i=0; i < tags.length; i++)
+	log("new tag: " + tags[i]);
+
 // Create a pen for drawing geometry
 var p = new Pen();
 
 // Draw the closet
-p.SetAngleDegrees(90);
+p.SetAngleDegrees(90 * ScriptOptions.direction);
 p.MoveTo(basepos); p.DrawVertex();
 p.MoveForward(ScriptOptions.length); p.DrawVertex(); p.TurnRight();
 p.MoveForward(closetwidth); p.DrawVertex(); p.TurnRight();
@@ -42,6 +48,7 @@ p.MoveForward(ScriptOptions.length); p.DrawVertex();
 if(!p.FinishDrawing())
 	throw "Something went wrong while drawing!";
 
+
 // Get the new sector and assign a tag
 var sector = Map.GetMarkedSectors(true)[0]
 sector.Tag = tags[newtagindex];
@@ -49,7 +56,7 @@ sector.FloorHeight = 0;
 sector.CeilHeight = 56;
 
 // Draw the carrying line
-p.SetAngleDegrees(90);
+p.SetAngleDegrees(90 * ScriptOptions.direction);
 p.MoveTo(basepos); p.DrawVertex();
 p.MoveForward(32); p.DrawVertex();
 
@@ -68,11 +75,12 @@ newtagindex++;
 if(ScriptOptions.inactive)
 {
 	// Draw the blocking sector
-	p.SetAngleDegrees(0);
-	p.MoveTo(new Vector2D(basepos.x + 16, basepos.y + 48)); p.DrawVertex();
-	p.MoveForward(closetwidth - 32); p.DrawVertex();
-	p.MoveTo(new Vector2D(basepos.x + 16, basepos.y + 52)); p.DrawVertex();
-
+	p.SetAngleDegrees(90 * ScriptOptions.direction);
+	p.MoveTo(basepos);
+	p.MoveForward(64); p.TurnRight(); p.MoveForward(16); p.DrawVertex();
+	p.TurnRight(); p.MoveForward(8); p.DrawVertex();
+	p.TurnLeft(); p.MoveForward(closetwidth - 32); p.DrawVertex();
+	
 	if(!p.FinishDrawing())
 		throw "Something went wrong while drawing!";
 
@@ -100,7 +108,7 @@ if(ScriptOptions.inactive)
 				tl.Tag = tags[newtagindex];
 			}
 	});
-	
+
 	// Increment the new tag index, so that the next new tag will be used for the next step
 	newtagindex++;
 }
@@ -109,8 +117,9 @@ if(ScriptOptions.inactive)
 if(ScriptOptions.looping)
 {
 	// Create the teleport destination line
-	p.SetAngleDegrees(0);
-	p.MoveTo(new Vector2D(basepos.x + 8, basepos.y + 32)); p.DrawVertex();
+	p.SetAngleDegrees(90 * ScriptOptions.direction);
+	p.MoveTo(basepos);
+	p.MoveForward(32); p.TurnRight(); p.MoveForward(8); p.DrawVertex();
 	p.MoveForward(closetwidth - 16); p.DrawVertex();
 
 	if(!p.FinishDrawing())
@@ -121,8 +130,9 @@ if(ScriptOptions.looping)
 	line[0].Tag = tags[newtagindex];
 	
 	// Create the teleport line
-	p.SetAngleDegrees(0);
-	p.MoveTo(new Vector2D(basepos.x + 8, basepos.y + ScriptOptions.length - 32)); p.DrawVertex();
+	p.SetAngleDegrees(90 * ScriptOptions.direction);
+	p.MoveTo(basepos);
+	p.MoveForward(ScriptOptions.length - 32); p.TurnRight(); p.MoveForward(8); p.DrawVertex();
 	p.MoveForward(closetwidth - 16); p.DrawVertex();
 	
 	if(!p.FinishDrawing())
@@ -138,6 +148,10 @@ if(ScriptOptions.looping)
 // so we move the last player 1 start to the monster closet and create a new player 1
 // start at the old position
 
+p.SetAngleDegrees(90 * ScriptOptions.direction);
+p.MoveTo(basepos);
+p.MoveForward(32); p.TurnRight(); p.MoveForward(32);
+
 // Get all player 1 starts
 var playerthings = Map.Things.filter(o => { return o.Type == 1; });
 
@@ -150,7 +164,8 @@ if(playerthings.length > 0)
 	// Store old position and angle and move the last player 1 start to the closet
 	var oldpos = playerthings[0].Position;
 	var oldangle = playerthings[0].Angle;
-	playerthings[0].Move(basepos.x + 32, basepos.y + 32, 0);
+	
+	playerthings[0].Move(p.curpos.x, p.curpos.y, 0);
 
 	// Create a new player 1 start and move it to the old position	
 	var t = Map.CreateThing();
@@ -163,6 +178,6 @@ else
 {
 	var t = Map.CreateThing();
 	t.Type = 1;
-	t.Move(basepos.x + 32, basepos.y + 32, 0);
+	t.Move(p.curpos.x, p.curpos.y, 0);
 	t.UpdateConfiguration();
 }

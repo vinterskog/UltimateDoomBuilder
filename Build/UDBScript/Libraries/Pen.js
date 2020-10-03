@@ -1,5 +1,5 @@
 function Pen(pos) {
-	this.angle = 0;
+	this.angle = Math.PI / 2;
 	this.snaptogrid = false;
 	this.ListOfDrawnVertex = System.Collections.Generic.List(UDB.Geometry.DrawnVertex);
 	this.vertices = new this.ListOfDrawnVertex();
@@ -60,23 +60,23 @@ Pen.prototype.TurnLeft = function(radians) {
 }
 
 Pen.prototype.TurnRightDegrees = function(degrees) {
-	this.angle += degrees * Math.PI / 180.0;
+	this.angle -= degrees * Math.PI / 180.0;
 	
 	while(this.angle < 0)
 		this.angle += Math.PI * 2;
 }
 
 Pen.prototype.TurnLeftDegrees = function(degrees) {
-	this.angle -= degrees * Math.PI / 180.0;
+	this.angle += degrees * Math.PI / 180.0;
 	
 	while(this.angle > Math.PI * 2)
 		this.angle -= Math.PI * 2;
 }
 
 Pen.prototype.SetAngle = function(radians) {
-	this.angle = radians;
+	this.angle = Math.PI / 2 - radians;
 }
 
 Pen.prototype.SetAngleDegrees = function(degrees) {
-	this.angle = degrees * Math.PI / 180.0;
+	this.angle = (90 - degrees) * Math.PI / 180.0;
 }

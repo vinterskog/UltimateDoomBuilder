@@ -279,5 +279,47 @@ namespace CodeImp.DoomBuilder.UDBScript
 			// Update the browse button so that it stays at the correct position when the control is resized
 			UpdateBrowseButton();
 		}
+
+		/// <summary>
+		/// Makes sure the edited cell value is valid. Also stores the value in the editor's configuration file so that it is remembered
+		/// </summary>
+		/// <param name="sender">the sender</param>
+		/// <param name="e">the event</param>
+		private void parametersview_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+		{
+			if (e.RowIndex < 0 || e.ColumnIndex == 0 || parametersview.Rows[e.RowIndex].Tag == null)
+				return;
+
+			object newvalue = parametersview.Rows[e.RowIndex].Cells["Value"].Value;
+
+			ScriptOption so = (ScriptOption)parametersview.Rows[e.RowIndex].Tag;
+
+			// If the new value is empty reset it to the default value. Don't fire this event again, though
+			if (newvalue == null || string.IsNullOrWhiteSpace(newvalue.ToString()))
+			{
+				newvalue = so.defaultvalue;
+				parametersview.CellValueChanged -= parametersview_CellValueChanged;
+				parametersview.Rows[e.RowIndex].Cells["Value"].Value = newvalue.ToString();
+				parametersview.CellValueChanged += parametersview_CellValueChanged;
+			}
+
+			so.typehandler.SetValue(newvalue);
+
+			so.value = newvalue;
+			parametersview.Rows[e.RowIndex].Tag = so;
+
+			// Make the text lighter if it's the default value, and store the setting in the config file if it's not the default
+			if (so.value.ToString() == so.defaultvalue.ToString())
+			{
+				parametersview.Rows[e.RowIndex].Cells["Value"].Style.ForeColor = SystemColors.GrayText;
+				General.Settings.DeletePluginSetting(BuilderPlug.Me.GetScriptPathHash() + "." + so.name);
+			}
+			else
+			{
+				parametersview.Rows[e.RowIndex].Cells["Value"].Style.ForeColor = SystemColors.WindowText;
+				General.Settings.WritePluginSetting(BuilderPlug.Me.GetScriptPathHash() + "." + so.name, so.value);
+
+			}
+		}
 	}
 }

@@ -29,10 +29,10 @@
 		private void InitializeComponent()
 		{
 			this.parametersview = new System.Windows.Forms.DataGridView();
-			this.enumscombo = new System.Windows.Forms.ComboBox();
-			this.browsebutton = new System.Windows.Forms.Button();
 			this.Description = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.Value = new System.Windows.Forms.DataGridViewTextBoxColumn();
+			this.enumscombo = new System.Windows.Forms.ComboBox();
+			this.browsebutton = new System.Windows.Forms.Button();
 			((System.ComponentModel.ISupportInitialize)(this.parametersview)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -57,9 +57,27 @@
 			this.parametersview.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.parametersview_CellBeginEdit);
 			this.parametersview.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.parametersview_CellClick);
 			this.parametersview.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.parametersview_CellEndEdit);
+			this.parametersview.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.parametersview_CellValueChanged);
 			this.parametersview.SelectionChanged += new System.EventHandler(this.parametersview_SelectionChanged);
 			this.parametersview.MouseUp += new System.Windows.Forms.MouseEventHandler(this.parametersview_MouseUp);
 			this.parametersview.Resize += new System.EventHandler(this.parametersview_Resize);
+			// 
+			// Description
+			// 
+			this.Description.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+			this.Description.FillWeight = 70F;
+			this.Description.HeaderText = "Description";
+			this.Description.Name = "Description";
+			this.Description.ReadOnly = true;
+			this.Description.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+			// 
+			// Value
+			// 
+			this.Value.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+			this.Value.FillWeight = 30F;
+			this.Value.HeaderText = "Value";
+			this.Value.Name = "Value";
+			this.Value.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
 			// 
 			// enumscombo
 			// 
@@ -80,23 +98,6 @@
 			this.browsebutton.TabStop = false;
 			this.browsebutton.UseVisualStyleBackColor = true;
 			this.browsebutton.Click += new System.EventHandler(this.browsebutton_Click);
-			// 
-			// Description
-			// 
-			this.Description.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-			this.Description.FillWeight = 70F;
-			this.Description.HeaderText = "Description";
-			this.Description.Name = "Description";
-			this.Description.ReadOnly = true;
-			this.Description.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-			// 
-			// Value
-			// 
-			this.Value.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-			this.Value.FillWeight = 30F;
-			this.Value.HeaderText = "Value";
-			this.Value.Name = "Value";
-			this.Value.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
 			// 
 			// ScriptOptionsControl
 			// 

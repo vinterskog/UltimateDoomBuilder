@@ -42,6 +42,35 @@ namespace CodeImp.DoomBuilder.UDBScript
 		public TypeHandler typehandler;
 		private IDictionary enumvalues;
 
+		public static readonly UniversalType[] ValidTypes =
+		{
+			UniversalType.Integer,
+			UniversalType.Float,
+			UniversalType.String,
+			UniversalType.Boolean,
+			UniversalType.LinedefType,
+			UniversalType.SectorEffect,
+			UniversalType.Texture,
+			UniversalType.Flat,
+			UniversalType.AngleDegrees,
+			UniversalType.AngleRadians,
+			UniversalType.Color,
+			UniversalType.EnumOption,
+			UniversalType.SectorTag,
+			UniversalType.ThingTag,
+			UniversalType.LinedefTag,
+			//UniversalType.EnumStrings,
+			UniversalType.AngleDegreesFloat,
+			UniversalType.ThingType,
+			UniversalType.ThingClass,
+			UniversalType.RandomInteger,
+			UniversalType.RandomFloat,
+			UniversalType.AngleByte,
+			UniversalType.ThingRadius,
+			UniversalType.ThingHeight,
+			UniversalType.PolyobjectNumber
+		};
+
 		public ScriptOption(string name, string description, int type, IDictionary enumvalues, object defaultvalue)
 		{
 			this.name = name;
@@ -71,6 +100,9 @@ namespace CodeImp.DoomBuilder.UDBScript
 			}
 		}
 
+		/// <summary>
+		/// Fills the enum list
+		/// </summary>
 		private void FillEnumList()
 		{
 			if (enumvalues != null)
@@ -79,7 +111,10 @@ namespace CodeImp.DoomBuilder.UDBScript
 
 				foreach (DictionaryEntry de in enumvalues)
 				{
-					el.Add(new EnumItem((string)de.Key, (string)de.Value));
+					if (de.Value == null)
+						el.Add(new EnumItem((string)de.Key, de.Key.ToString()));
+					else
+						el.Add(new EnumItem((string)de.Key, de.Value.ToString()));
 				}
 			}
 		}
