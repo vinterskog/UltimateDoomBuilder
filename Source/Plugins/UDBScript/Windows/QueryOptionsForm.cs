@@ -48,9 +48,16 @@ namespace CodeImp.DoomBuilder.UDBScript
 
 		public void AddOption(string name, string description, int type, object defaultvalue)	
 		{
+			AddOption(name, description, type, defaultvalue, null);
+		}
+
+		public void AddOption(string name, string description, int type, object defaultvalue, Dictionary<string, object> enumvalues)
+		{
 			int index = parametersview.ParametersView.Rows.Add();
 
-			ScriptOption so = new ScriptOption(name, description, type, null, defaultvalue);
+			ScriptOption so = new ScriptOption(name, description, type, enumvalues, defaultvalue);
+
+			so.ReloadTypeHandler();
 
 			parametersview.ParametersView.Rows[index].Cells["Description"].Value = description;
 			parametersview.ParametersView.Rows[index].Cells["Value"].Value = so.value;

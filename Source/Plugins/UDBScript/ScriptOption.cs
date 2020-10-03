@@ -112,9 +112,9 @@ namespace CodeImp.DoomBuilder.UDBScript
 				foreach (DictionaryEntry de in enumvalues)
 				{
 					if (de.Value == null)
-						el.Add(new EnumItem((string)de.Key, de.Key.ToString()));
+						el.Add(new EnumItem(de.Key.ToString(), de.Key.ToString()));
 					else
-						el.Add(new EnumItem((string)de.Key, de.Value.ToString()));
+						el.Add(new EnumItem(de.Key.ToString(), de.Value.ToString()));
 				}
 			}
 		}

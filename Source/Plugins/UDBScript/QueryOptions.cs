@@ -21,6 +21,9 @@
 
 #endregion
 
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Windows.Forms;
@@ -63,7 +66,47 @@ namespace CodeImp.DoomBuilder.UDBScript
 		/// <param name="defaultvalue">Default value of the parameter</param>
 		public void AddOption(string name, string description, int type, object defaultvalue)
 		{
+			if (Array.FindIndex(ScriptOption.ValidTypes, t => (int)t == type) == -1)
+			{
+				string errordesc = "Error in script " + BuilderPlug.Me.CurrentScriptFile + ": option " + name + " has invalid type " + type;
+				General.ErrorLogger.Add(ErrorType.Error, errordesc);
+				General.WriteLogLine(errordesc);
+				return;
+			}
+
 			form.AddOption(name, description, type, defaultvalue);
+		}
+
+		/// <summary>
+		/// Adds a parameter to query
+		/// </summary>
+		/// <param name="name">Name of the variable that the queried value is stored in</param>
+		/// <param name="description">Textual description of the parameter</param>
+		/// <param name="type">UniversalType value of the parameter</param>
+		/// <param name="defaultvalue">Default value of the parameter</param>
+		public void AddOption(string name, string description, int type, object defaultvalue, object enumvalues)
+		{
+			if (Array.FindIndex(ScriptOption.ValidTypes, t => (int)t == type) == -1)
+			{
+				string errordesc = "Error in script " + BuilderPlug.Me.CurrentScriptFile + ": option " + name + " has invalid type " + type;
+				General.ErrorLogger.Add(ErrorType.Error, errordesc);
+				General.WriteLogLine(errordesc);
+				return;
+			}
+
+			if (enumvalues is Dictionary<string, object>)
+				form.AddOption(name, description, type, defaultvalue, (Dictionary<string, object>)enumvalues);
+			else if (enumvalues is ExpandoObject)
+			{
+				Dictionary<string, object> values = new Dictionary<string, object>();
+
+				foreach(KeyValuePair<string, object> kvp in (ExpandoObject)enumvalues)
+				{
+					values[kvp.Key] = kvp.Value;
+				}
+
+				form.AddOption(name, description, type, defaultvalue, values);
+			}
 		}
 
 		/// <summary>
