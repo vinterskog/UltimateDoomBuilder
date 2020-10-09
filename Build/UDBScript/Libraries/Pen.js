@@ -1,8 +1,9 @@
 function Pen(pos) {
 	this.angle = Math.PI / 2;
 	this.snaptogrid = false;
-	this.ListOfDrawnVertex = System.Collections.Generic.List(UDB.Geometry.DrawnVertex);
-	this.vertices = new this.ListOfDrawnVertex();
+	//this.ListOfDrawnVertex = System.Collections.Generic.List(UDB.Geometry.DrawnVertex);
+	//this.vertices = new this.ListOfDrawnVertex();
+	this.vertices = new (System.Collections.Generic.List(UDB.Geometry.DrawnVertex))();
 	
 	if(typeof pos !== 'undefined')
 		this.curpos = pos;
@@ -23,7 +24,8 @@ Pen.prototype.FinishDrawing = function() {
 	
 	var result = UDB.Geometry.Tools.DrawLines(this.vertices);
 	
-	this.vertices = new this.ListOfDrawnVertex();
+	//this.vertices = new this.ListOfDrawnVertex();
+	this.vertices = new (System.Collections.Generic.List(UDB.Geometry.DrawnVertex))();
 	
 	return result;
 }
