@@ -370,7 +370,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if (t.Action > 0 && General.Map.Config.LinedefActions.ContainsKey(t.Action))
 					action = General.Map.Config.LinedefActions[t.Action];
 
-				actionargs = t.Args;
+				actionargs = t.Args.ToArray();
 			}
 			else // element is a Sector
 			{
@@ -522,7 +522,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			if (se is Thing)
 			{
 				action = ((Thing)se).Action;
-				actionargs = ((Thing)se).Args;
+				actionargs = ((Thing)se).Args.ToArray();
 			}
 			else if(se is Linedef)
 			{

@@ -4,6 +4,7 @@ using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Linq;
 using System.Windows.Forms;
 using CodeImp.DoomBuilder.Config;
 using CodeImp.DoomBuilder.GZBuilder.Data;
@@ -86,7 +87,7 @@ namespace CodeImp.DoomBuilder.Controls
 
 		public void SetValue(Thing t, bool first)
 		{
-			SetValue(t.Fields, t.Args, first);
+			SetValue(t.Fields, t.Args.ToArray(), first);
 		}
 
 		private void SetValue(UniFields fields, int[] args, bool first)
@@ -213,10 +214,14 @@ namespace CodeImp.DoomBuilder.Controls
                     //
                     if (!string.IsNullOrEmpty(arg0int.Text))
                     {
-                        if (arg0int.SelectedItem != null)
-                            t.Args[0] = ((ScriptItem)((ColoredComboBoxItem)arg0int.SelectedItem).Value).Index;
-                        else if (!int.TryParse(arg0int.Text.Trim(), out t.Args[0]))
-                            t.Args[0] = 0;
+						int outarg;
+
+						if (arg0int.SelectedItem != null)
+							t.Args[0] = ((ScriptItem)((ColoredComboBoxItem)arg0int.SelectedItem).Value).Index;
+						else if (!int.TryParse(arg0int.Text.Trim(), out outarg))
+							t.Args[0] = 0;
+						else
+							t.Args[0] = outarg;
 
                         if (t.Fields.ContainsKey("arg0str")) t.Fields.Remove("arg0str");
                     }

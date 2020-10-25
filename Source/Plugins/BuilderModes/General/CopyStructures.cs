@@ -752,7 +752,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		private readonly Dictionary<string, bool> flags;
 		private readonly int tag;
 		private readonly int action;
-		private readonly int[] args;
+		private readonly MapElementArguments args;
 		
 		public ThingProperties(Thing t) : base(t.Fields, MapElementType.THING)
 		{
@@ -766,7 +766,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			flags = t.GetFlags();
 			tag = t.Tag;
 			action = t.Action;
-			args = (int[])(t.Args.Clone());
+			args = t.Args.Clone();
 		}
 
 		//mxd. Applies coped properties with all settings enabled
