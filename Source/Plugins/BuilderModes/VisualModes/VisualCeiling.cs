@@ -218,13 +218,19 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					}
 					else if(side.Other != null && side.Other.Sector != null && side.Other.Sector.CeilTexture == General.Map.Config.SkyFlatName)
 					{
-						// Update upper side of the neightbouring sector
-						BaseVisualSector other = (BaseVisualSector)mode.GetVisualSector(side.Other.Sector);
-						if(other != null && other.Sides != null)
+						// Update upper side of the neightbouring sector, but only when the visual sector already exists. GetVisualSector will create
+						// the visual sector when it does not exist yet, which in turn modifies the mode's allsectors list, which is illegal when done
+						// from the mode's UpdateChangedObjects method, since that method iterates over allsectors.
+						// See https://github.com/jewalky/UltimateDoomBuilder/issues/517
+						if (mode.VisualSectorExists(side.Other.Sector))
 						{
-							parts = other.GetSidedefParts(side.Other);
-							if(parts.upper != null && parts.upper.Triangles > 0)
-								parts.upper.UpdateSkyRenderFlag();
+							BaseVisualSector other = (BaseVisualSector)mode.GetVisualSector(side.Other.Sector);
+							if (other != null && other.Sides != null)
+							{
+								parts = other.GetSidedefParts(side.Other);
+								if (parts.upper != null && parts.upper.Triangles > 0)
+									parts.upper.UpdateSkyRenderFlag();
+							}
 						}
 					}
 				}
@@ -352,12 +358,21 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 				SetTexture(BuilderPlug.Me.CopiedFlat);
 
-				// Update
-				if(mode.VisualSectorExists(level.sector))
+				// Update. We need to create a visual sector if it doesn't exist yet. This can happen when pasting
+				// to a 3D floor and its control sector wasn't in view before
+				BaseVisualSector vs;
+
+				if (mode.VisualSectorExists(level.sector))
 				{
-					BaseVisualSector vs = (BaseVisualSector)mode.GetVisualSector(level.sector);
-					vs.UpdateSectorGeometry(false);
+					vs = (BaseVisualSector)mode.GetVisualSector(level.sector);
 				}
+				else
+				{
+					vs = mode.CreateBaseVisualSector(level.sector);
+				}
+
+				if (vs != null)
+					vs.UpdateSectorGeometry(false);
 			}
 		}
 

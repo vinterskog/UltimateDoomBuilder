@@ -38,9 +38,9 @@ using CodeImp.DoomBuilder.Data;
 
 namespace CodeImp.DoomBuilder.BuilderModes
 {
-	[EditMode(DisplayName = "GZDB Visual Mode",
+	[EditMode(DisplayName = "Visual Mode",
 			  SwitchAction = "gzdbvisualmode", // Action name used to switch to this mode
-			  ButtonImage = "VisualModeGZ.png",	// Image resource name for the button
+			  ButtonImage = "VisualMode.png",	// Image resource name for the button
 			  ButtonOrder = 1,					// Position of the button (lower is more to the left)
 			  ButtonGroup = "001_visual",
 			  UseByDefault = true)]
@@ -362,7 +362,26 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					BaseVisualSector bvs = (BaseVisualSector)vs.Value;
 					if((bvs.Floor != null) && bvs.Floor.Selected) selectedobjects.Add(bvs.Floor);
 					if((bvs.Ceiling != null) && bvs.Ceiling.Selected) selectedobjects.Add(bvs.Ceiling);
-					foreach(Sidedef sd in vs.Key.Sidedefs)
+					
+					// Also check extra floors
+					if (bvs.ExtraFloors.Count > 0)
+						foreach (VisualFloor vf in bvs.ExtraFloors)
+							if (vf.Selected) selectedobjects.Add(vf);
+
+					if (bvs.ExtraBackFloors.Count > 0)
+						foreach (VisualFloor vf in bvs.ExtraBackFloors)
+							if (vf.Selected) selectedobjects.Add(vf);
+
+					// Also check extra ceilings
+					if (bvs.ExtraCeilings.Count > 0)
+						foreach (VisualCeiling vc in bvs.ExtraCeilings)
+							if (vc.Selected) selectedobjects.Add(vc);
+
+					if (bvs.ExtraBackCeilings.Count > 0)
+						foreach (VisualCeiling vc in bvs.ExtraBackCeilings)
+							if (vc.Selected) selectedobjects.Add(vc);
+
+					foreach (Sidedef sd in vs.Key.Sidedefs)
 					{
 						List<VisualGeometry> sidedefgeos = bvs.GetSidedefGeometry(sd);
 						foreach(VisualGeometry sdg in sidedefgeos)
@@ -398,8 +417,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			{
 				foreach (KeyValuePair<Sector, List<VisualSlope>> kvp in allslopehandles)
 				{
-					foreach (VisualSlope handle in kvp.Value)
-						if (handle.Selected) selectedobjects.Add((VisualSidedefSlope)handle);
+					foreach (BaseVisualSlope handle in kvp.Value)
+						if (handle.Selected) selectedobjects.Add(handle);
 				}
 			}
 
@@ -430,7 +449,38 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			if (!allslopehandles.ContainsKey(sd.Sector))
 				allslopehandles.Add(sd.Sector, new List<VisualSlope>());
 
+			if (!sidedefslopehandles.ContainsKey(sd.Sector))
+				sidedefslopehandles.Add(sd.Sector, new List<VisualSlope>());
+
 			allslopehandles[sd.Sector].Add(handle);
+			sidedefslopehandles[sd.Sector].Add(handle);
+
+			return handle;
+		}
+
+		internal VisualSlope CreateVisualSlopeHandle(SectorLevel level, Vertex v, Sector s, bool up)
+		{
+			VisualVertexSlope handle = new VisualVertexSlope(this, level, v, s, up);
+
+			/*
+			if (!allslopehandles.ContainsKey(level.sector))
+				allslopehandles.Add(level.sector, new List<VisualSlope>());
+
+			if (!vertexslopehandles.ContainsKey(level.sector))
+				vertexslopehandles.Add(level.sector, new List<VisualSlope>());
+
+			allslopehandles[level.sector].Add(handle);
+			vertexslopehandles[level.sector].Add(handle);
+			*/
+
+			if (!allslopehandles.ContainsKey(s))
+				allslopehandles.Add(s, new List<VisualSlope>());
+
+			if (!vertexslopehandles.ContainsKey(s))
+				vertexslopehandles.Add(s, new List<VisualSlope>());
+
+			allslopehandles[s].Add(handle);
+			vertexslopehandles[s].Add(handle);
 
 			return handle;
 		}
@@ -468,31 +518,56 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			Vector3D delta = General.Map.VisualCamera.Target - General.Map.VisualCamera.Position;
 			delta = delta.GetFixedLength(General.Settings.ViewDistance * PICK_RANGE);
 			VisualPickResult newtarget = PickObject(start, start + delta);
+			VisualSlope pickedhandle = null;
 			
 			// Should we update the info on panels?
 			bool updateinfo = (newtarget.picked != target.picked);
 
 			if (updateinfo)
 			{
-				if (newtarget.picked is VisualSidedefSlope)
+				if (target.picked is VisualSlope) // Old target
 				{
-					// Get the smart pivot handle for the targeted slope handle, so that it can be drawn
-					VisualSidedefSlope handle = VisualSidedefSlope.GetSmartPivotHandle((VisualSidedefSlope)newtarget.picked, this);
-					if (handle != null)
-						handle.SmartPivot = true;
-				}
-				else if(target.picked is VisualSidedefSlope)
-				{
+					// Remove all smart pivot handles from being processed. There should only be exactly one, but better save than sorry
+					List<VisualSlope> sph = new List<VisualSlope>();
 
-					// Clear smart pivot handles, otherwise it will keep being displayed
-					foreach (KeyValuePair<Sector, List<VisualSlope>> kvp in allslopehandles)
-						foreach (VisualSidedefSlope checkhandle in kvp.Value)
-							checkhandle.SmartPivot = false;
+					foreach (VisualSlope vs in usedslopehandles)
+					{
+						if(vs.SmartPivot && !(vs.Selected || vs.Pivot))
+							sph.Add(vs);
+
+						vs.SmartPivot = false;
+					}
+
+					foreach (VisualSlope vs in sph)
+						usedslopehandles.Remove(vs);
+
+					// Don't render old slope handle anymore
+					if (!((VisualSlope)target.picked).Selected && !((VisualSlope)target.picked).Pivot)
+						usedslopehandles.Remove((VisualSlope)target.picked);
+				}
+
+				if(newtarget.picked is VisualSlope)
+				{
+					usedslopehandles.Add((VisualSlope)newtarget.picked);
+
+					pickedhandle = ((VisualSlope)newtarget.picked);
 				}
 			}
 
 			// Apply new target
 			target = newtarget;
+
+			// Get the smart pivot handle for the targeted slope handle, so that it can be drawn. We have to do it after the current
+			// target is set because otherwise it might get wrong results if the old target was a floor/ceiling
+			if (pickedhandle != null)
+			{
+				VisualSlope handle = pickedhandle.GetSmartPivotHandle();
+				if (handle != null)
+				{
+					handle.SmartPivot = true;
+					usedslopehandles.Add(handle);
+				}
+			}
 
 			// Show target info
 			if (updateinfo)
@@ -561,7 +636,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 						// Also update slope handles
 						if (allslopehandles.ContainsKey(vs.Key))
-							foreach (VisualSidedefSlope handle in allslopehandles[vs.Key])
+							foreach (VisualSlope handle in allslopehandles[vs.Key])
 								handle.Update();
 					}
 				}
@@ -759,7 +834,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// No handles selected, try to slope between highlighted handle and it smart pivot
 			if (handles.Count == 0 && HighlightedTarget is VisualSidedefSlope)
 			{
-				VisualSidedefSlope handle = VisualSidedefSlope.GetSmartPivotHandle((VisualSidedefSlope)HighlightedTarget, this);
+				//VisualSidedefSlope handle = VisualSidedefSlope.GetSmartPivotHandle((VisualSidedefSlope)HighlightedTarget, this);
+				VisualSidedefSlope handle = (VisualSidedefSlope)((VisualSidedefSlope)HighlightedTarget).GetSmartPivotHandle();
 				if (handle == null)
 				{
 					General.Interface.DisplayStatus(StatusType.Warning, "Couldn't find a smart pivot handle.");
@@ -777,9 +853,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					VisualSidedefSlope handle;
 
 					if (HighlightedTarget is VisualSidedefSlope)
-						handle = VisualSidedefSlope.GetSmartPivotHandle((VisualSidedefSlope)HighlightedTarget, this);
+						handle = (VisualSidedefSlope)((VisualSidedefSlope)HighlightedTarget).GetSmartPivotHandle();
 					else
-						handle = VisualSidedefSlope.GetSmartPivotHandle(handles[0], this);
+						handle = (VisualSidedefSlope)(handles[0].GetSmartPivotHandle());
 
 					if (handle == null)
 					{
@@ -1094,15 +1170,24 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					case 9500:
 						if(linetags.ContainsKey(t.Args[0]))
 						{
+							// Only slope each sector once, even when multiple lines of the same sector are tagged. See https://github.com/jewalky/UltimateDoomBuilder/issues/491
+							List<Sector> slopedsectors = new List<Sector>();
+
 							foreach(Linedef ld in linetags[t.Args[0]])
 							{
 								if (ld.Line.GetSideOfLine(t.Position) < 0.0f)
 								{
-									if(ld.Front != null)
+									if (ld.Front != null && !slopedsectors.Contains(ld.Front.Sector))
+									{
 										GetSectorData(ld.Front.Sector).AddEffectThingLineSlope(t, ld.Front);
+										slopedsectors.Add(ld.Front.Sector);
+									}
 								}
-								else if (ld.Back != null)
+								else if (ld.Back != null && !slopedsectors.Contains(ld.Back.Sector))
+								{
 									GetSectorData(ld.Back.Sector).AddEffectThingLineSlope(t, ld.Back);
+									slopedsectors.Add(ld.Back.Sector);
+								}
 							}
 						}
 						break;
@@ -1238,46 +1323,92 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			foreach (KeyValuePair<Sector, List<VisualSlope>> kvp in allslopehandles)
 			{
 				foreach (VisualSlope handle in kvp.Value)
-					if (handle != null)
-						if (handle.Selected) RemoveSelectedObject((VisualSidedefSlope)handle);
+					if (handle != null && handle.Selected)
+						if (handle is BaseVisualSlope)
+							RemoveSelectedObject((BaseVisualSlope)handle);
 
 				kvp.Value.Clear();
 			}
+			usedslopehandles.Clear();
 			allslopehandles.Clear();
+			sidedefslopehandles.Clear();
+			vertexslopehandles.Clear();
 
 			BuildSlopeHandles(General.Map.Map.Sectors.ToList());
 		}
 
 		private void BuildSlopeHandles(List<Sector> sectors)
 		{
-			if (General.Map.UDMF)
+			if (!General.Map.UDMF)
+				return;
+
+			foreach (Sector s in sectors)
 			{
-				foreach (Sector s in sectors)
+				if (s.IsDisposed)
+					continue;
+
+				SectorData sectordata = GetSectorData(s);
+				sectordata.Update();
+
+				// Clear old data
+				if (allslopehandles.ContainsKey(s)) allslopehandles.Remove(s);
+				if (sidedefslopehandles.ContainsKey(s))	sidedefslopehandles.Remove(s);
+				if (vertexslopehandles.ContainsKey(s)) vertexslopehandles.Remove(s);
+
+
+				// Create visual sidedef slope handles
+				foreach (Sidedef sidedef in s.Sidedefs)
 				{
-					if (s.IsDisposed)
+					// Create handles for the regular floor and ceiling
+					CreateVisualSlopeHandle(sectordata.Floor, sidedef, true);
+					CreateVisualSlopeHandle(sectordata.Ceiling, sidedef, false);
+
+					// Create handles for 3D floors
+					if (sectordata.ExtraFloors.Count > 0)
 					{
-						continue;
+						foreach (Effect3DFloor floor in sectordata.ExtraFloors)
+						{
+							CreateVisualSlopeHandle(floor.Floor, sidedef, false);
+							CreateVisualSlopeHandle(floor.Ceiling, sidedef, true);
+						}
 					}
+				}
+			}
 
+			// Create visual vertex slope handles
+			foreach(Vertex v in General.Map.Map.Vertices)
+			{
+				if (v.IsDisposed || v.Linedefs.Count == 0)
+					continue;
+
+				HashSet<Sector> vertexsectors = new HashSet<Sector>();
+
+				// Find all sectors that have lines connected to this vertex
+				foreach(Linedef ld in v.Linedefs)
+				{
+					if (ld.IsDisposed)
+						continue;
+
+					if (ld.Front != null && !ld.Front.Sector.IsDisposed) vertexsectors.Add(ld.Front.Sector);
+					if (ld.Back != null && !ld.Front.Sector.IsDisposed) vertexsectors.Add(ld.Back.Sector);
+				}
+
+				foreach(Sector s in vertexsectors)
+				{
 					SectorData sectordata = GetSectorData(s);
-
 					sectordata.Update();
 
-					if (allslopehandles.ContainsKey(s))
-						allslopehandles.Remove(s);
+					// Create handles for the regular floor and ceiling
+					CreateVisualSlopeHandle(sectordata.Floor, v, s, true);
+					CreateVisualSlopeHandle(sectordata.Ceiling, v, s, false);
 
-					foreach (Sidedef sidedef in s.Sidedefs)
+					// Create handles for 3D floors
+					if (sectordata.ExtraFloors.Count > 0)
 					{
-						VisualSlope handle = CreateVisualSlopeHandle(sectordata.Floor, sidedef, true);
-						handle = CreateVisualSlopeHandle(sectordata.Ceiling, sidedef, false);
-
-						if (sectordata.ExtraFloors.Count > 0)
+						foreach (Effect3DFloor floor in sectordata.ExtraFloors)
 						{
-							foreach (Effect3DFloor floor in sectordata.ExtraFloors)
-							{
-								handle = CreateVisualSlopeHandle(floor.Floor, sidedef, false);
-								handle = CreateVisualSlopeHandle(floor.Ceiling, sidedef, true);
-							}
+							CreateVisualSlopeHandle(floor.Floor, v, s, false);
+							CreateVisualSlopeHandle(floor.Ceiling, v, s, true);
 						}
 					}
 				}
@@ -1523,14 +1654,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					renderer.SetVisualVertices(verts);
 				}
 
-				// Visual slope handles
-				List<VisualSlope> handles = new List<VisualSlope>();
-				foreach (KeyValuePair<Sector, List<VisualSlope>> kvp in allslopehandles)
-					foreach (VisualSlope handle in kvp.Value)
-						if (handle.Selected || handle.Pivot || handle.SmartPivot || target.picked == handle)
-							handles.Add(handle);
-
-				renderer.SetVisualSlopeHandles(handles);
+				renderer.SetVisualSlopeHandles(usedslopehandles);
 
 				// Done rendering geometry
 				renderer.FinishGeometry();
@@ -1578,6 +1702,12 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					{
 						allslopehandles[s].Clear();
 						allslopehandles.Remove(s);
+
+						sidedefslopehandles[s].Clear();
+						sidedefslopehandles.Remove(s);
+
+						vertexslopehandles[s].Clear();
+						vertexslopehandles.Remove(s);
 					}
 
 					// Rebuild slope handles for the changed sectors
@@ -2377,12 +2507,15 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				{
 					foreach (KeyValuePair<Sector, List<VisualSlope>> kvp in allslopehandles)
 					{
-						foreach (VisualSidedefSlope handle in kvp.Value)
+						foreach (VisualSlope handle in kvp.Value)
 						{
 							handle.Selected = false;
 							handle.Pivot = false;
+							handle.SmartPivot = false;
 						}
 					}
+
+					usedslopehandles.Clear();
 				}
 			}
 
@@ -2538,7 +2671,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				int startheight = (int)Math.Round(selectedhandles[0].GetCenterPoint().z);
 				int targetheight = int.MaxValue;
 
-				foreach (KeyValuePair<Sector, List<VisualSlope>> kvp in allslopehandles)
+				foreach (KeyValuePair<Sector, List<VisualSlope>> kvp in sidedefslopehandles)
 				{
 					foreach (VisualSidedefSlope handle in kvp.Value)
 					{
@@ -2779,7 +2912,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				int startheight = (int)Math.Round(selectedhandles[0].GetCenterPoint().z);
 				int targetheight = int.MinValue;
 
-				foreach (KeyValuePair<Sector, List<VisualSlope>> kvp in allslopehandles)
+				foreach (KeyValuePair<Sector, List<VisualSlope>> kvp in sidedefslopehandles)
 				{
 					foreach (VisualSidedefSlope handle in kvp.Value)
 					{
@@ -4219,19 +4352,125 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		}
 
 		[BeginAction("togglevisualslopepicking")]
-		public void ToggleVisualSlopePicking()
+		public void ToggleVisualSidedefSlopePicking()
 		{
-			if (pickingmode != PickingMode.SlopeHandles)
-				pickingmode = PickingMode.SlopeHandles;
+			if (!General.Map.UDMF)
+			{
+				General.Interface.DisplayStatus(StatusType.Warning, "Visual sloping is supported in UDMF only!");
+				return;
+			}
+
+			if (pickingmode != PickingMode.SidedefSlopeHandles)
+				pickingmode = PickingMode.SidedefSlopeHandles;
 			else
 			{
 				pickingmode = PickingMode.Default;
 
 				// Clear smart pivot handles, otherwise it will keep being displayed
 				foreach (KeyValuePair<Sector, List<VisualSlope>> kvp in allslopehandles)
-					foreach (VisualSidedefSlope checkhandle in kvp.Value)
-						checkhandle.SmartPivot = false;
+					foreach (VisualSlope checkhandle in kvp.Value)
+						if (checkhandle.SmartPivot && !(checkhandle.Selected || checkhandle.Pivot))
+						{
+							checkhandle.SmartPivot = false;
+							usedslopehandles.Remove(checkhandle);
+						}
 			}
+		}
+
+		[BeginAction("togglevisualvertexslopepicking")]
+		public void ToggleVisualVertexSlopePicking()
+		{
+			if (!General.Map.UDMF)
+			{
+				General.Interface.DisplayStatus(StatusType.Warning, "Visual sloping is supported in UDMF only!");
+				return;
+			}
+
+			if (pickingmode != PickingMode.VertexSlopeHandles)
+				pickingmode = PickingMode.VertexSlopeHandles;
+			else
+			{
+				pickingmode = PickingMode.Default;
+
+				// Clear smart pivot handles, otherwise it will keep being displayed
+				foreach (KeyValuePair<Sector, List<VisualSlope>> kvp in allslopehandles)
+					foreach (VisualSlope checkhandle in kvp.Value)
+						if (checkhandle.SmartPivot && !(checkhandle.Selected || checkhandle.Pivot))
+						{
+							checkhandle.SmartPivot = false;
+							usedslopehandles.Remove(checkhandle);
+						}
+			}
+		}
+
+
+		[BeginAction("resetslope")]
+		public void ResetSlope()
+		{
+			List<IVisualEventReceiver> selectedsectors = GetSelectedObjects(true, false, false, false, false);
+			if (selectedsectors.Count == 0)
+			{
+				General.Interface.DisplayStatus(StatusType.Warning, "You need to select at least one floor or ceiling to reset slope.");
+				return;
+			}
+
+			General.Map.UndoRedo.CreateUndo("Reset plane slope");
+
+			int numfloors = 0;
+			int numceilings = 0;
+
+			// Reset slope
+			foreach (BaseVisualGeometrySector bvgs in selectedsectors)
+			{
+				SectorLevel level = bvgs.Level;
+				bool applytoceiling = false;
+				if (level.extrafloor)
+				{
+					// The top side of 3D floors is the ceiling of the sector, but it's a "floor" in UDB, so the
+					// ceiling of the control sector has to be modified
+					if (level.type == SectorLevelType.Floor)
+						applytoceiling = true;
+				}
+				else
+				{
+					if (level.type == SectorLevelType.Ceiling)
+						applytoceiling = true;
+				}
+
+				if (applytoceiling)
+				{
+					level.sector.CeilSlopeOffset = double.NaN;
+					level.sector.CeilSlope = new Vector3D();
+					numceilings++;
+				}
+				else
+				{
+					level.sector.FloorSlopeOffset = double.NaN;
+					level.sector.FloorSlope = new Vector3D();
+					numfloors++;
+				}
+
+				// Rebuild sector
+				BaseVisualSector vs;
+				if (VisualSectorExists(level.sector))
+				{
+					vs = (BaseVisualSector)GetVisualSector(level.sector);
+				}
+				else
+				{
+					vs = CreateBaseVisualSector(level.sector);
+				}
+
+				if (vs != null) vs.UpdateSectorGeometry(true);
+			}
+
+			string ptype = "plane";
+			if (numfloors == 0) ptype = "ceiling";
+			else if (numceilings == 0) ptype = "floor";
+
+			UpdateChangedObjects();
+
+			General.Interface.DisplayStatus(StatusType.Action, string.Format("{1} {0} slopes reset.", ptype, numfloors+numceilings));
 		}
 
 		[BeginAction("slopebetweenhandles")]
@@ -4332,6 +4571,29 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				UpdateChangedObjects();
 
 				General.Interface.DisplayStatus(StatusType.Action, "Arched between slope handles.");
+			}
+		}
+
+		/// <summary>
+		/// Applies the Visual Mode's current camera pitch and yaw to the selected things
+		/// </summary>
+		[BeginAction("applycamerarotationtothings")]
+		public void ApplyCameraRotationToThings()
+		{
+			List<Thing> things = GetSelectedThings();
+
+			if(things.Count == 0)
+			{
+				General.Interface.DisplayStatus(StatusType.Warning, "Can't apply camera rotation to things: no things selected.");
+				return;
+			}
+
+			General.Map.UndoRedo.CreateUndo("Apply camera rotation to things");
+
+			foreach (Thing t in things)
+			{
+				t.Rotate(General.Map.VisualCamera.AngleXY - Angle2D.PI);
+				t.SetPitch((int)Angle2D.RadToDeg(General.Map.VisualCamera.AngleZ - Angle2D.PI));
 			}
 		}
 

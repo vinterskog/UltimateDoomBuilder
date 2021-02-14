@@ -93,9 +93,13 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				General.Map.UndoRedo.CreateUndo("Grid draw");
 
 				// Make an analysis and show info
-				string[] adjectives = { "gloomy", "sad", "unhappy", "lonely", "troubled", "depressed", "heartsick", "glum", "pessimistic", "bitter", "downcast" }; // aaand my english vocabulary ends here :)
+				string[] adjectives = new[]
+				{ "beautiful", "lovely", "romantic", "stylish", "cheerful", "comical",
+				  "awesome", "accurate", "adorable", "adventurous", "attractive", "cute",
+				  "elegant", "glamorous", "gorgeous", "handsome", "magnificent", "unusual",
+				  "outstanding", "mysterious", "amusing", "charming", "fantastic", "jolly" };
 				string word = adjectives[new Random().Next(adjectives.Length - 1)];
-				string a = (word[0] == 'u' ? "an " : "a ");
+				string a = ((word[0] == 'a') || (word[0] == 'e') || (word[0] == 'o') || (word[0] == 'u')) ? "an " : "a ";
 
 				General.Interface.DisplayStatus(StatusType.Action, "Created " + a + word + " grid.");
 
@@ -350,7 +354,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// No shape
 			if(s == e) return new List<Vector2D[]>();
 
-			// Setup slices
+			// Setup slices. Need to do some extra mathy stuff the make sure the rotated grid is taken into account
 			switch(gridlockmode)
 			{
 				case GridLockMode.NONE:
@@ -359,18 +363,18 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					break;
 
 				case GridLockMode.HORIZONTAL:
-					slicesH = width / General.Map.Grid.GridSize;
+					slicesH = Convert.ToInt32(Math.Ceiling(Math.Abs(width) / (double)General.Map.Grid.GridSize));
 					slicesV = verticalslices;
 					break;
 
 				case GridLockMode.VERTICAL:
 					slicesH = horizontalslices;
-					slicesV = Math.Abs(height / General.Map.Grid.GridSize);
+					slicesV = Convert.ToInt32(Math.Ceiling(Math.Abs(height) / (double)General.Map.Grid.GridSize));
 					break;
 
 				case GridLockMode.BOTH:
-					slicesH = Math.Abs(width / General.Map.Grid.GridSize);
-					slicesV = Math.Abs(height / General.Map.Grid.GridSize);
+					slicesH = Convert.ToInt32(Math.Ceiling(Math.Abs(width) / (double)General.Map.Grid.GridSize));
+					slicesV = Convert.ToInt32(Math.Ceiling(Math.Abs(height) / (double)General.Map.Grid.GridSize));
 					break;
 			}
 

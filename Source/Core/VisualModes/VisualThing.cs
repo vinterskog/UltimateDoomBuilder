@@ -66,7 +66,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 		// Rendering
 		private RenderPass renderpass;
 		private Matrix position;
-		private int cameradistance;
+		private double cameradistance;
 		private Color4 cagecolor;
 		protected bool sizeless; //mxd. Used to render visual things with 0 width and height
 		protected float fogfactor; //mxd
@@ -104,7 +104,17 @@ namespace CodeImp.DoomBuilder.VisualModes
 		
 		#region ================== Properties
 		
-		internal VertexBuffer GeometryBuffer { get { return geobuffers[spriteframe]; } }
+		internal VertexBuffer GeometryBuffer { get {
+				if (geobuffers != null)
+				{
+					return geobuffers[spriteframe];
+				}
+				else
+				{
+					return null;
+				}
+			}
+		}
 		internal VertexBuffer CageBuffer { get { return cagebuffer; } } //mxd
 		internal int CageLength { get { return cagelength; } } //mxd
 		internal bool NeedsUpdateGeo { get { return updategeo; } }
@@ -115,7 +125,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 		
 		//mxd
 		internal int VertexColor { get { return vertices.Length > 0 && vertices[0].Length > 0 ? vertices[0][0].c : 0; } }
-		public int CameraDistance { get { return cameradistance; } }
+		public double CameraDistance { get { return cameradistance; } }
 		public float FogFactor { get { return fogfactor; } }
 		public Vector3f Center
 		{ 
@@ -231,7 +241,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 		//mxd
 		internal void CalculateCameraDistance(Vector3D campos) 
 		{
-			cameradistance = (int)((CenterV3D - campos).GetLengthSq());
+			cameradistance = (CenterV3D - campos).GetLengthSq();
 		}
 		
 		// This is called before a device is reset (when resized or display adapter was changed)

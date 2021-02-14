@@ -116,7 +116,7 @@ namespace CodeImp.DoomBuilder.Rendering
 		private List<VisualVertex> visualvertices;
 
 		// Visual slope handles
-		private List<VisualSlope> visualslopehandles;
+		private ICollection<VisualSlope> visualslopehandles;
 
 		//mxd. Event lines
 		private List<Line3D> eventlines;
@@ -310,7 +310,7 @@ namespace CodeImp.DoomBuilder.Rendering
 		// This starts rendering
 		public bool Start()
 		{
-            if (!fpsWatch.IsRunning)
+            if (General.Settings.ShowFPS && !fpsWatch.IsRunning)
                 fpsWatch.Start();
 
             // Start drawing
@@ -493,14 +493,16 @@ namespace CodeImp.DoomBuilder.Rendering
 
 			visualvertices = null;
 
-            //
-            fps++;
-            if (fpsWatch.ElapsedMilliseconds > 1000)
-            {
-                fpsLabel.Text = string.Format("{0} FPS", fps);
-                fps = 0;
-                fpsWatch.Restart();
-            }
+			if (General.Settings.ShowFPS)
+			{
+				fps++;
+				if (fpsWatch.ElapsedMilliseconds > 1000)
+				{
+					fpsLabel.Text = string.Format("{0} FPS", fps);
+					fps = 0;
+					fpsWatch.Restart();
+				}
+			}
         }
 
         // [ZZ] black renderer magic here.
@@ -665,12 +667,20 @@ namespace CodeImp.DoomBuilder.Rendering
 
 				world = handle.Position;
 				graphics.SetUniform(UniformName.world, ref world);
-				graphics.SetUniform(UniformName.slopeHandleLength, (float)handle.Length);
 				graphics.SetUniform(UniformName.vertexColor, color.ToColorValue());
 
-				graphics.SetVertexBuffer(visualslopehandle.Geometry);
-				graphics.Draw(PrimitiveType.TriangleList, 0, 2);
-
+				if (handle.Type == VisualSlopeType.Line)
+				{
+					graphics.SetUniform(UniformName.slopeHandleLength, (float)handle.Length);
+					graphics.SetVertexBuffer(visualslopehandle.LineGeometry);
+					graphics.Draw(PrimitiveType.TriangleList, 0, 2);
+				}
+				else if (handle.Type == VisualSlopeType.Vertex)
+				{
+					graphics.SetUniform(UniformName.slopeHandleLength, 1.0f);
+					graphics.SetVertexBuffer(visualslopehandle.VertexGeometry);
+					graphics.Draw(PrimitiveType.TriangleList, 0, 1);
+				}
 			}
 
 			// Done
@@ -932,12 +942,17 @@ namespace CodeImp.DoomBuilder.Rendering
 						// Update buffer if needed
 						t.Update();
 
-                        //mxd. Check 3D distance. Check against MaxValue to save doing GetLenthSq if there's not DistanceCheck defined
-                        if (t.Info.DistanceCheckSq < double.MaxValue && (t.Thing.Position - cameraposition).GetLengthSq() > t.Info.DistanceCheckSq)
-							continue;
+						//mxd. Check 3D distance. Check against MaxValue to save doing GetLenthSq if there's not DistanceCheck defined
+						if (t.Info.DistanceCheckSq < double.MaxValue)
+						{
+							t.CalculateCameraDistance(cameraposition);
+
+							if (t.CameraDistance > t.Info.DistanceCheckSq)
+								continue;
+						}
 
 						// Only do this sector when a vertexbuffer is created
-						if(t.GeometryBuffer != null) 
+						if (t.GeometryBuffer != null) 
 						{
 							// Determine the shader pass we want to use for this object
 							ShaderName wantedshaderpass = (((t == highlighted) && showhighlight) || (t.Selected && showselection)) ? highshaderpass : shaderpass;
@@ -1246,9 +1261,14 @@ namespace CodeImp.DoomBuilder.Rendering
 					t.Update();
 
 					//mxd. Check 3D distance. Check against MaxValue to save doing GetLenthSq if there's not DistanceCheck defined
-					if (t.Info.DistanceCheckSq < double.MaxValue && (t.Thing.Position - cameraposition).GetLengthSq() > t.Info.DistanceCheckSq)
-						continue;
-					
+					if (t.Info.DistanceCheckSq < double.MaxValue)
+					{
+						t.CalculateCameraDistance(cameraposition);
+
+						if (t.CameraDistance > t.Info.DistanceCheckSq)
+							continue;
+					}
+
 					t.UpdateSpriteFrame(); // Set correct texture, geobuffer and triangles count
 					if(t.Texture is UnknownImage) continue;
 					
@@ -1469,8 +1489,13 @@ namespace CodeImp.DoomBuilder.Rendering
 				t.Update();
 
 				// Check 3D distance. Check against MaxValue to save doing GetLenthSq if there's not DistanceCheck defined
-				if (t.Info.DistanceCheckSq < double.MaxValue && (t.Thing.Position - cameraposition).GetLengthSq() > t.Info.DistanceCheckSq)
-					continue;
+				if (t.Info.DistanceCheckSq < double.MaxValue)
+				{
+					t.CalculateCameraDistance(cameraposition);
+
+					if (t.CameraDistance > t.Info.DistanceCheckSq)
+						continue;
+				}
 					
 				Color4 vertexcolor = new Color4(t.VertexColor);
 
@@ -1817,7 +1842,7 @@ namespace CodeImp.DoomBuilder.Rendering
 		//mxd
 		public void SetVisualVertices(List<VisualVertex> verts) { visualvertices = verts; }
 
-		public void SetVisualSlopeHandles(List<VisualSlope> handles) { visualslopehandles = handles; }
+		public void SetVisualSlopeHandles(ICollection<VisualSlope> handles) { visualslopehandles = handles; }
 
 		//mxd
 		public void SetEventLines(List<Line3D> lines) { eventlines = lines; }
@@ -1866,7 +1891,8 @@ namespace CodeImp.DoomBuilder.Rendering
 			// Draw
             graphics.Draw(PrimitiveType.TriangleStrip, 0, 2, crosshairverts);
 
-            General.Map.Renderer2D.RenderText(fpsLabel);
+			if (General.Settings.ShowFPS)
+				General.Map.Renderer2D.RenderText(fpsLabel);
         }
 
         // This switches fog on and off

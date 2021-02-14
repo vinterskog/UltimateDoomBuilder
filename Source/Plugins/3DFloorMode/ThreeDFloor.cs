@@ -19,6 +19,7 @@ using System.Linq;
 using System.Text;
 using System.Drawing;
 using System.Windows.Forms;
+using CodeImp.DoomBuilder.BuilderModes;
 using CodeImp.DoomBuilder.Windows;
 using CodeImp.DoomBuilder.IO;
 using CodeImp.DoomBuilder.Map;
@@ -55,6 +56,8 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 		private bool isnew;
 		private int udmftag;
 		private List<int> tags;
+		private LinedefProperties linedefproperties;
+		private SectorProperties sectorproperties;
 
 		public static Rectangle controlsectorarea = new Rectangle(-512, 512, 512, -512);
 
@@ -78,6 +81,8 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 		public double FloorSlopeOffset { get { return floorslopeoffset; } set { floorslopeoffset = value; } }
 		public Vector3D CeilingSlope { get { return ceilingslope; } set { ceilingslope = value; } }
 		public double CeilingSlopeOffset { get { return ceilingslopeoffset; } set { ceilingslopeoffset = value; } }
+		public LinedefProperties LinedefProperties { get { return linedefproperties; } }
+		public SectorProperties SectorProperties { get { return sectorproperties; } }
 
 		public ThreeDFloor()
 		{
@@ -95,6 +100,9 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 			floorslopeoffset = 0.0f;
 			ceilingslope = new Vector3D(0.0f, 0.0f, 0.0f);
 			ceilingslopeoffset = 0.0f;
+
+			linedefproperties = null;
+			sectorproperties = null;
 
 			alpha = 255;
 		}
@@ -131,6 +139,8 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 					type = sd.Line.Args[1];
 					flags = sd.Line.Args[2];
 					alpha = sd.Line.Args[3];
+					linedefproperties = new LinedefProperties(sd.Line);
+					sectorproperties = new SectorProperties(sector);
 
 					foreach (Sector s in BuilderPlug.GetSectorsByTag(potentialsectors, sd.Line.Args[0]))
 					{
@@ -141,7 +151,7 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 			}
 		}
 
-		public void BindTag(int tag)
+		public void BindTag(int tag, LinedefProperties ldprops)
 		{
 			Linedef line = null;
 
@@ -184,6 +194,9 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 				General.Interface.RedrawDisplay();
 			}
 
+			if(ldprops != null)
+				ldprops.Apply(new List<Linedef>() { line }, false);
+
 			line.Action = 160;
 			line.Args[0] = tag;
 			line.Args[1] = type;
@@ -224,10 +237,10 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 		{
 			int newtag;
 
-			return CreateGeometry(tagblacklist, alldrawnvertices, false, out newtag);
+			return CreateGeometry(tagblacklist, alldrawnvertices, null, null, false, out newtag);
 		}
 
-		public bool CreateGeometry(List<int> tagblacklist, List<DrawnVertex> alldrawnvertices, bool forcenewtag, out int newtag)
+		public bool CreateGeometry(List<int> tagblacklist, List<DrawnVertex> alldrawnvertices, LinedefProperties ldprops, SectorProperties sectorprops, bool forcenewtag, out int newtag)
 		{
 			List<Vertex> vertices = new List<Vertex>();
 			Vector3D slopetopthingpos = new Vector3D(0, 0, 0);
@@ -258,6 +271,9 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 
 			sector = General.Map.Map.GetMarkedSectors(true)[0];
 
+			if (sectorprops != null)
+				sectorprops.Apply(new List<Sector>() { sector }, false);
+
 			sector.FloorHeight = bottomheight;
 			sector.CeilHeight = topheight;
 			sector.SetFloorTexture(bottomflat);
@@ -287,7 +303,7 @@ namespace CodeImp.DoomBuilder.ThreeDFloorMode
 					tagblacklist.Add(udmftag);
 				}					
 
-				BindTag(udmftag);
+				BindTag(udmftag, ldprops);
 			}
 
 			return true;

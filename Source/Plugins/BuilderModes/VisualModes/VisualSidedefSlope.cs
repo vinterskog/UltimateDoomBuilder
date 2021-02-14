@@ -11,17 +11,11 @@ using CodeImp.DoomBuilder.Rendering;
 
 namespace CodeImp.DoomBuilder.VisualModes
 {
-	internal class VisualSidedefSlope : VisualSlope, IVisualEventReceiver
+	internal class VisualSidedefSlope : BaseVisualSlope // VisualSlope, IVisualEventReceiver
 	{
 		#region ================== Variables
 
-		private readonly BaseVisualMode mode;
 		private readonly Sidedef sidedef;
-		private readonly SectorLevel level;
-		private readonly bool up;
-		private Vector3D pickintersect;
-		private double pickrayu;
-		private Plane plane;
 
 		#endregion
 
@@ -34,21 +28,16 @@ namespace CodeImp.DoomBuilder.VisualModes
 		#region ================== Properties
 
 		public Sidedef Sidedef { get { return sidedef; } }
-		public SectorLevel Level { get { return level; } }
 		public int NormalizedAngleDeg { get { return (sidedef.Line.AngleDeg >= 180) ? (sidedef.Line.AngleDeg - 180) : sidedef.Line.AngleDeg; } }
 
 		#endregion
 
 		#region ================== Constructor / Destructor
 
-		public VisualSidedefSlope(BaseVisualMode mode, SectorLevel level, Sidedef sidedef, bool up) : base()
+		public VisualSidedefSlope(BaseVisualMode mode, SectorLevel level, Sidedef sidedef, bool up) : base(mode, level, up)
 		{
-			this.mode = mode;
 			this.sidedef = sidedef;
-			this.level = level;
-			this.up = up;
-
-			// length = sidedef.Line.Length;
+			type = VisualSlopeType.Line;
 
 			Update();
 
@@ -171,20 +160,32 @@ namespace CodeImp.DoomBuilder.VisualModes
 		/// same angle as the start handle, and is the furthest away. If such a handle does not exist it finds one that's
 		/// closest to those specs
 		/// </summary>
-		/// <param name="starthandle">The slope handle to start from (the one we need to find a pivot handle for)</param>
 		/// <returns></returns>
-		public static VisualSidedefSlope GetSmartPivotHandle(VisualSidedefSlope starthandle, BaseVisualMode mode)
+		public override VisualSlope GetSmartPivotHandle()
 		{
-			VisualSidedefSlope handle = starthandle;
-			List<VisualSidedefSlope> potentialhandles = new List<VisualSidedefSlope>();
 			List<IVisualEventReceiver> selectedsectors = mode.GetSelectedObjects(true, false, false, false, false);
+
+			// Special handling for triangular sectors
+			if (selectedsectors.Count == 0 && BuilderPlug.Me.UseOppositeSmartPivotHandle && sidedef.Sector.Sidedefs.Count == 3)
+			{
+				foreach(VisualVertexSlope vvs in mode.VertexSlopeHandles[sidedef.Sector])
+				{
+					if (vvs.Level == level && !vvs.Vertex.Linedefs.Contains(sidedef.Line))
+						return vvs;
+				}
+			}
+
+			VisualSlope handle = this;
+			List<VisualSidedefSlope> potentialhandles = new List<VisualSidedefSlope>();
 
 			if (selectedsectors.Count == 0)
 			{
 				// No sectors selected, so find all handles that belong to the same level
-				foreach (VisualSidedefSlope checkhandle in mode.AllSlopeHandles[starthandle.Sidedef.Sector])
-					if (checkhandle != starthandle && checkhandle.Level == starthandle.Level)
+				foreach (VisualSidedefSlope checkhandle in mode.SidedefSlopeHandles[sidedef.Sector])
+				{
+					if (checkhandle != this && checkhandle.Level == level)
 						potentialhandles.Add(checkhandle);
+				}
 			}
 			else
 			{
@@ -195,25 +196,23 @@ namespace CodeImp.DoomBuilder.VisualModes
 					sectors.Add(bvgs.Sector.Sector);
 
 				foreach (Sector s in sectors)
-					foreach (VisualSidedefSlope checkhandle in mode.AllSlopeHandles[s])
-						if(checkhandle != starthandle)
+					foreach (VisualSidedefSlope checkhandle in mode.SidedefSlopeHandles[s])
+					{
+						if (checkhandle != this)
 							foreach (BaseVisualGeometrySector bvgs in selectedsectors)
 								if (bvgs.Level == checkhandle.Level)
 									potentialhandles.Add(checkhandle);
+					}
 			}
 
-			foreach (KeyValuePair<Sector, List<VisualSlope>> kvp in mode.AllSlopeHandles)
-				foreach (VisualSidedefSlope checkhandle in kvp.Value)
-					checkhandle.SmartPivot = false;
-
 			// Sort potential handles by their angle difference to the start handle. That means that handles with less angle difference will be at the beginning of the list
-			List<VisualSidedefSlope> anglediffsortedhandles = potentialhandles.OrderBy(h => Math.Abs(starthandle.NormalizedAngleDeg - h.NormalizedAngleDeg)).ToList();
+			List<VisualSidedefSlope> anglediffsortedhandles = potentialhandles.OrderBy(h => Math.Abs(NormalizedAngleDeg - h.NormalizedAngleDeg)).ToList();
 
 			// Get all potential handles that have to same angle as the one that's closest to the start handle, then sort them by distance, and take the one that's furthest away
 			if (anglediffsortedhandles.Count > 0)
-				handle = anglediffsortedhandles.Where(h => h.NormalizedAngleDeg == anglediffsortedhandles[0].NormalizedAngleDeg).OrderByDescending(h => Math.Abs(starthandle.Sidedef.Line.Line.GetDistanceToLine(h.sidedef.Line.GetCenterPoint(), false))).First();
+				handle = anglediffsortedhandles.Where(h => h.NormalizedAngleDeg == anglediffsortedhandles[0].NormalizedAngleDeg).OrderByDescending(h => Math.Abs(sidedef.Line.Line.GetDistanceToLine(h.sidedef.Line.GetCenterPoint(), false))).First();
 
-			if (handle == starthandle)
+			if (handle == this)
 				return null;
 
 			return handle;
@@ -222,6 +221,9 @@ namespace CodeImp.DoomBuilder.VisualModes
 		public static void ApplySlope(SectorLevel level, Plane plane, BaseVisualMode mode)
 		{
 			bool applytoceiling = false;
+			bool reset = false;
+			int height = 0;
+			
 
 			Vector2D center = new Vector2D(level.sector.BBox.X + level.sector.BBox.Width / 2,
 											   level.sector.BBox.Y + level.sector.BBox.Height / 2);
@@ -239,16 +241,44 @@ namespace CodeImp.DoomBuilder.VisualModes
 					applytoceiling = true;
 			}
 
+			// If the plane horizontal remove the slope and set the sector height instead
+			// Rounding errors can result in offsets of horizontal planes to be a tiny, tiny bit off a whole number,
+			// assume we want to remove the plane in this case
+			double diff = Math.Abs(Math.Round(plane.d) - plane.d);
+			if (plane.Normal.z == 1.0 && diff < 0.000000001)
+			{
+				reset = true;
+				height = -Convert.ToInt32(plane.d);
+			}
+
 			if (applytoceiling)
 			{
-				Plane downplane = plane.GetInverted();
-				level.sector.CeilSlope = downplane.Normal;
-				level.sector.CeilSlopeOffset = downplane.Offset;
+				if (reset)
+				{
+					level.sector.CeilHeight = height;
+					level.sector.CeilSlope = new Vector3D();
+					level.sector.CeilSlopeOffset = double.NaN;
+				}
+				else
+				{
+					Plane downplane = plane.GetInverted();
+					level.sector.CeilSlope = downplane.Normal;
+					level.sector.CeilSlopeOffset = downplane.Offset;
+				}
 			}
 			else
 			{
-				level.sector.FloorSlope = plane.Normal;
-				level.sector.FloorSlopeOffset = plane.Offset;
+				if (reset)
+				{
+					level.sector.FloorHeight = height;
+					level.sector.FloorSlope = new Vector3D();
+					level.sector.FloorSlopeOffset = double.NaN;
+				}
+				else
+				{
+					level.sector.FloorSlope = plane.Normal;
+					level.sector.FloorSlopeOffset = plane.Offset;
+				}
 			}
 
 			// Rebuild sector
@@ -265,11 +295,29 @@ namespace CodeImp.DoomBuilder.VisualModes
 			if (vs != null) vs.UpdateSectorGeometry(true);
 		}
 
+		/// <summary>
+		/// Gets the pivor point for this slope handle
+		/// </summary>
+		/// <returns>The pivot point as Vector3D</returns>
+		public override Vector3D GetPivotPoint()
+		{
+			return new Vector3D(sidedef.Line.Line.GetCoordinatesAt(0.5), level.plane.GetZ(sidedef.Line.Line.GetCoordinatesAt(0.5)));
+		}
+
+		public List<Vector3D> GetPivotPoints()
+		{
+			return new List<Vector3D>()
+			{
+				new Vector3D(sidedef.Line.Start.Position, level.plane.GetZ(sidedef.Line.Start.Position)),
+				new Vector3D(sidedef.Line.End.Position, level.plane.GetZ(sidedef.Line.End.Position))
+			};
+		}
+
 		#endregion
 
 		#region ================== Events
 
-		public void OnChangeTargetHeight(int amount)
+		public override void OnChangeTargetHeight(int amount)
 		{
 			VisualSlope pivothandle = null;
 			List<IVisualEventReceiver> selectedsectors = mode.GetSelectedObjects(true, false, false, false, false);
@@ -290,7 +338,7 @@ namespace CodeImp.DoomBuilder.VisualModes
 			// TODO: doing this every time is kind of stupid. Maybe store the pivot handle in the mode?
 			foreach (KeyValuePair<Sector, List<VisualSlope>> kvp in mode.AllSlopeHandles)
 			{
-				foreach (VisualSidedefSlope handle in kvp.Value)
+				foreach (VisualSlope handle in kvp.Value)
 				{
 					if (handle.Pivot)
 					{
@@ -302,27 +350,21 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 			// User didn't set a pivot handle, try to find the smart pivot handle
 			if(pivothandle == null)
-				pivothandle = GetSmartPivotHandle(this, mode);
+				pivothandle = GetSmartPivotHandle();
 
 			// Still no pivot handle, cancle
 			if (pivothandle == null)
 				return;
 
-			pivothandle.SmartPivot = true;
-
 			mode.CreateUndo("Change slope");
 
 			Plane originalplane = level.plane;
-			Plane pivotplane = ((VisualSidedefSlope)pivothandle).Level.plane;
+			Plane pivotplane = ((BaseVisualSlope)pivothandle).Level.plane;
 
-			// Build a new plane. p1 and p2 are the points of the slope handle that is modified, p3 is on the line of the pivot handle
-			Vector3D p1 = new Vector3D(sidedef.Line.Start.Position, Math.Round(originalplane.GetZ(sidedef.Line.Start.Position)));
-			Vector3D p2 = new Vector3D(sidedef.Line.End.Position, Math.Round(originalplane.GetZ(sidedef.Line.End.Position)));
-			Vector3D p3 = new Vector3D(((VisualSidedefSlope)pivothandle).Sidedef.Line.Line.GetCoordinatesAt(0.5f), Math.Round(pivotplane.GetZ(((VisualSidedefSlope)pivothandle).Sidedef.Line.Line.GetCoordinatesAt(0.5f))));
-
-			// Move the points of the handle up/down
-			p1 += new Vector3D(0f, 0f, amount);
-			p2 += new Vector3D(0f, 0f, amount);
+			// Build a new plane. p1 and p2 are the points of the slope handle that is modified, with the changed amound added; p3 is on the line of the pivot handle
+			Vector3D p1 = new Vector3D(sidedef.Line.Start.Position, originalplane.GetZ(sidedef.Line.Start.Position) + amount);
+			Vector3D p2 = new Vector3D(sidedef.Line.End.Position, originalplane.GetZ(sidedef.Line.End.Position) + amount);
+			Vector3D p3 = pivothandle.GetPivotPoint();
 
 			Plane plane = new Plane(p1, p2, p3, true);
 
@@ -332,81 +374,6 @@ namespace CodeImp.DoomBuilder.VisualModes
 
 			mode.SetActionResult("Changed slope.");
 		}
-
-		// Select or deselect
-		public void OnSelectEnd()
-		{
-			if (this.selected)
-			{
-				this.selected = false;
-				mode.RemoveSelectedObject(this);
-			}
-			else
-			{
-				if(this.pivot)
-				{
-					General.Interface.DisplayStatus(Windows.StatusType.Warning, "It is not allowed to mark pivot slope handles as selected.");
-					return;
-				}
-
-				this.selected = true;
-				mode.AddSelectedObject(this);
-			}
-		}
-
-		public void OnEditEnd()
-		{
-			// We can only have one pivot handle, so remove it from all first
-			foreach (KeyValuePair<Sector, List<VisualSlope>> kvp in mode.AllSlopeHandles)
-			{
-				foreach (VisualSlope handle in kvp.Value)
-				{
-					if (handle == mode.HighlightedTarget)
-					{
-						if (handle.Selected)
-							General.Interface.DisplayStatus(Windows.StatusType.Warning, "It is not allowed to mark selected slope handles as pivot slope handles.");
-						else
-							handle.Pivot = !handle.Pivot;
-					}
-					else
-						handle.Pivot = false;
-				}
-			}
-		}
-
-		// Return texture name
-		public string GetTextureName() { return ""; }
-
-		// Unused
-		public void OnSelectBegin() { }
-		public void OnEditBegin() { }
-		public void OnChangeTargetBrightness(bool up) { }
-		public void OnChangeTextureOffset(int horizontal, int vertical, bool doSurfaceAngleCorrection) { }
-		public void OnSelectTexture() { }
-		public void OnCopyTexture() { }
-		public void OnPasteTexture() { }
-		public void OnCopyTextureOffsets() { }
-		public void OnPasteTextureOffsets() { }
-		public void OnTextureAlign(bool alignx, bool aligny) { }
-		public void OnToggleUpperUnpegged() { }
-		public void OnToggleLowerUnpegged() { }
-		public void OnProcess(long deltatime) { }
-		public void OnTextureFloodfill() { }
-		public void OnInsert() { }
-		public void OnTextureFit(FitTextureOptions options) { } //mxd
-		public void ApplyTexture(string texture) { }
-		public void ApplyUpperUnpegged(bool set) { }
-		public void ApplyLowerUnpegged(bool set) { }
-		public void SelectNeighbours(bool select, bool withSameTexture, bool withSameHeight) { } //mxd
-		public virtual void OnPaintSelectEnd() { } // biwa
-		public void OnChangeScale(int x, int y) { }
-		public void OnResetTextureOffset() { }
-		public void OnResetLocalTextureOffset() { }
-		public void OnCopyProperties() { }
-		public void OnPasteProperties(bool usecopysetting) { }
-		public void OnDelete() { }
-		public void OnPaintSelectBegin() { }
-		public void OnMouseMove(MouseEventArgs e) { }
 
 		#endregion
 	}

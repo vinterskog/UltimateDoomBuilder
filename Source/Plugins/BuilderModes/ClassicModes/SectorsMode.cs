@@ -62,6 +62,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 		// Labels
 		private Dictionary<Sector, TextLabel[]> labels;
+		private List<ITextLabel> torenderlabels;
 
 		//mxd. Effects
 		private readonly Dictionary<int, string[]> effects;
@@ -73,6 +74,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 		// The blockmap makes synchronized editing faster
 		BlockMap<BlockEntry> blockmap;
+		bool addedlinedefstoblockmap;
+
+		// Stores sizes of the text for text labels so that they only have to be computed once
+		private Dictionary<string, float> textlabelsizecache;
 
 		#endregion
 
@@ -88,6 +93,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		public SectorsMode()
 		{
 			highlightasso = new Association(renderer);
+
+			textlabelsizecache = new Dictionary<string, float>();
 
 			//mxd
 			effects = new Dictionary<int, string[]>();
@@ -196,6 +203,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					foreach(Sector s in General.Map.Map.Sectors) RenderComment(s);
 				}
 
+				// TODO: put this in UpdateToRenderLabels, too?
 				if(BuilderPlug.Me.ViewSelectionNumbers && orderedselection.Count < MAX_SECTOR_LABELS) 
 				{
 					List<ITextLabel> torender = new List<ITextLabel>(orderedselection.Count);
@@ -217,51 +225,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					renderer.RenderText(torender);
 				}
 
-				//mxd. Render effect labels
-				if(BuilderPlug.Me.ViewSelectionEffects) 
-				{
-					if(!BuilderPlug.Me.ViewSelectionNumbers) RenderEffectLabels(selectedEffectLabels);
-					RenderEffectLabels(unselectedEffectLabels);
-				}
+				// Render effect and tag labels
+				renderer.RenderText(torenderlabels);
 				
 				renderer.Finish();
 			}
-		}
-
-		//mxd
-		private void RenderEffectLabels(Dictionary<Sector, string[]> labelsGroup) 
-		{
-			List<ITextLabel> torender = new List<ITextLabel>(labelsGroup.Count);
-			foreach(KeyValuePair<Sector, string[]> group in labelsGroup) 
-			{
-				// Pick which text variant to use
-				TextLabel[] labelarray = labels[group.Key];
-				for(int i = 0; i < group.Key.Labels.Count; i++) 
-				{
-					TextLabel l = labelarray[i];
-					l.Color = General.Colors.InfoLine;
-
-					// Render only when enough space for the label to see
-					float requiredsize = (General.Interface.MeasureString(group.Value[0], l.Font).Width / 2) / renderer.Scale;
-					if(requiredsize > group.Key.Labels[i].radius) 
-					{
-						requiredsize = (General.Interface.MeasureString(group.Value[1], l.Font).Width / 2) / renderer.Scale;
-						if(requiredsize > group.Key.Labels[i].radius)
-							l.Text = (requiredsize > group.Key.Labels[i].radius * 4 ? string.Empty : "+");
-						else
-							l.Text = group.Value[1];
-					} 
-					else 
-					{
-						l.Text = group.Value[0];
-					}
-
-					if(!string.IsNullOrEmpty(l.Text)) torender.Add(l);
-				}
-			}
-
-			// Render labels
-			renderer.RenderText(torender);
 		}
 
 		//mxd
@@ -354,6 +322,69 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if(!string.IsNullOrEmpty(labelText[0]))
 					unselectedEffectLabels.Add(s, labelText);
 			}
+
+			UpdateToRenderLabels();
+		}
+
+		private void UpdateToRenderLabels()
+		{
+			UpdateToRenderLabels(renderer.Scale);
+		}
+
+		private void UpdateToRenderLabels(float scale)
+		{
+			torenderlabels = new List<ITextLabel>();
+			List<Dictionary<Sector, string[]>> alllabelsgroups = new List<Dictionary<Sector, string[]>>();
+			if(BuilderPlug.Me.ViewSelectionEffects)
+			{
+				if (!BuilderPlug.Me.ViewSelectionNumbers) alllabelsgroups.Add(selectedEffectLabels);
+				alllabelsgroups.Add(unselectedEffectLabels);
+			}
+
+			foreach (Dictionary<Sector, string[]> labelsGroup in alllabelsgroups)
+			{
+				foreach (KeyValuePair<Sector, string[]> group in labelsGroup)
+				{
+					// Pick which text variant to use
+					TextLabel[] labelarray = labels[group.Key];
+					for (int i = 0; i < group.Key.Labels.Count; i++)
+					{
+						TextLabel l = labelarray[i];
+						l.Color = General.Colors.InfoLine;
+
+						// Render only when enough space for the label to see
+						if (!textlabelsizecache.ContainsKey(group.Value[0]))
+							textlabelsizecache[group.Value[0]] = General.Interface.MeasureString(group.Value[0], l.Font).Width;
+
+						float requiredsize = textlabelsizecache[group.Value[0]] / 2 / scale;
+
+						if (requiredsize > group.Key.Labels[i].radius)
+						{
+							if (!textlabelsizecache.ContainsKey(group.Value[1]))
+								textlabelsizecache[group.Value[1]] = General.Interface.MeasureString(group.Value[1], l.Font).Width;
+
+							requiredsize = textlabelsizecache[group.Value[1]] / 2 / scale;
+
+							string newtext;
+
+							if (requiredsize > group.Key.Labels[i].radius)
+								newtext = (requiredsize > group.Key.Labels[i].radius * 4 ? string.Empty : "+");
+							else
+								newtext = group.Value[1];
+
+							if (l.Text != newtext)
+								l.Text = newtext;
+						}
+						else
+						{
+							if (group.Value[0] != l.Text)
+								l.Text = group.Value[0];
+						}
+
+						if (!string.IsNullOrEmpty(l.Text)) torenderlabels.Add(l);
+					}
+				}
+			}
 		}
 		
 		// Support function for joining and merging sectors
@@ -440,10 +471,12 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				PixelColor c = (General.Settings.UseHighlight ? General.Colors.Selection : General.Colors.Highlight);
 				foreach(TextLabel l in labelarray) l.Color = c;
 			}
-			
+
+			UpdateToRenderLabels();
+
 			// If we're changing associations, then we
 			// need to redraw the entire display
-			if(completeredraw)
+			if (completeredraw)
 			{
 				// Set new highlight and redraw completely
 				highlighted = s;
@@ -524,7 +557,12 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					if(update) 
 					{
 						TextLabel[] labelarray = labels[s];
-						foreach(TextLabel l in labelarray) l.Text = "";
+
+						foreach (TextLabel l in labelarray)
+						{
+							l.Text = "";
+							l.Color = General.Colors.InfoLine;
+						}
 
 						// Update all other labels
 						UpdateSelectedLabels();
@@ -552,14 +590,12 @@ namespace CodeImp.DoomBuilder.BuilderModes
 						{
 							foreach(Thing t in be.Things)
 							{
-								if (t.Sector == null)
-									t.DetermineSector(blockmap);
+								// Always determine the thing's current sector because it might have change since the last determination
+								t.DetermineSector(blockmap);
 
 								if (t.Sector == s && t.Selected != s.Selected) t.Selected = s.Selected;
 							}
 						}
-						//foreach(Thing t in General.Map.Map.Things) 
-						//	if(t.Sector == s && t.Selected != s.Selected) t.Selected = s.Selected;
 					}
 
 					if(update) 
@@ -683,6 +719,32 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		}
 
 		/// <summary>
+		/// Update the labels to render with the new scale before actually doing the rendering because zooming
+		/// will redraw the display, and the labels to render must be updated by then
+		/// </summary>
+		public override void ZoomIn()
+		{
+			float z = renderer.Scale * (1.0f + General.Settings.ZoomFactor * 0.1f);
+
+			UpdateToRenderLabels(z);
+
+			base.ZoomIn();
+		}
+
+		/// <summary>
+		/// Update the labels to render with the new scale before actually doing the rendering because zooming
+		/// will redraw the display, and the labels to render must be updated by then
+		/// </summary>
+		public override void ZoomOut()
+		{
+			float z = renderer.Scale * (1.0f / (1.0f + General.Settings.ZoomFactor * 0.1f));
+
+			UpdateToRenderLabels(z);
+
+			base.ZoomOut();
+		}
+
+		/// <summary>
 		/// Create a blockmap containing sectors and things. This is used to speed determining which sector a
 		/// thing is in when synchronized thing editing is enabled
 		/// </summary>
@@ -693,6 +755,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			blockmap = new BlockMap<BlockEntry>(area);
 			blockmap.AddSectorsSet(General.Map.Map.Sectors);
 			blockmap.AddThingsSet(General.Map.Map.Things);
+
+			// Don't add linedefs here. They are only needed for paint select, so let's save some
+			// time (and add them when paint select is used t he first time)
+			addedlinedefstoblockmap = false;
 		}
 
 		#endregion
@@ -768,8 +834,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					{
 						foreach (Thing t in be.Things)
 						{
-							if (t.Sector == null)
-								t.DetermineSector(blockmap);
+							// Always determine the thing's current sector because it might have change since the last determination
+							t.DetermineSector(blockmap);
 
 							if (t.Sector == s && t.Selected != s.Selected) t.Selected = s.Selected;
 						}
@@ -923,8 +989,14 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 					// Update overlay
 					TextLabel[] labelarray = labels[highlighted];
-					PixelColor c = (General.Settings.UseHighlight ? General.Colors.Selection : General.Colors.Highlight);
-					foreach(TextLabel l in labelarray) l.Color = c;
+					PixelColor c;
+					
+					if(highlighted.Selected)
+						c = General.Settings.UseHighlight ? General.Colors.Selection : General.Colors.Highlight;
+					else
+						c = General.Colors.InfoLine;
+
+					foreach (TextLabel l in labelarray) l.Color = c;
 					UpdateOverlaySurfaces(); //mxd
 					UpdateOverlay();
 					renderer.Present();
@@ -1087,8 +1159,15 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			}
 			else if(paintselectpressed && !editpressed && !selecting) //mxd. Drag-select
 			{
+				// If linedefs were not added to the blockmap yet add them here
+				if (!addedlinedefstoblockmap)
+				{
+					blockmap.AddLinedefsSet(General.Map.Map.Linedefs);
+					addedlinedefstoblockmap = true;
+				}
+
 				// Find the nearest linedef within highlight range
-				Linedef l = General.Map.Map.NearestLinedefRange(mousemappos, BuilderPlug.Me.HighlightRange / renderer.Scale);
+				Linedef l = MapSet.NearestLinedefRange(blockmap, mousemappos, BuilderPlug.Me.HighlightRange / renderer.Scale);
 				Sector s = null;
 
 				if(l != null) 
@@ -1420,6 +1499,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// Recreate the blockmap to not include the potentially un-done sectors and things anymore
 			CreateBlockmap();
 
+			// If something is highlighted make sure to update the association so that it contains valid data
+			if (highlighted != null && !highlighted.IsDisposed)
+				highlightasso.Set(highlighted);
+
 			// Clear labels
 			SetupLabels();
 			UpdateEffectLabels(); //mxd
@@ -1441,6 +1524,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		{
 			// Recreate the blockmap to include the potentially re-done sectors and things again
 			CreateBlockmap();
+
+			// If something is highlighted make sure to update the association so that it contains valid data
+			if (highlighted != null && !highlighted.IsDisposed)
+				highlightasso.Set(highlighted);
 
 			// Clear labels
 			SetupLabels();
@@ -1971,6 +2058,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				//mxd. Clear selection info
 				General.Interface.DisplayStatus(StatusType.Selection, string.Empty);
 
+				// Recreate the blockmap
+				CreateBlockmap();
+
 				//mxd. Update
 				UpdateOverlaySurfaces();
 				UpdateEffectLabels();
@@ -2009,7 +2099,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 				//mxd. Clear selection info
 				General.Interface.DisplayStatus(StatusType.Selection, string.Empty);
-				
+
+				// Recreate the blockmap
+				CreateBlockmap();
+
 				//mxd. Update
 				UpdateOverlaySurfaces();
 				UpdateEffectLabels();

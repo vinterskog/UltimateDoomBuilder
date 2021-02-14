@@ -84,7 +84,7 @@ namespace CodeImp.DoomBuilder.BuilderModes.IO
 			ExportForGZDoom = form.UseGZDoomScale;
 			ExportTextures = form.ExportTextures;
 
-			ActorName = form.ActorName;
+			ActorName = form.ActorName.Trim();
 			BasePath = form.BasePath;
 			ActorPath = form.ActorPath;
 			ModelPath = form.ModelPath;
@@ -163,7 +163,12 @@ namespace CodeImp.DoomBuilder.BuilderModes.IO
 							Bitmap bmp = id.ExportBitmap();
                             lock (bmp)
                             {
-                                bmp.Save(Path.Combine(settings.ObjPath, Path.GetFileNameWithoutExtension(s) + ".PNG"), ImageFormat.Png);
+								string filepath = Path.Combine(settings.ObjPath, Path.GetDirectoryName(s), Path.GetFileNameWithoutExtension(s) + ".png");
+
+								// Make sure the directory is there
+								Directory.CreateDirectory(Path.GetDirectoryName(filepath));
+
+								bmp.Save(filepath, ImageFormat.Png);
                             }
 						} 
 						else 
@@ -232,9 +237,12 @@ namespace CodeImp.DoomBuilder.BuilderModes.IO
 				foreach(string s in settings.Textures) 
 				{
 					if(s == DEFAULT) continue;
-					mtl.Append("newmtl " + s.ToUpperInvariant() + Environment.NewLine);
+
+					string filepath = Path.Combine(settings.ObjPath, Path.GetDirectoryName(s), Path.GetFileNameWithoutExtension(s) + ".png");
+
+					mtl.Append("newmtl " + s + Environment.NewLine);
 					mtl.Append("Kd 1.0 1.0 1.0" + Environment.NewLine);
-					if(settings.ExportTextures) mtl.Append("map_Kd " + Path.Combine(settings.ObjPath, s.ToUpperInvariant() + ".PNG") + Environment.NewLine);
+					if(settings.ExportTextures) mtl.Append("map_Kd " + filepath + Environment.NewLine);
 					mtl.Append(Environment.NewLine);
 				}
 			}
@@ -244,16 +252,18 @@ namespace CodeImp.DoomBuilder.BuilderModes.IO
 				foreach(string s in settings.Flats) 
 				{
 					if(s == DEFAULT) continue;
-					mtl.Append("newmtl " + s.ToUpperInvariant() + Environment.NewLine);
+					mtl.Append("newmtl " + s + Environment.NewLine);
 					mtl.Append("Kd 1.0 1.0 1.0" + Environment.NewLine);
 					if(settings.ExportTextures) 
 					{
 						// Handle duplicate names
-						string flatname = s;
+						string flatsuffix = string.Empty;
 						if(settings.Textures != null && Array.IndexOf(settings.Textures, s) != -1)
-							flatname += "_FLAT";
+							flatsuffix = "_FLAT";
 
-						mtl.Append("map_Kd " + Path.Combine(settings.ObjPath, flatname.ToUpperInvariant() + ".PNG") + Environment.NewLine);
+						string filepath = Path.Combine(settings.ObjPath, Path.GetDirectoryName(s), Path.GetFileNameWithoutExtension(s) + flatsuffix + ".png");
+
+						mtl.Append("map_Kd " + Path.Combine(settings.ObjPath, filepath) + Environment.NewLine);
 					}
 					mtl.Append(Environment.NewLine);
 				}
@@ -350,7 +360,7 @@ namespace CodeImp.DoomBuilder.BuilderModes.IO
 			}
 
 			//done
-			General.Interface.DisplayStatus(StatusType.Warning, "Geometry exported to \"" + savePath);
+			General.Interface.DisplayStatus(StatusType.Info, "Geometry exported to \"" + savePath);
 		}
 
 		#endregion
@@ -625,6 +635,7 @@ namespace CodeImp.DoomBuilder.BuilderModes.IO
 		private static StringBuilder CreateObjGeometry(List<Dictionary<string, List<WorldVertex[]>>> geometryByTexture, ref WavefrontExportSettings data) 
 		{
 			StringBuilder obj = new StringBuilder();
+			Vector2D offset;
 			const string vertexFormatter = "{0} {2} {1}\n";
 
 			Dictionary<Vector3D, int> uniqueVerts = new Dictionary<Vector3D, int>();
@@ -647,8 +658,8 @@ namespace CodeImp.DoomBuilder.BuilderModes.IO
 					Dictionary<WorldVertex, VertexIndices> vertsData = new Dictionary<WorldVertex, VertexIndices>();
 					foreach(WorldVertex[] verts in group.Value) 
 					{
-						//vertex normals
-						Vector3D n = new Vector3D(verts[0].nx, verts[0].ny, verts[0].nz).GetNormal();
+						//vertex normals. biwa not sure why I need to invert the normal, but it seems to be necessary
+						Vector3D n = new Vector3D(verts[0].nx, verts[0].ny, verts[0].nz).GetNormal() * -1;
 						int ni;
 						if(uniqueNormals.ContainsKey(n)) 
 						{
@@ -726,16 +737,16 @@ namespace CodeImp.DoomBuilder.BuilderModes.IO
 			data.Radius = br.x - tl.x > tl.y - br.y ? (int)(tl.y - br.y) / 2 : (int)(br.x - tl.x) / 2;
 			data.Height = (int)(tl.z - br.z);
 
+			if (data.CenterModel)
+				offset = new Vector2D(tl.x + (br.x - tl.x) / 2.0, tl.y + (br.y - tl.y) / 2.0);
+			else
+				offset = new Vector2D(0.0, 0.0);
+
 			//write geometry
 			//write vertices
 			if (data.ExportForGZDoom) 
 			{
-				Vector2D offset;
 
-				if (data.CenterModel)
-					offset = new Vector2D(tl.x + (br.x - tl.x) / 2.0, tl.y + (br.y - tl.y) / 2.0);
-				else
-					offset = new Vector2D(0.0, 0.0);
 
 				foreach (KeyValuePair<Vector3D, int> group in uniqueVerts)
 				{
@@ -748,8 +759,12 @@ namespace CodeImp.DoomBuilder.BuilderModes.IO
 			{
 				// biwa. Not sure why the x-axis is flipped here, since it will result in wrong normals when using the model directly in GZDoom. For this reason
 				// I disabled the flipping above
-				foreach(KeyValuePair<Vector3D, int> group in uniqueVerts)
-					obj.Append(string.Format(CultureInfo.InvariantCulture, "v " + vertexFormatter, -group.Key.x * data.Scale, group.Key.y * data.Scale, group.Key.z * data.Scale));
+				foreach (KeyValuePair<Vector3D, int> group in uniqueVerts)
+				{
+					double z = (group.Key.z - (data.NormalizeLowestVertex ? br.z : 0)) * data.Scale;
+
+					obj.Append(string.Format(CultureInfo.InvariantCulture, "v " + vertexFormatter, -(group.Key.x - offset.x) * data.Scale, (group.Key.y - offset.y) * data.Scale, z));
+				}
 			}
 
 			//write normals
@@ -758,10 +773,7 @@ namespace CodeImp.DoomBuilder.BuilderModes.IO
 
 			//write UV coords
 			foreach(KeyValuePair<PointF, int> group in uniqueUVs)
-				if(data.ExportForGZDoom) // Flip the U value when exporting for GZDoom
-					obj.Append(string.Format(CultureInfo.InvariantCulture, "vt {0} {1}\n", -group.Key.X, -group.Key.Y));
-				else
-					obj.Append(string.Format(CultureInfo.InvariantCulture, "vt {0} {1}\n", group.Key.X, -group.Key.Y));
+				obj.Append(string.Format(CultureInfo.InvariantCulture, "vt {0} {1}\n", group.Key.X, -group.Key.Y));
 
 			// GZDoom ignores the material lib, so don't add it if the model is for GZDoom
 			if (!data.ExportForGZDoom)

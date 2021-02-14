@@ -79,8 +79,15 @@ namespace CodeImp.DoomBuilder.Map
 			this.blocksize = 1 << blocksizeshift;
 			if((this.blocksize != blocksize) || (this.blocksize <= 1)) throw new ArgumentException("Block size must be a power of 2 greater than 1");
 			rangelefttop = new Vector2D(range.Left, range.Top);
-			Point lefttop = new Point((int)range.Left >> blocksizeshift, (int)range.Top >> blocksizeshift);
-			Point rightbottom = new Point((int)range.Right >> blocksizeshift, (int)range.Bottom >> blocksizeshift);
+
+			// Simply casting to int can result int the blockmap being too small (for example for off-grid vertices), so round the dimensions
+			int left = range.Left < 0 ? (int)Math.Floor(range.Left) : (int)Math.Ceiling(range.Left);
+			int right = range.Right < 0 ? (int)Math.Floor(range.Right) : (int)Math.Ceiling(range.Right);
+			int top = range.Top < 0 ? (int)Math.Floor(range.Top) : (int)Math.Ceiling(range.Top);
+			int bottom = range.Bottom < 0 ? (int)Math.Floor(range.Bottom) : (int)Math.Ceiling(range.Bottom);
+
+			Point lefttop = new Point(left >> blocksizeshift, top >> blocksizeshift);
+			Point rightbottom = new Point(right >> blocksizeshift, bottom >> blocksizeshift);
 			size = new Size((rightbottom.X - lefttop.X) + 1, (rightbottom.Y - lefttop.Y) + 1);
 			blockmap = new BE[size.Width, size.Height];
 			Clear();
@@ -193,6 +200,32 @@ namespace CodeImp.DoomBuilder.Map
 			}
 			
 			// Return list
+			return entries;
+		}
+
+		// This returns a range of blocks in a rectangle. Pretty much the same like GetSquareRange(RectangleF rect),
+		// just without the overhead to create a RectangleF first
+		public virtual HashSet<BE> GetSquareRange(double left, double top, double width, double height)
+		{
+			// Calculate block coordinates
+			Point lt = GetBlockCoordinates(new Vector2D(left, top));
+			Point rb = GetBlockCoordinates(new Vector2D(left+width, top+height));
+
+			// Crop coordinates to range
+			lt = CropToRange(lt);
+			rb = CropToRange(rb);
+
+			// Go through the range to make a list
+			int entriescount = ((rb.X - lt.X) + 1) * ((rb.Y - lt.Y) + 1);
+			HashSet<BE> entries = new HashSet<BE>(entriescount);
+			for (int x = lt.X; x <= rb.X; x++)
+			{
+				for (int y = lt.Y; y <= rb.Y; y++)
+				{
+					entries.Add(blockmap[x, y]);
+				}
+			}
+
 			return entries;
 		}
 

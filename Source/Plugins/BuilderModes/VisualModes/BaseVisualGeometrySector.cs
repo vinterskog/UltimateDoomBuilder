@@ -461,23 +461,28 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				{
 					if (General.Interface.ShiftState ^ BuilderPlug.Me.AdditivePaintSelect)
 					{
-						this.selected = true;
-						mode.AddSelectedObject(this);
+						if (!selected)
+						{
+							selected = true;
+							mode.AddSelectedObject(this);
+						}
 					}
 					else if (General.Interface.CtrlState)
 					{
-						this.selected = false;
-						mode.RemoveSelectedObject(this);
-
+						if (selected)
+						{
+							selected = false;
+							mode.RemoveSelectedObject(this);
+						}
 					}
 					else
 					{
-						if (this.selected)
+						if (selected)
 							mode.RemoveSelectedObject(this);
 						else
 							mode.AddSelectedObject(this);
 
-						this.selected = !this.selected;
+						selected = !selected;
 					}
 				}
 
@@ -819,7 +824,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			if (General.Map.UDMF)
 			{
 				if (mode.AllSlopeHandles.ContainsKey(level.sector))
-					foreach (VisualSidedefSlope handle in mode.AllSlopeHandles[level.sector])
+					foreach (VisualSlope handle in mode.AllSlopeHandles[level.sector])
 						handle.Changed = true;
 			}
 		}
@@ -1001,23 +1006,28 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// toggle selected state
 			if (General.Interface.ShiftState ^ BuilderPlug.Me.AdditivePaintSelect)
 			{
-				this.selected = true;
-				mode.AddSelectedObject(this);
+				if (!selected)
+				{
+					selected = true;
+					mode.AddSelectedObject(this);
+				}
 			}
 			else if (General.Interface.CtrlState)
 			{
-				this.selected = false;
-				mode.RemoveSelectedObject(this);
-
+				if (selected)
+				{
+					selected = false;
+					mode.RemoveSelectedObject(this);
+				}
 			}
 			else
 			{
-				if (this.selected)
+				if (selected)
 					mode.RemoveSelectedObject(this);
 				else
 					mode.AddSelectedObject(this);
 
-				this.selected = !this.selected;
+				selected = !selected;
 			}
 		}
 		

@@ -67,7 +67,13 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		// Interface
 		new private bool editpressed;
 		private bool selectionfromhighlight; //mxd
-		
+
+		// The blockmap makes is used to make finding lines faster
+		BlockMap<BlockEntry> blockmap;
+
+		// Stores sizes of the text for text labels so that they only have to be computed once
+		private Dictionary<string, float> textlabelsizecache;
+
 		#endregion
 
 		#region ================== Properties
@@ -82,6 +88,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		{
 			//mxd. Associations now requre initializing...
 			highlightasso = new Association(renderer);
+
+			textlabelsizecache = new Dictionary<string, float>();
 		}
 
 		//mxd
@@ -446,9 +454,20 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				labels.Add(linedef, l);
 			}
 		}
-		
+
+		/// <summary>
+		/// Create a blockmap containing linedefs. This is used to speed up determining the closest line
+		/// to the mouse cursor
+		/// </summary>
+		private void CreateBlockmap()
+		{
+			RectangleF area = MapSet.CreateArea(General.Map.Map.Vertices);
+			blockmap = new BlockMap<BlockEntry>(area);
+			blockmap.AddLinedefsSet(General.Map.Map.Linedefs);
+		}
+
 		#endregion
-		
+
 		#region ================== Events
 
 		public override void OnHelp()
@@ -498,6 +517,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			//mxd. Update the tooltip
 			BuilderPlug.Me.MenusForm.SyncronizeThingEditButton.ToolTipText = "Synchronized Things Editing" + Environment.NewLine + BuilderPlug.Me.MenusForm.SyncronizeThingEditLinedefsItem.ToolTipText;
 			General.Interface.EndToolbarUpdate(); //mxd
+
+			// Create the blockmap
+			CreateBlockmap();
 
 			// Convert geometry selection to linedefs selection
 			General.Map.Map.ConvertSelection(SelectionType.Linedefs);
@@ -612,18 +634,32 @@ namespace CodeImp.DoomBuilder.BuilderModes
 							TextLabel l = labelarray[i];
 
 							// Render only when enough space for the label to see
-							float requiredsize = (General.Interface.MeasureString(group.Value[0], l.Font).Width / 2) / renderer.Scale;
-							if(requiredsize > group.Key.Labels[i].radius)
+							if (!textlabelsizecache.ContainsKey(group.Value[0]))
+								textlabelsizecache[group.Value[0]] = General.Interface.MeasureString(group.Value[0], l.Font).Width;
+
+							float requiredsize = textlabelsizecache[group.Value[0]] / 2 / renderer.Scale;
+
+							if (requiredsize > group.Key.Labels[i].radius)
 							{
-								requiredsize = (General.Interface.MeasureString(group.Value[1], l.Font).Width / 2) / renderer.Scale;
-								if(requiredsize > group.Key.Labels[i].radius)
-									l.Text = (requiredsize > group.Key.Labels[i].radius * 4 ? string.Empty : "+");
+								if (!textlabelsizecache.ContainsKey(group.Value[1]))
+									textlabelsizecache[group.Value[1]] = General.Interface.MeasureString(group.Value[1], l.Font).Width;
+
+								requiredsize = textlabelsizecache[group.Value[1]] / 2 / renderer.Scale;
+
+								string newtext;
+
+								if (requiredsize > group.Key.Labels[i].radius)
+									newtext = (requiredsize > group.Key.Labels[i].radius * 4 ? string.Empty : "+");
 								else
-									l.Text = group.Value[1];
+									newtext = group.Value[1];
+
+								if (l.Text != newtext)
+									l.Text = newtext;
 							}
 							else
 							{
-								l.Text = group.Value[0];
+								if (group.Value[0] != l.Text)
+									l.Text = group.Value[0];
 							}
 
 							if(!string.IsNullOrEmpty(l.Text)) torender.Add(l);
@@ -824,6 +860,13 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		{
 			base.OnUndoEnd();
 
+			// Recreate the blockmap to not include the potentially un-done lines anymore
+			CreateBlockmap();
+
+			// If something is highlighted make sure to update the association so that it contains valid data
+			if (highlighted != null && !highlighted.IsDisposed)
+				highlightasso.Set(highlighted);
+
 			// Update selection info and labels
 			UpdateSelectionInfo();
 			SetupSectorLabels();
@@ -833,6 +876,13 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		public override void OnRedoEnd()
 		{
 			base.OnRedoEnd();
+
+			// Recreate the blockmap to include the potentially re-done linedefs again
+			CreateBlockmap();
+
+			// If something is highlighted make sure to update the association so that it contains valid data
+			if (highlighted != null && !highlighted.IsDisposed)
+				highlightasso.Set(highlighted);
 
 			// Update selection info and labels
 			UpdateSelectionInfo();
@@ -860,7 +910,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			else if(paintselectpressed && !editpressed && !selecting)  //mxd. Drag-select
 			{
 				// Find the nearest thing within highlight range
-				Linedef l = General.Map.Map.NearestLinedefRange(mousemappos, BuilderPlug.Me.HighlightRange / renderer.Scale);
+				Linedef l = MapSet.NearestLinedefRange(blockmap, mousemappos, BuilderPlug.Me.HighlightRange / renderer.Scale);
 
 				if(l != null) 
 				{
@@ -892,11 +942,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			else if(e.Button == MouseButtons.None) // Not holding any buttons?
 			{
 				// Find the nearest linedef within highlight range
-				Linedef l = General.Map.Map.NearestLinedefRange(mousemappos, BuilderPlug.Me.HighlightRange / renderer.Scale);
+				Linedef l = MapSet.NearestLinedefRange(blockmap, mousemappos, BuilderPlug.Me.HighlightRange / renderer.Scale);
 
 				//mxd. Render insert vertex preview
-				Linedef sl = General.Map.Map.NearestLinedefRange(mousemappos, BuilderPlug.Me.StitchRange / renderer.Scale);
-				if(sl != null)
+				Linedef sl = MapSet.NearestLinedefRange(blockmap, mousemappos, BuilderPlug.Me.StitchRange / renderer.Scale);
+				if (sl != null)
 				{
 					bool snaptogrid = General.Interface.ShiftState ^ General.Interface.SnapToGrid;
 					bool snaptonearest = General.Interface.CtrlState ^ General.Interface.AutoMerge;
@@ -1363,6 +1413,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			General.Map.IsChanged = true;
 			General.Map.Map.Update();
 
+			// Recreate the blockmap since it shouldn't include the deleted linedefs anymore
+			CreateBlockmap();
+
 			// Redraw screen
 			SetupSectorLabels(); //mxd
 			UpdateSelectionInfo(); //mxd
@@ -1432,7 +1485,10 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				// Update cache values
 				General.Map.IsChanged = true;
 				General.Map.Map.Update();
-				
+
+				// Recreate the blockmap since it shouldn't include the dissolved linedefs anymore
+				CreateBlockmap();
+
 				// Redraw screen
 				SetupSectorLabels(); //mxd
 				UpdateSelectionInfo(); //mxd
@@ -1502,6 +1558,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 					}
 					//BuilderPlug.Me.AdjustSplitCoordinates(ld, sld);
 				}
+
+				// Create the blockmap
+				CreateBlockmap();
 
 				// Update cache values
 				General.Map.IsChanged = true;

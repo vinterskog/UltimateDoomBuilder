@@ -254,10 +254,13 @@ namespace CodeImp.DoomBuilder.Editing
 
 						try
 						{
-							//mxd. Set on clipboard
+							#if !MONO_WINFORMS
 							DataObject copydata = new DataObject();
 							copydata.SetData(CLIPBOARD_DATA_FORMAT, memstream);
 							Clipboard.SetDataObject(copydata, true, 5, 200);
+							#else
+							Clipboard.SetText(CLIPBOARD_DATA_FORMAT + Convert.ToBase64String(memstream.ToArray()));
+							#endif
 						}
 						catch(ExternalException)
 						{
@@ -290,8 +293,13 @@ namespace CodeImp.DoomBuilder.Editing
 			// Check if possible to copy/paste
 			if(General.Editing.Mode.Attributes.AllowCopyPaste)
 			{
+				#if !MONO_WINFORMS
 				bool havepastedata = Clipboard.ContainsData(CLIPBOARD_DATA_FORMAT); //mxd
 				bool havedb2pastedata = Clipboard.ContainsData(CLIPBOARD_DATA_FORMAT_DB2); //mxd
+				#else
+				bool havepastedata = Clipboard.ContainsText() && Clipboard.GetText().Length > CLIPBOARD_DATA_FORMAT.Length && Clipboard.GetText().Substring(0, CLIPBOARD_DATA_FORMAT.Length) == CLIPBOARD_DATA_FORMAT;
+				bool havedb2pastedata = false;
+				#endif
 				
 				// Anything to paste?
 				if(havepastedata || havedb2pastedata)
@@ -315,8 +323,14 @@ namespace CodeImp.DoomBuilder.Editing
 							// Read from clipboard
 							if(havepastedata)
 							{
+								#if !MONO_WINFORMS
 								using(Stream memstream = (Stream)Clipboard.GetData(CLIPBOARD_DATA_FORMAT))
+								#else
+								using(Stream memstream = new MemoryStream(Convert.FromBase64String(((string)Clipboard.GetData(DataFormats.Text)).Substring(CLIPBOARD_DATA_FORMAT.Length))))
+								#endif
 								{
+									if (memstream == null) return;
+									
 									// Rewind before use
 									memstream.Seek(0, SeekOrigin.Begin);
 
@@ -337,6 +351,8 @@ namespace CodeImp.DoomBuilder.Editing
 							{
 								using(Stream memstream = (Stream)Clipboard.GetData(CLIPBOARD_DATA_FORMAT_DB2))
 								{
+									if (memstream == null) return;
+								
 									// Read data stream
 									UniversalStreamReader reader = new UniversalStreamReader(new Dictionary<MapElementType, Dictionary<string, UniversalType>>());
 									reader.StrictChecking = false;
@@ -397,9 +413,9 @@ namespace CodeImp.DoomBuilder.Editing
 			}
 		}
 		
-		#endregion
+#endregion
 		
-		#region ================== Actions
+#region ================== Actions
 		
 		// This copies the current selection
 		[BeginAction("copyselection")]
@@ -647,6 +663,6 @@ namespace CodeImp.DoomBuilder.Editing
 			}
 		}
 		
-		#endregion
+#endregion
 	}
 }

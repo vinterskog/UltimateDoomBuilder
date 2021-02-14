@@ -480,6 +480,7 @@
     <Compile Include="VisualModes\BaseVisualGeometrySidedef.cs" />
     <Compile Include="VisualModes\BaseVisualMode.cs" />
     <Compile Include="VisualModes\BaseVisualSector.cs" />
+    <Compile Include="VisualModes\BaseVisualSlope.cs" />
     <Compile Include="VisualModes\BaseVisualThing.cs" />
     <Compile Include="VisualModes\BaseVisualVertex.cs" />
     <Compile Include="VisualModes\Effect3DFloor.cs" />
@@ -517,6 +518,7 @@
     <Compile Include="VisualModes\VisualSidedefParts.cs" />
     <Compile Include="VisualModes\VisualSidedefSlope.cs" />
     <Compile Include="VisualModes\VisualUpper.cs" />
+    <Compile Include="VisualModes\VisualVertexSlope.cs" />
     <Compile Include="VisualModes\WallPolygon.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -586,7 +588,6 @@
     <EmbeddedResource Include="Interface\WavefrontSettingsForm.resx">
       <DependentUpon>WavefrontSettingsForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\VisualModeGZ.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\SelectTouching.png" />
@@ -715,6 +716,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\TextureLock3Dfloor.png" />
+    <EmbeddedResource Include="Resources\VisualMode.png" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

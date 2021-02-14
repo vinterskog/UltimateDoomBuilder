@@ -437,6 +437,9 @@ namespace CodeImp.DoomBuilder.Data
 			LoadCvarInfo();
 			LoadLockDefs();
 
+			// Load DECALDEF
+			LoadDecalDefs();
+
 			//mxd. Load Script Editor-only stuff...
 			LoadExtraTextLumps();
 
@@ -1806,7 +1809,7 @@ namespace CodeImp.DoomBuilder.Data
                 if (!string.IsNullOrEmpty(actor.ReplacesClass) && thingtypesbyclass.ContainsKey(actor.ReplacesClass))
                 {
                     // Update info
-                    thingtypesbyclass[actor.ReplacesClass].ModifyByDecorateActor(actor, true);
+                    thingtypesbyclass[actor.ReplacesClass].ModifyByDecorateActor(actor);
 
                     // Count
                     counter++;
@@ -2818,6 +2821,65 @@ namespace CodeImp.DoomBuilder.Data
 			}
 		}
 
+		/// <summary>
+		/// Load DECALDEF decal definitions
+		/// </summary>
+		private void LoadDecalDefs()
+		{
+			// Bail out when not supported by current game configuration
+			if (string.IsNullOrEmpty(General.Map.Config.DecorateGames)) return;
+
+			DecalDefsParser parser = new DecalDefsParser();
+
+			foreach(DataReader dr in containers)
+			{
+				currentreader = dr; // Why?
+				IEnumerable<TextResourceData> streams = dr.GetTextLumpData(ScriptType.DECALDEF, false, false);
+
+				// Parse the data
+				foreach(TextResourceData data in streams)
+				{
+					parser.Parse(data, true);
+
+					// Report errors?
+					if (parser.HasError) parser.LogError();
+				}
+			}
+
+			currentreader = null; // Why?
+
+			if(parser.Decals.Count > 0)
+			{
+				// Update or create the main enums list
+				Dictionary<int, EnumItem> configenums = new Dictionary<int, EnumItem>();
+				if (General.Map.Config.Enums.ContainsKey("decals"))
+				{
+					foreach (EnumItem item in General.Map.Config.Enums["decals"])
+						configenums.Add(item.GetIntValue(), item);
+				}
+				if (configenums.ContainsKey(0)) configenums.Remove(0);
+
+				foreach (KeyValuePair<int, DecalInfo> group in parser.GetDecalDefsById())
+				{
+					configenums[group.Key] = new EnumItem(group.Key.ToString(), group.Value.Description);
+				}
+
+				// Store results in "decals" enum
+				EnumList newenums = new EnumList();
+				newenums.AddRange(configenums.Values);
+				newenums.Sort();
+				newenums.Insert(0, new EnumItem("0", "None"));
+				General.Map.Config.Enums["decals"] = newenums;
+
+				// Update all ArgumentInfos...
+				foreach (ThingTypeInfo info in thingtypes.Values)
+				{
+					foreach (ArgumentInfo ai in info.Args)
+						if (ai.Enum.Name == "decals") ai.Enum = newenums;
+				}
+			}
+		}
+
 		//mxd. This collects ZDoom text lumps, which are not used by the editor anywhere outside the Script Editor
 		private void LoadExtraTextLumps()
 		{
@@ -3086,14 +3148,36 @@ namespace CodeImp.DoomBuilder.Data
 					Bitmap sky1 = GetTextureBitmap(skytex, out scale);
 					if(sky1 != null)
 					{
+						// Special handling for wide skies. They are drawn from the east, but normal skyboxes are not,
+						// to we have to rearrange the texture a bit (paste the right half to the left and vice versa)
+						if(sky1.Width == 1024)
+						{
+							Bitmap tmpbmp = new Bitmap(sky1);
+							Graphics g = Graphics.FromImage(tmpbmp);
+							g.DrawImage(sky1, 512, 0, new Rectangle(0, 0, 512, sky1.Height), GraphicsUnit.Pixel);
+							g.DrawImage(sky1, 0, 0, new Rectangle(512, 0, 512, sky1.Height), GraphicsUnit.Pixel);
+							sky1 = tmpbmp;
+						}
+
 						// Double skies?
 						if(mapinfo.DoubleSky)
 						{
 							Bitmap sky2 = GetTextureBitmap(mapinfo.Sky2);
 							if(sky2 != null)
 							{
+								// Special handling for wide skies. They are drawn from the east, but normal skyboxes are not,
+								// to we have to rearrange the texture a bit (paste the right half to the left and vice versa)
+								if (sky2.Width == 1024)
+								{
+									Bitmap tmpbmp = new Bitmap(sky2);
+									Graphics g = Graphics.FromImage(tmpbmp);
+									g.DrawImage(sky2, 512, 0, new Rectangle(0, 0, 512, sky2.Height), GraphicsUnit.Pixel);
+									g.DrawImage(sky2, 0, 0, new Rectangle(512, 0, 512, sky2.Height), GraphicsUnit.Pixel);
+									sky2 = tmpbmp;
+								}
+
 								// Resize if needed
-								if(sky2.Width != sky1.Width || sky2.Height != sky1.Height)
+								if (sky2.Width != sky1.Width || sky2.Height != sky1.Height)
 									ResizeImage(sky2, sky1.Width, sky1.Height);
 
 								// Combine both textures. Sky2 is below Sky1

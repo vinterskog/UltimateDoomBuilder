@@ -19,8 +19,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using CodeImp.DoomBuilder.IO;
 using CodeImp.DoomBuilder.Map;
@@ -93,6 +95,8 @@ namespace CodeImp.DoomBuilder.Config
 		private bool splitjoinedsectors; //mxd
 		private bool usehighlight; //mxd
 		private bool switchviewmodes; //mxd
+		private bool showfps;
+		private int[] colordialogcustomcolors;
 
 		//mxd. Script editor settings
 		private string scriptfontname;
@@ -201,6 +205,8 @@ namespace CodeImp.DoomBuilder.Config
 		public SplitLineBehavior SplitLineBehavior { get { return splitlinebehavior; } set { splitlinebehavior = value; } } //mxd
 		public MergeGeometryMode MergeGeometryMode { get { return mergegeomode; } internal set { mergegeomode = value; } } //mxd
 		public bool SplitJoinedSectors { get { return splitjoinedsectors; } internal set { splitjoinedsectors = value; } } //mxd
+		public bool ShowFPS { get { return showfps; } internal set { showfps = value; } }
+		public int[] ColorDialogCustomColors { get { return colordialogcustomcolors; } internal set { colordialogcustomcolors = value; } }
 
 		//mxd. Highlight mode
 		public bool UseHighlight
@@ -325,7 +331,7 @@ namespace CodeImp.DoomBuilder.Config
 				animatevisualselection = cfg.ReadSetting("animatevisualselection", true);
 				previousversion = cfg.ReadSetting("currentversion", 0);
 				dockersposition = cfg.ReadSetting("dockersposition", 1);
-				collapsedockers = cfg.ReadSetting("collapsedockers", true);
+				collapsedockers = cfg.ReadSetting("collapsedockers", false);
 				dockerswidth = cfg.ReadSetting("dockerswidth", 300);
 				pasteoptions.ReadConfiguration(cfg, "pasteoptions");
 				toolbarscript = cfg.ReadSetting("toolbarscript", true);
@@ -347,6 +353,7 @@ namespace CodeImp.DoomBuilder.Config
 				splitjoinedsectors = cfg.ReadSetting("splitjoinedsectors", true); //mxd
 				usehighlight = cfg.ReadSetting("usehighlight", true); //mxd
 				switchviewmodes = cfg.ReadSetting("switchviewmodes", false); //mxd
+				showfps = cfg.ReadSetting("showfps", false);
 
 				//mxd. Script editor
 				scriptfontname = cfg.ReadSetting("scriptfontname", "Courier New");
@@ -398,7 +405,30 @@ namespace CodeImp.DoomBuilder.Config
 				defaultceilheight = cfg.ReadSetting("defaultceilheight", 128);
 				defaultfloorheight = cfg.ReadSetting("defaultfloorheight", 0);
 				defaultbrightness = cfg.ReadSetting("defaultbrightness", 192);
-				
+
+				// Color dialog custom colors
+				colordialogcustomcolors = new int[16] { 16777215, 16777215, 16777215, 16777215, 16777215, 16777215, 16777215, 16777215, 16777215, 16777215, 16777215, 16777215, 16777215, 16777215, 16777215, 16777215 }; // White
+				IDictionary colordict = cfg.ReadSetting("colordialogcustomcolors", new Hashtable());
+				foreach (DictionaryEntry de in colordict)
+				{
+					string colornum = Regex.Match(de.Key.ToString(), @"^color(\d+)$").Groups[1].Value;
+					if (string.IsNullOrEmpty(colornum))
+						continue;
+
+					try
+					{
+						int colorid = Convert.ToInt32(colornum, CultureInfo.InvariantCulture);
+						int colorval = Convert.ToInt32(de.Value.ToString(), CultureInfo.InvariantCulture);
+						if (colorid >= 0 && colorid < 16)
+							colordialogcustomcolors[colorid] = colorval;
+
+					}
+					catch (FormatException)
+					{
+						// Do nothing
+					}
+				}
+
 				// Success
 				return true;
 			}
@@ -460,6 +490,7 @@ namespace CodeImp.DoomBuilder.Config
 			cfg.WriteSetting("splitjoinedsectors", splitjoinedsectors); //mxd
 			cfg.WriteSetting("usehighlight", usehighlight); //mxd
 			cfg.WriteSetting("switchviewmodes", switchviewmodes); //mxd
+			cfg.WriteSetting("showfps", showfps);
 
 			//mxd. Script editor
 			cfg.WriteSetting("scriptfontname", scriptfontname);
@@ -513,7 +544,11 @@ namespace CodeImp.DoomBuilder.Config
 			cfg.WriteSetting("defaultceilheight", defaultceilheight);
 			cfg.WriteSetting("defaultfloorheight", defaultfloorheight);
 			cfg.WriteSetting("defaultbrightness", defaultbrightness);
-			
+
+			// Color dialog custom colors
+			for (int i = 0; i < 16; i++)
+				cfg.WriteSetting("colordialogcustomcolors.color" + i, colordialogcustomcolors[i]);
+
 			// Save settings configuration
 			General.WriteLogLine("Saving program configuration to \"" + filepathname + "\"...");
 			cfg.SaveConfiguration(filepathname);
