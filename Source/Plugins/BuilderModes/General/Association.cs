@@ -361,7 +361,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				if (ld.Action > 0 && General.Map.Config.LinedefActions.ContainsKey(ld.Action))
 					action = General.Map.Config.LinedefActions[ld.Action];
 
-				actionargs = ld.Args;
+				actionargs = ld.Args.ToArray();
 			}
 			else if (element is Thing)
 			{
@@ -527,7 +527,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			else if(se is Linedef)
 			{
 				action = ((Linedef)se).Action;
-				actionargs = ((Linedef)se).Args;
+				actionargs = ((Linedef)se).Args.ToArray();
 			}
 
 			if (action > 0)

@@ -82,7 +82,7 @@ namespace CodeImp.DoomBuilder.Controls
 
 		public void SetValue(Linedef l, bool first)
 		{
-			SetValue(l.Fields, l.Args, first);
+			SetValue(l.Fields, l.Args.ToArray(), first);
 		}
 
 		public void SetValue(Thing t, bool first)
@@ -160,10 +160,14 @@ namespace CodeImp.DoomBuilder.Controls
                     //
 					if(!string.IsNullOrEmpty(arg0int.Text))
 					{
-						if(arg0int.SelectedItem != null)
+						int outarg;
+
+						if (arg0int.SelectedItem != null)
 							l.Args[0] = ((ScriptItem)((ColoredComboBoxItem)arg0int.SelectedItem).Value).Index;
-						else if(!int.TryParse(arg0int.Text.Trim(), out l.Args[0]))
+						else if (!int.TryParse(arg0int.Text.Trim(), out outarg))
 							l.Args[0] = 0;
+						else
+							l.Args[0] = outarg;
 
 						if(l.Fields.ContainsKey("arg0str")) l.Fields.Remove("arg0str");
 					}

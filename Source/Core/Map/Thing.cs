@@ -112,7 +112,6 @@ namespace CodeImp.DoomBuilder.Map
 		private Dictionary<string, bool> flags;
 		private int tag;
 		private int action;
-		//private int[] args;
 		private MapElementArguments args;
 		private double scaleX; //mxd
 		private double scaleY; //mxd
@@ -157,7 +156,6 @@ namespace CodeImp.DoomBuilder.Map
 		public int AngleDoom { get { return angledoom; } }
 		internal Dictionary<string, bool> Flags { get { return flags; } }
 		public int Action { get { return action; } set { BeforePropsChange(); action = value; } }
-		//public int[] Args { get { return args; } }
 		public MapElementArguments Args { get { return args; } }
 		public float Size { get { return size; } }
 		public float RenderSize { get { return rendersize; } }
@@ -183,7 +181,6 @@ namespace CodeImp.DoomBuilder.Map
 			this.map = map;
 			this.listindex = listindex;
 			this.flags = new Dictionary<string, bool>(StringComparer.Ordinal);
-			//this.args = new int[NUM_ARGS];
 			this.args = new MapElementArguments(NUM_ARGS);
 			this.scaleX = 1.0f;
 			this.scaleY = 1.0f;
@@ -302,7 +299,6 @@ namespace CodeImp.DoomBuilder.Map
 			t.flags = new Dictionary<string,bool>(flags);
 			t.tag = tag;
 			t.action = action;
-			//t.args = (int[])args.Clone();
 			t.args = args.Clone();
 			t.size = size;
 			t.rendersize = rendersize;
