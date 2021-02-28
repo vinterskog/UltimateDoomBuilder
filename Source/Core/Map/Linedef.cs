@@ -1382,7 +1382,7 @@ namespace CodeImp.DoomBuilder.Map
 			this.tags = new List<int>(tags); //mxd
 			this.activate = activate;
 			this.action = action;
-			this.args = new MapElementArguments(NUM_ARGS, this.args);
+			this.args = new MapElementArguments(NUM_ARGS, args);
 			this.updateneeded = true;
 		}
 

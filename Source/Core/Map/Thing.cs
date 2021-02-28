@@ -577,7 +577,7 @@ namespace CodeImp.DoomBuilder.Map
 			this.flags = new Dictionary<string, bool>(flags);
 			this.tag = tag;
 			this.action = action;
-			this.args = new MapElementArguments(NUM_ARGS, this.args);
+			this.args = new MapElementArguments(NUM_ARGS, args);
 			this.Move(x, y, zoffset);
 
 			UpdateCache(); //mxd
