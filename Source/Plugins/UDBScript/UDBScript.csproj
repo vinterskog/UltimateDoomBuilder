@@ -104,11 +104,11 @@
     <Compile Include="Windows\QueryOptionsForm.Designer.cs">
       <DependentUpon>QueryOptionsForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Windows\ScriptErrorForm.cs">
+    <Compile Include="Windows\UDBScriptErrorForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Windows\ScriptErrorForm.Designer.cs">
-      <DependentUpon>ScriptErrorForm.cs</DependentUpon>
+    <Compile Include="Windows\UDBScriptErrorForm.Designer.cs">
+      <DependentUpon>UDBScriptErrorForm.cs</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -126,8 +126,8 @@
     <EmbeddedResource Include="Windows\QueryOptionsForm.resx">
       <DependentUpon>QueryOptionsForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Windows\ScriptErrorForm.resx">
-      <DependentUpon>ScriptErrorForm.cs</DependentUpon>
+    <EmbeddedResource Include="Windows\UDBScriptErrorForm.resx">
+      <DependentUpon>UDBScriptErrorForm.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
