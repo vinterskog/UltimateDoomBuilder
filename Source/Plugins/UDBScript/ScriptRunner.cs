@@ -32,6 +32,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using CodeImp.DoomBuilder.Geometry;
 using Jint;
+using Esprima;
 
 namespace CodeImp.DoomBuilder.UDBScript
 {
@@ -77,7 +78,8 @@ namespace CodeImp.DoomBuilder.UDBScript
 			{
 				try
 				{
-					engine.Execute(File.ReadAllText(file));
+					ParserOptions po = new ParserOptions(file.Remove(0, General.AppPath.Length));
+					engine.Execute(File.ReadAllText(file), po);
 				}
 				catch (Esprima.ParserException e)
 				{
@@ -149,8 +151,11 @@ namespace CodeImp.DoomBuilder.UDBScript
 			try
 			{
 				General.Map.UndoRedo.CreateUndo("Run script " + BuilderPlug.GetScriptName(scriptfile));
+
+				ParserOptions po = new ParserOptions(scriptfile.Remove(0, General.AppPath.Length));
+
 				stopwatch.Start();
-				engine.Execute(script);
+				engine.Execute(script, po);
 				stopwatch.Stop();
 			}
 			catch (UserScriptAbortException e)
@@ -158,7 +163,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 				General.Interface.DisplayStatus(Windows.StatusType.Warning, "Script aborted");
 				abort = true;
 			}
-			catch (Esprima.ParserException e)
+			catch (ParserException e)
 			{
 				MessageBox.Show("There is an error while parsing the script:\n\n" + e.Message, "Script error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				abort = true;
@@ -166,7 +171,11 @@ namespace CodeImp.DoomBuilder.UDBScript
 			catch (Jint.Runtime.JavaScriptException e)
 			{
 				if (e.Error.Type != Jint.Runtime.Types.String)
-					MessageBox.Show("There is an error in the script in line " + e.LineNumber + ":\n\n" + e.Message, "Script error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				{
+					//MessageBox.Show("There is an error in the script in line " + e.LineNumber + ":\n\n" + e.Message + "\n\n" + e.StackTrace, "Script error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					UDBScriptErrorForm sef = new UDBScriptErrorForm(e.Message, e.StackTrace);
+					sef.ShowDialog();
+				}
 				else
 					General.Interface.DisplayStatus(Windows.StatusType.Warning, e.Message); // We get here if "throw" is used in a script
 

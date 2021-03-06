@@ -104,6 +104,12 @@
     <Compile Include="Windows\QueryOptionsForm.Designer.cs">
       <DependentUpon>QueryOptionsForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Windows\ScriptErrorForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Windows\ScriptErrorForm.Designer.cs">
+      <DependentUpon>ScriptErrorForm.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Controls\ScriptDockerControl.resx">
@@ -119,6 +125,9 @@
     <EmbeddedResource Include="Resources\Actions.cfg" />
     <EmbeddedResource Include="Windows\QueryOptionsForm.resx">
       <DependentUpon>QueryOptionsForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Windows\ScriptErrorForm.resx">
+      <DependentUpon>ScriptErrorForm.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
