@@ -889,6 +889,15 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			SetupSectorLabels();
 		}
 
+		public override void OnScriptRunEnd()
+		{
+			base.OnScriptRunEnd();
+
+			UpdateSelectionInfo();
+
+			General.Interface.RedrawDisplay();
+		}
+
 		// Mouse moves
 		public override void OnMouseMove(MouseEventArgs e)
 		{

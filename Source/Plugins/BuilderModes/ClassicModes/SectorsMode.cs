@@ -1543,10 +1543,14 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 			CreateBlockmap();
 
-			// Clear labels
+			// Redo labels
 			SetupLabels();
 			UpdateEffectLabels();
+			UpdateSelectedLabels();
+			UpdateOverlay();
 			UpdateOverlaySurfaces();
+
+			General.Interface.RedrawDisplay();
 		}
 
 		//mxd
