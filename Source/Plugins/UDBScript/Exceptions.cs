@@ -22,11 +22,6 @@
 #endregion
 
 using System;
-using System.Runtime.Serialization;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CodeImp.DoomBuilder.UDBScript
 {
@@ -38,6 +33,18 @@ namespace CodeImp.DoomBuilder.UDBScript
 		}
 
 		public UserScriptAbortException(string message) : base(message)
+		{
+		}
+	}
+
+	[Serializable]
+	public class CantConvertToVectorException : Exception
+	{
+		public CantConvertToVectorException()
+		{
+		}
+
+		public CantConvertToVectorException(string message) : base(message)
 		{
 		}
 	}

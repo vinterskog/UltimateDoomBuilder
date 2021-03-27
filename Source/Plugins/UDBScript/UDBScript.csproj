@@ -97,7 +97,7 @@
     <Compile Include="RuntimeConstraint.cs" />
     <Compile Include="ScriptOption.cs" />
     <Compile Include="ScriptRunner.cs" />
-    <Compile Include="UserScriptAbortException.cs" />
+    <Compile Include="Exceptions.cs" />
     <Compile Include="Windows\QueryOptionsForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -110,6 +110,14 @@
     <Compile Include="Windows\UDBScriptErrorForm.Designer.cs">
       <DependentUpon>UDBScriptErrorForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Wrapper\LinedefWrapper.cs" />
+    <Compile Include="Wrapper\MapElementArgumentsWrapper.cs" />
+    <Compile Include="Wrapper\MapElementWrapper.cs" />
+    <Compile Include="Wrapper\MapWrapper.cs" />
+    <Compile Include="Wrapper\SectorWrapper.cs" />
+    <Compile Include="Wrapper\SidedefWrapper.cs" />
+    <Compile Include="Wrapper\ThingWrapper.cs" />
+    <Compile Include="Wrapper\VertexWrapper.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Controls\ScriptDockerControl.resx">

@@ -31,7 +31,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CodeImp.DoomBuilder.Geometry;
+using CodeImp.DoomBuilder.Map;
+using CodeImp.DoomBuilder.UDBScript.Wrapper;
 using Jint;
+using Jint.Runtime;
+using Jint.Runtime.Interop;
+using Jint.Native;
+using Jint.Native.Error;
 using Esprima;
 
 namespace CodeImp.DoomBuilder.UDBScript
@@ -41,6 +47,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 		#region ================== Variables
 
 		private string scriptfile;
+		Engine engine;
 
 		#endregion
 
@@ -58,6 +65,11 @@ namespace CodeImp.DoomBuilder.UDBScript
 		public void ShowMessage(string s)
 		{
 			MessageBox.Show(s);
+		}
+
+		public JavaScriptException CreateRuntimeException(string message)
+		{
+			return new JavaScriptException(ErrorConstructor.CreateErrorConstructor(engine, new JsString("UDBScriptRuntimeException")), message);
 		}
 
 		/// <summary>
@@ -125,7 +137,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 			assemblies.Add(General.ThisAssembly);
 
 			// Create the script engine
-			Engine engine = new Engine(cfg => {
+			engine = new Engine(cfg => {
 				cfg.AllowClr(assemblies.ToArray());
 				cfg.Constraint(new RuntimeConstraint(stopwatch));
 			});
@@ -133,6 +145,11 @@ namespace CodeImp.DoomBuilder.UDBScript
 			engine.SetValue("ShowMessage", new Action<string>(ShowMessage));
 			engine.SetValue("QueryOptions", new QueryOptions(stopwatch));
 			engine.SetValue("ScriptOptions", BuilderPlug.Me.GetScriptOptions());
+			engine.SetValue("Map", new MapWrapper());
+			//engine.SetValue("MyClass", TypeReference.CreateTypeReference(engine, typeof(MyClass)));
+			engine.SetValue("Vector3D", TypeReference.CreateTypeReference(engine, typeof(Vector3D)));
+			engine.SetValue("Vector2D", TypeReference.CreateTypeReference(engine, typeof(Vector2D)));
+			engine.SetValue("UniValue", TypeReference.CreateTypeReference(engine, typeof(UniValue)));
 
 			// We'll always need to import the UDB namespace anyway, so do it here instead in every single script
 			engine.Execute("var UDB = importNamespace('CodeImp.DoomBuilder');");
@@ -158,7 +175,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 				engine.Execute(script, po);
 				stopwatch.Stop();
 			}
-			catch (UserScriptAbortException e)
+			catch (UserScriptAbortException)
 			{
 				General.Interface.DisplayStatus(Windows.StatusType.Warning, "Script aborted");
 				abort = true;

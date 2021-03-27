@@ -37,6 +37,7 @@ using CodeImp.DoomBuilder.IO;
 using CodeImp.DoomBuilder.Controls;
 using CodeImp.DoomBuilder.Geometry;
 using CodeImp.DoomBuilder.Plugins;
+using Jint;
 
 namespace CodeImp.DoomBuilder.UDBScript
 {
@@ -54,6 +55,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 		private ScriptDockerControl panel;
 		private Docker docker;
 		private string currentscriptfile;
+		private ScriptRunner scriptrunner;
 
 		#endregion
 
@@ -61,6 +63,7 @@ namespace CodeImp.DoomBuilder.UDBScript
 
 		public static BuilderPlug Me { get { return me; } }
 		public string CurrentScriptFile { get { return currentscriptfile; } set { currentscriptfile = value; } }
+		internal ScriptRunner ScriptRunner { get { return scriptrunner; } }
 
 		#endregion
 
@@ -140,8 +143,8 @@ namespace CodeImp.DoomBuilder.UDBScript
 			if (string.IsNullOrEmpty(currentscriptfile))
 				return;
 
-			ScriptRunner sr = new ScriptRunner(currentscriptfile);
-			sr.Run();
+			scriptrunner = new ScriptRunner(currentscriptfile);
+			scriptrunner.Run();
 		}
 
 		#endregion
